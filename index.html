@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Cubo</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: system-ui, sans-serif;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+            overscroll-behavior: none
+        }
+
+        :root {
+            color-scheme: dark
+        }
+
+        input {
+            user-select: text;
+            -webkit-user-select: text
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        #cross {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 18px;
+            height: 18px;
+            margin: -9px 0 0 -9px;
+            pointer-events: none
+        }
+
+        #cross:before,
+        #cross:after {
+            content: "";
+            position: absolute;
+            background: #fff;
+            mix-blend-mode: difference
+        }
+
+        #cross:before {
+            left: 8px;
+            top: 0;
+            width: 2px;
+            height: 18px
+        }
+
+        #cross:after {
+            left: 0;
+            top: 8px;
+            width: 18px;
+            height: 2px
+        }
+
+        #hotbar {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(0, 0, 0, .45);
+            border-radius: 6px
+        }
+
+        .slot {
+            width: 44px;
+            height: 44px;
+            border: 3px solid #555;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+            background-color: #222;
+            position: relative
+        }
+
+        .slot.sel {
+            border-color: #fff
+        }
+
+        .slot span {
+            position: absolute;
+            left: 2px;
+            top: -1px;
+            font-size: 10px;
+            text-shadow: 0 0 2px #000
+        }
+
+        #inv {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            padding: 12px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, .6);
+            font-family: "Courier New", ui-monospace, monospace;
+            color: #fff
+        }
+
+        #inv.on {
+            display: flex
+        }
+
+        #invBox {
+            width: min(560px, 100%);
+            max-height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+            padding: 12px;
+            background: rgba(40, 40, 44, .92);
+            border: 2px solid #000;
+            box-shadow: inset 3px 3px 0 #6a6a70, inset -3px -3px 0 #26262a;
+            text-align: center
+        }
+
+        #invBox h2 {
+            margin: 0 0 8px;
+            font-size: 18px;
+            text-shadow: 2px 2px 0 #333
+        }
+
+        #invBox p {
+            margin: 6px 0;
+            font-size: 12px;
+            line-height: 1.5;
+            opacity: .9
+        }
+
+        #invGrid,
+        #invHot {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px;
+            background: rgba(0, 0, 0, .35)
+        }
+
+        #invGrid .slot,
+        #invHot .slot {
+            cursor: pointer
+        }
+
+        #invGrid .slot:hover {
+            border-color: #ffd24a
+        }
+
+        #invTip {
+            min-height: 18px;
+            color: #ffd24a
+        }
+
+        #invBox .btn {
+            margin-top: 8px
+        }
+
+        #info {
+            position: fixed;
+            left: 8px;
+            top: 8px;
+            font: 12px monospace;
+            text-shadow: 0 0 3px #000;
+            white-space: pre;
+            pointer-events: none
+        }
+
+        #flash {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none
+        }
+
+        #water {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 60, 160, .35);
+            opacity: 0;
+            pointer-events: none
+        }
+
+        #rew {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(transparent 40%, rgba(120, 80, 255, .5));
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 60px;
+            font-size: 22px;
+            font-weight: 700;
+            text-shadow: 0 0 6px #000
+        }
+
+        #saveInd {
+            position: fixed;
+            left: 50%;
+            top: calc(10px + env(safe-area-inset-top, 0px));
+            transform: translateX(-50%);
+            font: 12px monospace;
+            background: rgba(0, 0, 0, .6);
+            padding: 4px 10px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity .4s;
+            pointer-events: none
+        }
+
+        /* ===== Menu estilo Bedrock ===== */
+        #menu {
+            position: fixed;
+            z-index: 10;
+            inset: 0;
+            display: flex;
+            overflow: auto;
+            padding: 16px;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+            background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55)), var(--dirt) 0 0/96px 96px;
+            font-family: "Courier New", ui-monospace, monospace
+        }
+
+        #menu.ingame {
+            background: rgba(0, 0, 0, .6)
+        }
+
+        .scr {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            width: min(440px, 100%);
+            margin: auto;
+            text-align: center
+        }
+
+        .scr.on {
+            display: flex
+        }
+
+        .scr h2 {
+            margin: 0 0 4px;
+            font-size: 22px;
+            text-shadow: 2px 2px 0 #333;
+            letter-spacing: 1px
+        }
+
+        .scr p {
+            margin: 2px 0;
+            font-size: 12px;
+            line-height: 1.5;
+            opacity: .9
+        }
+
+        .scr label {
+            text-align: left;
+            font-size: 12px;
+            opacity: .85;
+            margin-top: 4px
+        }
+
+        .scr b {
+            color: #ffd24a
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            font: 700 15px/1 "Courier New", monospace;
+            color: #fff;
+            text-shadow: 2px 2px 0 #3f3f3f;
+            background: #6d6d6d;
+            border: 2px solid #000;
+            box-shadow: inset 3px 3px 0 #a8a8a8, inset -3px -3px 0 #3d3d3d;
+            padding: 13px 10px;
+            cursor: pointer;
+            touch-action: manipulation
+        }
+
+        .btn:hover,
+        .btn:focus-visible {
+            background: #7f7f7f;
+            outline: 2px solid #fff;
+            outline-offset: -5px
+        }
+
+        .btn.g {
+            background: #3c8527;
+            box-shadow: inset 3px 3px 0 #6ec04f, inset -3px -3px 0 #1f4a14
+        }
+
+        .btn.g:hover {
+            background: #4a9b32
+        }
+
+        .btn.r {
+            background: #a03232;
+            box-shadow: inset 3px 3px 0 #d36a6a, inset -3px -3px 0 #5c1818
+        }
+
+        .btn:disabled {
+            opacity: .45;
+            pointer-events: none
+        }
+
+        .in {
+            width: 100%;
+            box-sizing: border-box;
+            background: #000;
+            color: #fff;
+            border: 2px solid #777;
+            padding: 11px;
+            font: 15px "Courier New", monospace;
+            outline: none;
+            border-radius: 0
+        }
+
+        .in:focus {
+            border-color: #fff
+        }
+
+        #logo {
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            color: #c6c6c6;
+            text-shadow: 0 4px 0 #6b6b6b, 0 8px 0 #333, 0 12px 0 #111;
+            margin-bottom: 6px
+        }
+
+        #splash {
+            color: #ffe14a;
+            font-weight: 700;
+            font-size: 14px;
+            transform: rotate(-4deg);
+            text-shadow: 2px 2px 0 #3b3300;
+            margin: 0 0 18px;
+            min-height: 18px
+        }
+
+        .foot {
+            font-size: 11px !important;
+            opacity: .6 !important;
+            margin-top: 8px !important
+        }
+
+        .wl {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 48vh;
+            overflow: auto;
+            padding: 2px;
+            background: rgba(0, 0, 0, .35);
+            border: 2px solid #000;
+            min-height: 60px
+        }
+
+        .wr {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, .07);
+            border: 2px solid #333;
+            cursor: pointer;
+            text-align: left
+        }
+
+        .wr:hover {
+            border-color: #fff;
+            background: rgba(255, 255, 255, .14)
+        }
+
+        .wt {
+            width: 96px;
+            height: 54px;
+            flex: none;
+            border: 2px solid #000;
+            background: var(--grass) 0 0/32px 32px;
+            image-rendering: auto;
+            object-fit: cover
+        }
+
+        .wi {
+            flex: 1;
+            min-width: 0
+        }
+
+        .wn {
+            font-weight: 700;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .wm {
+            font-size: 11px;
+            opacity: .7;
+            line-height: 1.4
+        }
+
+        .we {
+            flex: none;
+            width: auto;
+            height: 36px;
+            padding: 0 12px;
+            font-size: 13px
+        }
+
+        .empty {
+            margin: auto;
+            opacity: .7;
+            font-size: 13px;
+            padding: 14px
+        }
+
+        .ctl p {
+            text-align: left
+        }
+
+        #keyCfg {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 6px 0
+        }
+
+        body.touch #keyCfg {
+            display: none
+        }
+
+        #keyCfg h3 {
+            margin: 6px 0 0;
+            font-size: 15px;
+            text-align: left;
+            text-shadow: 2px 2px 0 #333
+        }
+
+        .ptabs {
+            display: flex;
+            gap: 6px
+        }
+
+        .ptabs .btn {
+            padding: 8px 6px;
+            font-size: 13px
+        }
+
+        .ptabs .btn.sel {
+            background: #3c8527;
+            box-shadow: inset 3px 3px 0 #6ec04f, inset -3px -3px 0 #1f4a14
+        }
+
+        .kbrow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            text-align: left;
+            font-size: 12px
+        }
+
+        .kbrow span {
+            flex: 1
+        }
+
+        .kbrow .btn {
+            width: 130px;
+            padding: 8px 6px;
+            font-size: 13px
+        }
+
+        .kbrow .btn.cap {
+            background: #a68a1f;
+            box-shadow: inset 3px 3px 0 #e0c34f, inset -3px -3px 0 #5e4c0c
+        }
+
+        #keyMsg {
+            min-height: 18px;
+            text-align: left
+        }
+
+        body:not(.touch) #play {
+            display: none
+        }
+
+        body.touch .kb {
+            display: none
+        }
+
+        body:not(.touch) .tc {
+            display: none
+        }
+
+        #touch {
+            display: none
+        }
+
+        body.touch #touch {
+            display: block
+        }
+
+        #joy {
+            position: fixed;
+            left: calc(28px + env(safe-area-inset-left, 0px));
+            bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .26);
+            border: 3px solid rgba(20, 20, 20, .7);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16);
+            touch-action: none
+        }
+
+        #knob {
+            position: absolute;
+            left: 33px;
+            top: 33px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(170, 170, 170, .55);
+            border: 3px solid rgba(20, 20, 20, .75);
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .35), inset -2px -2px 0 rgba(0, 0, 0, .3)
+        }
+
+        /* botoes no mesmo estilo dos menus do jogo: quadrados, chanfro de pixel, icones em pixel art */
+        .tb {
+            position: fixed;
+            width: 52px;
+            height: 52px;
+            border: 2px solid rgba(0, 0, 0, .8);
+            border-radius: 0;
+            background: rgba(120, 120, 120, .5);
+            box-shadow: inset 3px 3px 0 rgba(255, 255, 255, .32), inset -3px -3px 0 rgba(0, 0, 0, .32);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        .tb svg {
+            width: 55%;
+            height: 55%;
+            filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, .7))
+        }
+
+        .tb.on {
+            background: rgba(190, 190, 190, .6);
+            box-shadow: inset 3px 3px 0 rgba(0, 0, 0, .32), inset -3px -3px 0 rgba(255, 255, 255, .25)
+        }
+
+        .tb.big {
+            width: 70px;
+            height: 70px
+        }
+
+        .tb.sm {
+            width: 40px;
+            height: 40px
+        }
+
+        #bJump {
+            right: calc(26px + env(safe-area-inset-right, 0px));
+            bottom: calc(66px + env(safe-area-inset-bottom, 0px))
+        }
+
+        #bSneak {
+            right: calc(112px + env(safe-area-inset-right, 0px));
+            bottom: calc(66px + env(safe-area-inset-bottom, 0px))
+        }
+
+        #bDown {
+            display: none;
+            right: calc(36px + env(safe-area-inset-right, 0px));
+            bottom: calc(148px + env(safe-area-inset-bottom, 0px))
+        }
+
+        body.flying #bDown {
+            display: flex
+        }
+
+        body.flying #bFly {
+            background: rgba(90, 150, 210, .6)
+        }
+
+        #bPause {
+            right: calc(12px + env(safe-area-inset-right, 0px));
+            top: calc(10px + env(safe-area-inset-top, 0px))
+        }
+
+        #bRew {
+            right: calc(60px + env(safe-area-inset-right, 0px));
+            top: calc(10px + env(safe-area-inset-top, 0px))
+        }
+
+        #bFly {
+            right: calc(108px + env(safe-area-inset-right, 0px));
+            top: calc(10px + env(safe-area-inset-top, 0px))
+        }
+
+        #bPage {
+            left: calc(50% + 214px);
+            bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+            width: 44px;
+            height: 44px
+        }
+
+        body.touch #cross {
+            display: none
+        }
+
+        body.touch #info {
+            font-size: 10px;
+            top: calc(8px + env(safe-area-inset-top, 0px));
+            left: calc(10px + env(safe-area-inset-left, 0px))
+        }
+
+        body.touch #hotbar {
+            bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+            gap: 2px;
+            padding: 3px
+        }
+
+        body.touch .slot {
+            width: 38px;
+            height: 38px;
+            border-width: 2px
+        }
+
+        body.touch .slot span {
+            font-size: 8px
+        }
+
+        @media (max-height:480px) {
+            #logo {
+                font-size: 44px
+            }
+
+            #splash {
+                margin-bottom: 8px
+            }
+
+            .wl {
+                max-height: 34vh
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <div id="water"></div>
+    <div id="flash"></div>
+    <div id="rew"></div>
+    <div id="cross"></div>
+    <div id="hotbar"></div>
+    <div id="inv">
+        <div id="invBox">
+            <h2>Inventário · Criativo</h2>
+            <div id="invGrid"></div>
+            <p id="invTip">&nbsp;</p>
+            <div id="invHot"></div>
+            <p>Clique num item para colocá-lo no slot selecionado da barra (se ele já estiver em outro slot, os dois
+                trocam de lugar). Clique num slot da barra, ou aperte 1-9 e 0, para escolher qual slot trocar.</p>
+            <button class="btn" id="invClose" type="button">Fechar</button>
+        </div>
+    </div>
+    <div id="info"></div>
+    <div id="touch">
+        <div id="joy">
+            <div id="knob"></div>
+        </div>
+        <button class="tb big" id="bJump" aria-label="Pular"><svg viewBox="0 0 8 7" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="3" y="0" width="2" height="1" />
+                <rect x="2" y="1" width="4" height="1" />
+                <rect x="1" y="2" width="6" height="1" />
+                <rect x="0" y="3" width="8" height="1" />
+                <rect x="3" y="4" width="2" height="1" />
+                <rect x="3" y="5" width="2" height="1" />
+                <rect x="3" y="6" width="2" height="1" />
+            </svg></button>
+        <button class="tb" id="bSneak" aria-label="Agachar"><svg viewBox="0 0 8 7" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="3" y="0" width="2" height="1" />
+                <rect x="3" y="1" width="2" height="1" />
+                <rect x="3" y="2" width="2" height="1" />
+                <rect x="0" y="3" width="8" height="1" />
+                <rect x="1" y="4" width="6" height="1" />
+                <rect x="2" y="5" width="4" height="1" />
+                <rect x="3" y="6" width="2" height="1" />
+            </svg></button>
+        <button class="tb" id="bDown" aria-label="Descer"><svg viewBox="0 0 8 7" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="3" y="0" width="2" height="1" />
+                <rect x="3" y="1" width="2" height="1" />
+                <rect x="3" y="2" width="2" height="1" />
+                <rect x="0" y="3" width="8" height="1" />
+                <rect x="1" y="4" width="6" height="1" />
+                <rect x="2" y="5" width="4" height="1" />
+                <rect x="3" y="6" width="2" height="1" />
+            </svg></button>
+        <button class="tb sm" id="bFly" aria-label="Voar"><svg viewBox="0 0 10 6" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="0" y="0" width="2" height="1" />
+                <rect x="8" y="0" width="2" height="1" />
+                <rect x="0" y="1" width="4" height="1" />
+                <rect x="6" y="1" width="4" height="1" />
+                <rect x="0" y="2" width="10" height="1" />
+                <rect x="1" y="3" width="8" height="1" />
+                <rect x="2" y="4" width="2" height="1" />
+                <rect x="6" y="4" width="2" height="1" />
+                <rect x="3" y="5" width="1" height="1" />
+                <rect x="6" y="5" width="1" height="1" />
+            </svg></button>
+        <button class="tb sm" id="bRew" aria-label="Voltar no tempo"><svg viewBox="0 0 10 7"
+                shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">
+                <rect x="4" y="0" width="1" height="1" />
+                <rect x="9" y="0" width="1" height="1" />
+                <rect x="3" y="1" width="2" height="1" />
+                <rect x="8" y="1" width="2" height="1" />
+                <rect x="2" y="2" width="3" height="1" />
+                <rect x="7" y="2" width="3" height="1" />
+                <rect x="1" y="3" width="4" height="1" />
+                <rect x="6" y="3" width="4" height="1" />
+                <rect x="2" y="4" width="3" height="1" />
+                <rect x="7" y="4" width="3" height="1" />
+                <rect x="3" y="5" width="2" height="1" />
+                <rect x="8" y="5" width="2" height="1" />
+                <rect x="4" y="6" width="1" height="1" />
+                <rect x="9" y="6" width="1" height="1" />
+            </svg></button>
+        <button class="tb sm" id="bPause" aria-label="Pausa"><svg viewBox="0 0 8 8" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="1" y="1" width="2" height="1" />
+                <rect x="5" y="1" width="2" height="1" />
+                <rect x="1" y="2" width="2" height="1" />
+                <rect x="5" y="2" width="2" height="1" />
+                <rect x="1" y="3" width="2" height="1" />
+                <rect x="5" y="3" width="2" height="1" />
+                <rect x="1" y="4" width="2" height="1" />
+                <rect x="5" y="4" width="2" height="1" />
+                <rect x="1" y="5" width="2" height="1" />
+                <rect x="5" y="5" width="2" height="1" />
+                <rect x="1" y="6" width="2" height="1" />
+                <rect x="5" y="6" width="2" height="1" />
+            </svg></button>
+        <button class="tb" id="bPage" aria-label="Inventario"><svg viewBox="0 0 8 7" shape-rendering="crispEdges"
+                fill="currentColor" aria-hidden="true">
+                <rect x="0" y="0" width="3" height="1" />
+                <rect x="4" y="0" width="3" height="1" />
+                <rect x="0" y="1" width="3" height="1" />
+                <rect x="4" y="1" width="3" height="1" />
+                <rect x="0" y="2" width="3" height="1" />
+                <rect x="4" y="2" width="3" height="1" />
+                <rect x="0" y="4" width="3" height="1" />
+                <rect x="4" y="4" width="3" height="1" />
+                <rect x="0" y="5" width="3" height="1" />
+                <rect x="4" y="5" width="3" height="1" />
+                <rect x="0" y="6" width="3" height="1" />
+                <rect x="4" y="6" width="3" height="1" />
+            </svg></button>
+    </div>
+
+    <div id="menu">
+        <div class="scr on" id="s-title">
+            <div id="logo">CUBO</div>
+            <div id="splash"></div>
+            <button class="btn g" data-go="worlds">Jogar</button>
+            <button class="btn" data-go="settings">Configurações</button>
+            <p class="foot" id="dbNote">Seus mundos ficam salvos neste navegador.</p>
+        </div>
+
+        <div class="scr" id="s-worlds">
+            <h2>Jogar</h2>
+            <div class="wl" id="wl"></div>
+            <button class="btn g" id="newW">Criar novo mundo</button>
+            <button class="btn" data-go="title">Voltar</button>
+        </div>
+
+        <div class="scr" id="s-create">
+            <h2>Criar novo mundo</h2>
+            <label for="cName">Nome do mundo</label>
+            <input class="in" id="cName" maxlength="32" autocomplete="off">
+            <label for="cSeed">Semente (opcional, deixe vazio para aleatória)</label>
+            <input class="in" id="cSeed" maxlength="40" autocomplete="off" placeholder="ex.: 12345 ou qualquer texto">
+            <button class="btn g" id="cDo">Criar</button>
+            <button class="btn" data-go="worlds">Cancelar</button>
+        </div>
+
+        <div class="scr" id="s-edit">
+            <h2>Editar mundo</h2>
+            <p id="eInfo"></p>
+            <label for="eName">Nome do mundo</label>
+            <input class="in" id="eName" maxlength="32" autocomplete="off">
+            <button class="btn g" id="eSave">Salvar nome</button>
+            <button class="btn" id="eDup">Duplicar mundo</button>
+            <button class="btn r" id="eReset">Apagar construções (manter semente)</button>
+            <button class="btn r" id="eDel">Excluir mundo</button>
+            <button class="btn" data-go="worlds">Voltar</button>
+        </div>
+
+        <div class="scr" id="s-load">
+            <h2 id="lTitle">Mundo</h2>
+            <p id="status">Gerando o mundo...</p>
+            <button class="btn g" id="enter" disabled>Entrar no mundo</button>
+            <button class="btn" id="lCancel">Cancelar</button>
+        </div>
+
+        <div class="scr" id="s-pause">
+            <h2>Jogo pausado</h2>
+            <p id="saveInfo">O progresso é salvo automaticamente.</p>
+            <button class="btn g" id="resume">Continuar</button>
+            <button class="btn" data-go="settings">Configurações</button>
+            <button class="btn" id="quit">Salvar e sair</button>
+        </div>
+
+        <div class="scr" id="s-settings">
+            <h2>Configurações</h2>
+            <p>Distância de visão: <button class="btn" id="dMinus"
+                    style="display:inline-block;width:40px;padding:6px">−</button> <b id="dVal">4</b> <button
+                    class="btn" id="dPlus" style="display:inline-block;width:40px;padding:6px">+</button></p>
+            <div id="keyCfg">
+                <h3>Controles</h3>
+                <div class="ptabs">
+                    <button class="btn sel" id="pcTab" type="button">Computador</button>
+                    <button class="btn" type="button" disabled title="Em breve">Celular (em breve)</button>
+                </div>
+                <p>Clique numa ação e aperte a nova tecla. Se a tecla já estiver em uso, as duas ações trocam de tecla.
+                    <b>Esc</b> cancela.
+                </p>
+                <div id="keyRows"></div>
+                <p id="keyMsg"></p>
+                <button class="btn" id="keyReset" type="button">Restaurar teclas padrão</button>
+            </div>
+            <div class="ctl">
+                <p class="kb"><b data-k="move">WASD</b> andar · <b data-k="jump">Espaço</b> pular/nadar · <b
+                        data-k="sprint">Ctrl</b> correr (ou toque duplo em <b data-k="forward">W</b>) ·
+                    <b data-k="sneak">Shift</b> agachar · <b data-k="jump">Espaço</b> duas vezes (ou <b
+                        data-k="fly">F</b>) voar · no voo: <b data-k="jump">Espaço</b> sobe,
+                    <b data-k="sneak">Shift</b> desce, <b data-k="sprint">Ctrl</b> acelera, tocar o chão encerra
+                </p>
+                <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>balde
+                        (9)</b>: direito pega a água de uma fonte e solta de novo</p>
+                <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>[ ]</b> visão · <b
+                        data-k="inventory">I</b> inventário
+                    (itens do criativo) · <b>Esc</b> pausa</p>
+                <p class="kb">Segure <b data-k="rewind">R</b> para voltar no tempo (desfaz explosões, água e
+                    construções)</p>
+                <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco: colocar ·
+                    <b>Segure</b> o dedo num bloco: quebrar · botões: pular, agachar (liga/desliga), voar, voltar no
+                    tempo,
+                    inventário (ao lado da barra) e pausa
+                </p>
+                <p>Dica: faça uma barragem com água, depois quebre um bloco dela.</p>
+            </div>
+            <button class="btn" data-go="back">Voltar</button>
+        </div>
+    </div>
+    <div id="saveInd"></div>
+
+    <script>
+        'use strict';
+        /* ============================================================
+           CUBO - mundo de blocos em WebGL2 puro, sem bibliotecas.
+           Menu estilo Bedrock + varios mundos + salvamento em IndexedDB.
+           ============================================================ */
+        const $ = id => document.getElementById(id);
+        const CS = 16, CH = 64, SEA = 22;
+        const idx = (x, y, z) => (y << 8) | (z << 4) | x;
+        const isWater = b => b >= 16 && b < 24;
+        const WSRC = 23;
+        const TORCH = 10;
+        const BUCKET = 30; // item (nao e bloco): balde, vazio ou cheio de agua
+        // Iluminacao estilo Minecraft: cada celula guarda luz do ceu (4 bits altos) e luz de bloco (4 bits baixos), de 0 a 15.
+        // OP = quanto o bloco atenua a luz (15 = opaco). EM = luz emitida pelo bloco.
+        const OP = new Uint8Array(64).fill(15), EM = new Uint8Array(64);
+        OP[0] = 0; OP[6] = 1; OP[9] = 0; for (let i = 10; i < 24; i++) OP[i] = 0;
+        for (let i = 10; i < 15; i++) EM[i] = 14; // 10 = tocha em pe, 11-14 = tocha de parede
+        OP[26] = OP[28] = 1; EM[34] = 15; // folhas de bétula/abeto, lâmpada
+        const LEAF = new Uint8Array(64); LEAF[6] = LEAF[26] = LEAF[28] = 1;
+        // tochas de parede (ids 11-14): deslocamento ate o bloco de apoio
+        const WDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        const isTorch = b => b === TORCH || (b >= 11 && b <= 14);
+
+        /* ---------- Worker: geracao de terreno (Perlin, com semente) ---------- */
+        function workerMain() {
+            const CS = 16, CH = 64, SEA = 22;
+            let perm = new Uint8Array(512), SD = 0, seedCur = null;
+            function init(seed) {
+                seedCur = seed; SD = seed | 0;
+                let s = seed >>> 0;
+                const rr = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+                const p = []; for (let i = 0; i < 256; i++) p.push(i);
+                for (let i = 255; i > 0; i--) { const j = Math.floor(rr() * (i + 1)); const t = p[i]; p[i] = p[j]; p[j] = t; }
+                for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+            }
+            const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+            const lerp = (t, a, b) => a + t * (b - a);
+            function grad(h, x, y) { switch (h & 3) { case 0: return x + y; case 1: return -x + y; case 2: return x - y; default: return -x - y; } }
+            function perlin(x, y) {
+                const fx = Math.floor(x), fy = Math.floor(y);
+                const X = fx & 255, Y = fy & 255; x -= fx; y -= fy;
+                const u = fade(x), v = fade(y);
+                const a = perm[X] + Y, b = perm[X + 1] + Y;
+                return lerp(v, lerp(u, grad(perm[a], x, y), grad(perm[b], x - 1, y)),
+                    lerp(u, grad(perm[a + 1], x, y - 1), grad(perm[b + 1], x - 1, y - 1)));
+            }
+            function fbm(x, z, oct) {
+                let a = 1, f = 1, sum = 0, norm = 0;
+                for (let i = 0; i < oct; i++) { sum += a * perlin(x * f, z * f); norm += a; a *= 0.5; f *= 2; }
+                return sum / norm;
+            }
+            function hash(x, z) {
+                let h = (Math.imul(x, 374761393) + Math.imul(z, 668265263) + SD) | 0;
+                h = Math.imul(h ^ (h >>> 13), 1274126177);
+                return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+            }
+            // Biomas: 0 planicie, 1 floresta, 2 bétulas, 3 taiga, 4 tundra, 5 deserto, 6 montanha
+            // A altura usa exatamente a mesma formula de antes; o bioma só muda superficie e vegetacao.
+            let gH = 0, gB = 0;
+            function col(wx, wz) {
+                const n = fbm(wx * 0.006, wz * 0.006, 5), m = fbm(wx * 0.02 + 100, wz * 0.02, 3);
+                let h = Math.floor(26 + n * 36 + m * 5);
+                h = Math.max(3, Math.min(CH - 12, h));
+                gH = h;
+                const t = fbm(wx * 0.0022 + 300, wz * 0.0022 - 300, 2), w = fbm(wx * 0.003 - 700, wz * 0.003 + 200, 2);
+                if (h >= 38) gB = 6;
+                else if (t < -0.1) gB = w > 0 ? 3 : 4;
+                else if (t > 0.12) gB = w < 0.12 ? 5 : 0;
+                else gB = w > 0.12 ? 2 : (w > -0.02 ? 1 : 0);
+            }
+            const DENS = [0.004, 0.022, 0.020, 0.020, 0.003, 0.0035, 0.004];
+            const D4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            const D8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+            function gen(cx, cz) {
+                const d = new Uint8Array(CS * CS * CH);
+                for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
+                    const wx = cx * 16 + x, wz = cz * 16 + z;
+                    col(wx, wz);
+                    const h = gH, b = gB, beach = h <= SEA + 1;
+                    for (let y = 0; y <= h; y++) {
+                        let id = 3;
+                        if (y > 0) {
+                            if (beach) { if (y >= h - 3) id = 4; }
+                            else if (b === 5) id = y >= h - 3 ? 4 : (y >= h - 7 ? 31 : 3);
+                            else if (b === 6) id = (y === h && h >= 44) ? 32 : 3;
+                            else if (b === 3 || b === 4) id = y === h ? 24 : (y >= h - 3 ? 2 : 3);
+                            else id = y === h ? 1 : (y >= h - 3 ? 2 : 3);
+                        }
+                        d[(y << 8) | (z << 4) | x] = id;
+                    }
+                    for (let y = h + 1; y <= SEA; y++) d[(y << 8) | (z << 4) | x] = 16 + 7;
+                }
+                const X0 = cx * 16, Z0 = cz * 16;
+                // escreve só dentro deste chunk; arvores vizinhas entram pela borda sem emenda
+                function put(x, y, z, id, hard) {
+                    const lx = x - X0, lz = z - Z0; if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 1 || y >= CH) return;
+                    const i = (y << 8) | (lz << 4) | lx;
+                    if (hard || d[i] === 0) d[i] = id;
+                }
+                // copa: elipsoide irregular, com metade de cima (ryu) e de baixo (ryd) diferentes; o = deslocamento p/ tronco 2x2
+                function blob(wx, wz, cy, rx, ryu, ryd, id, o) {
+                    const ax = Math.ceil(rx + o);
+                    for (let dy = -Math.ceil(ryd); dy <= Math.ceil(ryu); dy++) {
+                        const ry = dy < 0 ? ryd : ryu, e0 = dy * dy / (ry * ry);
+                        for (let dz = -ax; dz <= ax; dz++) for (let dx = -ax; dx <= ax; dx++) {
+                            const px = dx - o, pz = dz - o;
+                            const e = (px * px + pz * pz) / (rx * rx) + e0;
+                            if (e > 1 + (hash(wx + dx + dy * 131, wz + dz - dy * 71) - 0.5) * 0.6) continue;
+                            put(wx + dx, cy + dy, wz + dz, id, false);
+                        }
+                    }
+                }
+                function groundAt(x, z) { col(x, z); return gH; }
+                function oak(wx, wz, h, a, b, c) {
+                    const k0 = (hash(wx + 5, wz + 5) * 8) | 0;
+                    if (c >= 0.1) { // carvalho comum: tronco reto, copa larga + 2-3 tufos laterais presos por galhos
+                        const top = h + 4 + (a * 3 | 0);
+                        for (let y = h + 1; y <= top; y++) put(wx, y, wz, 5, 1);
+                        blob(wx, wz, top, 2.7 + b * 0.8, 2.2, 1.5, 6, 0);
+                        const n = 2 + (b * 2 | 0);
+                        for (let i = 0; i < n; i++) {
+                            const dd = D8[(k0 + i * 3) & 7], by = top - 2 - (i & 1);
+                            put(wx + dd[0], by, wz + dd[1], 5, 1); put(wx + 2 * dd[0], by + 1, wz + 2 * dd[1], 5, 1);
+                            blob(wx + 2 * dd[0], wz + 2 * dd[1], by + 2, 1.9, 1.6, 1.2, 6, 0);
+                        }
+                        return;
+                    }
+                    // carvalho gigante: tronco 2x2 com raizes, 4-5 galhos diagonais com tufos e copa central larga
+                    const top = h + 9 + (a * 4 | 0);
+                    for (let i = 0; i < 4; i++) {
+                        const ox = i & 1, oz = i >> 1, g = groundAt(wx + ox, wz + oz);
+                        for (let y = g; y <= top; y++) put(wx + ox, y, wz + oz, 5, 1);
+                    }
+                    for (let dz = -1; dz <= 2; dz++) for (let dx = -1; dx <= 2; dx++) {
+                        if (dx >= 0 && dx <= 1 && dz >= 0 && dz <= 1) continue;
+                        if (hash(wx + dx * 7, wz + dz * 13) > 0.45) continue;
+                        const g = groundAt(wx + dx, wz + dz); if (Math.abs(g - h) <= 1) put(wx + dx, g + 1, wz + dz, 5, 1);
+                    }
+                    const nb = 4 + (b * 2 | 0);
+                    for (let i = 0; i < nb; i++) {
+                        const dd = D8[(k0 + ((i * 8 / nb) | 0)) & 7], sy = top - 4 - (i & 1) * 2;
+                        const bx = wx + (dd[0] > 0 ? 1 : 0), bz = wz + (dd[1] > 0 ? 1 : 0);
+                        let ex = bx, ey = sy, ez = bz;
+                        for (let s = 1; s <= 3; s++) { ex = bx + dd[0] * s; ez = bz + dd[1] * s; ey = sy + ((s + 1) >> 1); put(ex, ey, ez, 5, 1); }
+                        blob(ex, ez, ey + 1, 2.8, 2.2, 1.5, 6, 0);
+                    }
+                    blob(wx, wz, top, 4.4 + b, 3.0, 2.0, 6, 0.5);
+                }
+                function birch(wx, wz, h, a, b) { // fina e alta, copa estreita e alongada, as vezes um tufo lateral
+                    const top = h + 6 + (a * 4 | 0);
+                    for (let y = h + 1; y <= top; y++) put(wx, y, wz, 25, 1);
+                    blob(wx, wz, top - 1, 1.9 + b * 0.7, 2.8, 2.2, 26, 0);
+                    if (b > 0.4) {
+                        const dd = D8[(hash(wx + 9, wz + 1) * 8) | 0];
+                        put(wx + dd[0], top - 3, wz + dd[1], 25, 1);
+                        blob(wx + 2 * dd[0], wz + 2 * dd[1], top - 2, 1.4, 1.3, 1.0, 26, 0);
+                    }
+                }
+                const TIER = [0, 1, 2, 1, 2, 3, 2, 3, 3, 3, 3, 3];
+                function spruce(wx, wz, h, a, b) { // cone em camadas com bordas irregulares e ponta fina
+                    const top = h + 7 + (a * 5 | 0), mr = 2 + (b * 2 | 0);
+                    for (let y = h + 1; y <= top; y++) put(wx, y, wz, 27, 1);
+                    put(wx, top + 2, wz, 28, false);
+                    for (let ly = top + 1; ly >= h + 3; ly--) {
+                        const k = top + 1 - ly, r = Math.min(mr, TIER[Math.min(k, 11)]);
+                        for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+                            if (r >= 2) {
+                                const ex = Math.abs(dx) === r, ez = Math.abs(dz) === r;
+                                if (ex && ez) continue;
+                                if ((ex || ez) && hash(wx + dx + ly * 17, wz + dz - ly * 13) > 0.8) continue;
+                            }
+                            put(wx + dx, ly, wz + dz, 28, false);
+                        }
+                    }
+                }
+                const R = 8; // alcance maximo de uma arvore (carvalho gigante) alem da borda do chunk
+                for (let wz = Z0 - R; wz < Z0 + 16 + R; wz++) for (let wx = X0 - R; wx < X0 + 16 + R; wx++) {
+                    const r = hash(wx, wz); if (r >= 0.026) continue;
+                    let ok = true;
+                    for (let dz = -2; dz <= 2 && ok; dz++) for (let dx = -2; dx <= 2; dx++) if ((dx || dz) && hash(wx + dx, wz + dz) < r) { ok = false; break; }
+                    if (!ok) continue;
+                    col(wx, wz); const h = gH, b = gB;
+                    if (r >= DENS[b] || h <= SEA + 1 || (b === 6 && h >= 44)) continue;
+                    const a = hash(wx + 11, wz + 5), s = hash(wx + 31, wz - 17), c = hash(wx - 7, wz + 23), pk = hash(wx + 3, wz + 9);
+                    if (b === 5) { const ch = 1 + (a * 3 | 0); for (let y = 1; y <= ch; y++) put(wx, h + y, wz, 29, 1); }
+                    else if (b === 3 || b === 4 || b === 6) spruce(wx, wz, h, a, s);
+                    else if (b === 2 && pk < 0.85) birch(wx, wz, h, a, s);
+                    else if (b === 1 && pk < 0.35) birch(wx, wz, h, a, s);
+                    else oak(wx, wz, h, a, s, c);
+                }
+                return d;
+            }
+            self.onmessage = e => {
+                const { cx, cz, seed } = e.data;
+                if (seed !== seedCur) init(seed);
+                const data = gen(cx, cz);
+                self.postMessage({ cx, cz, data }, [data.buffer]);
+            };
+        }
+        const workerURL = URL.createObjectURL(new Blob(['(' + workerMain.toString() + ')()'], { type: 'text/javascript' }));
+        function fakeWorker() {
+            const w = { busy: false, onmessage: null };
+            const selfObj = { postMessage: d => setTimeout(() => w.onmessage && w.onmessage({ data: d }), 0) };
+            new Function('self', '(' + workerMain.toString() + ')()')(selfObj);
+            w.postMessage = m => setTimeout(() => selfObj.onmessage({ data: m }), 0);
+            return w;
+        }
+        const workers = [0, 1, 2].map(() => {
+            try { const w = new Worker(workerURL); w.busy = false; return w; } catch (e) { return fakeWorker(); }
+        });
+
+        /* ---------- Texturas pintadas so com codigo ---------- */
+        function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+        const atlas = document.createElement('canvas'); const NT = 32; atlas.width = NT * 16; atlas.height = 16;
+        const actx2 = atlas.getContext('2d');
+        function tile(i, fn) {
+            const r = rnd(i * 977 + 13);
+            const img = actx2.createImageData(16, 16);
+            for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+                const c = fn(x, y, r), o = (y * 16 + x) * 4;
+                img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = c.length > 3 ? c[3] : 255;
+            }
+            actx2.putImageData(img, i * 16, 0);
+        }
+        const nz = (r, a) => (r() - 0.5) * a;
+        tile(0, (x, y, r) => { const n = nz(r, 36); return [78 + n, 150 + n, 58 + n]; });
+        tile(1, (x, y, r) => { const n = nz(r, 30); return (y < 3 + (r() < 0.4 ? 1 : 0)) ? [78 + n, 150 + n, 58 + n] : [134 + n, 96 + n, 67 + n]; });
+        tile(2, (x, y, r) => { const n = nz(r, 30); return [134 + n, 96 + n, 67 + n]; });
+        tile(3, (x, y, r) => { const n = nz(r, 34); const k = r() < 0.06 ? -30 : 0; return [125 + n + k, 125 + n + k, 125 + n + k]; });
+        tile(4, (x, y, r) => { const n = nz(r, 14); return [219 + n, 205 + n, 150 + n]; });
+        tile(5, (x, y, r) => { const n = nz(r, 16); const rg = ((x + ((y >> 3) & 1)) % 4 === 0) ? -24 : (x % 4 === 2 ? 10 : 0); const k = (x === 9 && y >= 5 && y <= 7) ? -30 : 0; return [96 + n + rg + k, 76 + n + rg + k, 48 + n + rg + k]; });
+        tile(6, (x, y, r) => { const n = nz(r, 14); const dd = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); const ring = (Math.floor(dd) % 3 === 0) ? -28 : 0; return [175 + n + ring, 142 + n + ring, 90 + n + ring]; });
+        tile(7, (x, y, r) => { const n = nz(r, 40); const c = (x * 7 + y * 13) % 5; const hl = c < 2 ? 22 : (c === 4 ? -26 : 0); return r() < 0.16 ? [0, 0, 0, 0] : [46 + n + hl, 118 + n + hl, 36 + n + hl]; });
+        tile(8, (x, y, r) => { const n = nz(r, 14); const d = (y % 4 === 3) ? -30 : (x === 7 && (y >> 2) % 2 === 0 ? -18 : 0); return [172 + n + d, 136 + n + d, 86 + n + d]; });
+        tile(9, (x, y, r) => { const n = nz(r, 14); if (y >= 6 && y <= 9) { const t = (y === 7 || y === 8) && (x % 3 !== 2) && x > 2 && x < 13; return t ? [60, 60, 60] : [225 + n, 225 + n, 220 + n]; } return [200 + n, 42 + n, 32 + n]; });
+        tile(10, (x, y, r) => { const n = nz(r, 14); const dd = Math.hypot(x - 7.5, y - 7.5); return dd < 2.2 ? [40, 40, 40] : (dd < 6 ? [185 + n, 165 + n, 118 + n] : [200 + n, 42 + n, 32 + n]); });
+        tile(11, (x, y, r) => { const e = x === 0 || y === 0 || x === 15 || y === 15; const g = (x === 3 && y === 3) || (x === 4 && y === 4); return (e || g) ? [205, 235, 245, 255] : [0, 0, 0, 0]; });
+        tile(12, (x, y, r) => { const n = nz(r, 22); return [40 + n, 100 + n, 205 + n, 220]; });
+        tile(13, (x, y, r) => { if (x < 7 || x > 8 || y < 6) return [0, 0, 0, 0]; if (y < 8) return y === 6 ? [255, 238, 130] : [255, 150, 40]; const n = nz(r, 14); return [112 + n, 80 + n, 42 + n]; });
+        // balde: 14 = vazio, 15 = cheio de agua
+        const bucketPx = (x, y, full) => {
+            const cx = 7.5, hw = 4.6 - (y - 5) * 0.27, T = [0, 0, 0, 0];
+            if (y >= 2 && y <= 4) { const arc = (y === 2 && x >= 4 && x <= 11) || (y > 2 && (x === 3 || x === 12)); return arc ? [92, 92, 98] : T; }
+            if (y < 5 || y > 14) return T;
+            const dx = Math.abs(x - cx); if (dx > hw) return T;
+            const edge = dx > hw - 1;
+            if (y === 5) return edge ? [218, 218, 224] : (full ? [46, 112, 222] : [58, 58, 64]);
+            if (y === 6 && !edge) return full ? [38, 98, 205] : [96, 96, 104];
+            if (edge || y === 14) return [60, 60, 66];
+            const band = (y === 9 || y === 10) ? -26 : 0;
+            return x < cx ? [190 + band, 190 + band, 197 + band] : [152 + band, 152 + band, 160 + band];
+        };
+        tile(14, (x, y) => bucketPx(x, y, false));
+        tile(15, (x, y) => bucketPx(x, y, true));
+        tile(16, (x, y, r) => { const n = nz(r, 14); return [238 + n, 243 + n, 248 + n]; });
+        tile(17, (x, y, r) => { const s = y < 4 + (r() < 0.45 ? 1 : 0), n = nz(r, s ? 12 : 30); return s ? [238 + n, 243 + n, 248 + n] : [134 + n, 96 + n, 67 + n]; });
+        tile(18, (x, y, r) => { // casca de bétula: branca com pequenas marcas escuras horizontais, em posições variadas
+            const n = nz(r, 10), hh = (a, b) => { let h = (Math.imul(a, 374761393) + Math.imul(b, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+            const cx = x >> 2, yo = y + (cx & 1) * 2, cy = yo >> 2, yy = yo & 3, xx = x & 3;
+            const q = hh(cx, cy), o = (hh(cx, cy + 7) * 2) | 0, w = 2 + ((hh(cx, cy + 3) * 2) | 0), sh = (x % 5 === 0) ? -8 : (x % 5 === 2 ? 5 : 0);
+            if (q < 0.4 && yy === 1 && xx >= o && xx < o + w) return [56 + n * 0.3, 54 + n * 0.3, 50 + n * 0.3];
+            if (q < 0.4 && yy === 2 && xx >= o && xx < o + w - 1 && hh(x, y) < 0.5) return [176 + n, 174 + n, 164 + n];
+            if (q > 0.9 && yy === 0 && xx >= o && xx < o + 2) return [198 + n, 196 + n, 186 + n];
+            return [228 + n + sh, 226 + n + sh, 216 + n + sh];
+        });
+        tile(19, (x, y, r) => { const n = nz(r, 12); const dd = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); if (dd >= 7) return [225, 222, 212]; const ring = (Math.floor(dd) % 3 === 0) ? -24 : 0; return [205 + n + ring, 185 + n + ring, 140 + n + ring]; });
+        tile(20, (x, y, r) => { const n = nz(r, 40); const c = (x * 5 + y * 11) % 5; const hl = c < 2 ? 22 : (c === 4 ? -24 : 0); return r() < 0.16 ? [0, 0, 0, 0] : [100 + n + hl, 152 + n + hl, 62 + n + hl]; });
+        tile(21, (x, y, r) => { const n = nz(r, 14); const rg = ((x + ((y >> 3) & 1)) % 4 === 0) ? -20 : (x % 4 === 2 ? 8 : 0); return [62 + n + rg, 46 + n + rg, 30 + n + rg]; });
+        tile(22, (x, y, r) => { const n = nz(r, 12); const dd = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); const ring = (Math.floor(dd) % 3 === 0) ? -24 : 0; return [120 + n + ring, 92 + n + ring, 58 + n + ring]; });
+        tile(23, (x, y, r) => { const n = nz(r, 36); const c = (x * 7 + y * 3) % 5; const hl = c < 2 ? 18 : (c === 4 ? -20 : 0); return r() < 0.14 ? [0, 0, 0, 0] : [30 + n + hl, 78 + n + hl, 52 + n + hl]; });
+        tile(24, (x, y, r) => { const n = nz(r, 14); if (x === 0 || x === 8) return [18 + n, 80 + n, 28 + n]; if (x % 4 === 2 && y % 4 === 1) return [225, 225, 160]; return [30 + n, 120 + n, 40 + n]; });
+        tile(25, (x, y, r) => { const n = nz(r, 12); const dd = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); return dd >= 6.5 ? [20 + n, 86 + n, 30 + n] : (dd >= 4 ? [48 + n, 140 + n, 52 + n] : [34 + n, 120 + n, 44 + n]); });
+        tile(26, (x, y, r) => { const n = nz(r, 12); const b = y % 8 < 1 ? -22 : 0; return [218 + n + b, 201 + n + b, 148 + n + b]; });
+        tile(27, (x, y, r) => { const n = nz(r, 12); const mo = (x + ((y >> 3) & 1 ? 4 : 0)) % 8 === 0 || y % 8 === 0; return mo ? [90, 90, 92] : [128 + n, 128 + n, 130 + n]; });
+        tile(28, (x, y, r) => { const n = nz(r, 10); return (x % 8 === 0 || y % 8 === 0) ? [190, 130, 50] : [255, 226 + n, 150 + n]; });
+        const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
+        Object.assign(TILES, { 24: [16, 2, 17], 25: [19, 19, 18], 26: [20, 20, 20], 27: [22, 22, 21], 28: [23, 23, 23], 29: [25, 25, 24], 31: [26, 26, 26], 32: [16, 16, 16], 33: [27, 27, 27], 34: [28, 28, 28] });
+        const TILES_W = [12, 12, 12];
+        const atlasURL = atlas.toDataURL();
+        function tileURL(i) { const c = document.createElement('canvas'); c.width = c.height = 16; c.getContext('2d').drawImage(atlas, i * 16, 0, 16, 16, 0, 0, 16, 16); return c.toDataURL(); }
+        $('menu').style.setProperty('--dirt', 'url(' + tileURL(2) + ')');
+        $('menu').style.setProperty('--grass', 'url(' + tileURL(0) + ')');
+
+        /* ---------- HUD / hotbar + inventario criativo ---------- */
+        // Catalogo de itens do criativo: [id, tile, nome]. A barra (HOT) tem 10 slots editaveis.
+        const CAT = [[1, 0, 'Grama'], [2, 2, 'Terra'], [3, 3, 'Pedra'], [33, 27, 'Tijolos de pedra'], [4, 4, 'Areia'], [31, 26, 'Arenito'],
+        [24, 17, 'Terra com neve'], [32, 16, 'Neve'], [5, 5, 'Tronco de carvalho'], [6, 7, 'Folhas de carvalho'], [25, 18, 'Tronco de bétula'],
+        [26, 20, 'Folhas de bétula'], [27, 21, 'Tronco de abeto'], [28, 23, 'Folhas de abeto'], [7, 8, 'Tábuas'], [9, 11, 'Vidro'],
+        [29, 24, 'Cacto'], [34, 28, 'Lâmpada'], [8, 9, 'TNT'], [TORCH, 13, 'Tocha'], [BUCKET, 14, 'Balde']];
+        const DEFHOT = [1, 2, 3, 4, 5, 7, 8, 9, BUCKET, TORCH];
+        const catOf = id => CAT.find(c => c[0] === id);
+        const HOT = DEFHOT.map(id => { const c = catOf(id); return [c[0], c[1]]; });
+        let sel = 0, bucketFull = false;
+        const slotEls = [], hotbar = $('hotbar'), invEl = $('inv'), invGrid = $('invGrid'), invHot = $('invHot'), invTip = $('invTip');
+        function mkSlot(num) {
+            const d = document.createElement('div'); d.className = 'slot';
+            d.style.backgroundImage = 'url(' + atlasURL + ')';
+            d.style.backgroundSize = (NT * 100) + '% 100%';
+            if (num) d.innerHTML = '<span>' + num + '</span>';
+            return d;
+        }
+        for (let i = 0; i < 10; i++) { const d = mkSlot(i + 1); hotbar.appendChild(d); slotEls.push(d); }
+        const tilePos = t => (t / (NT - 1) * 100) + '% 0';
+        const invHotEls = HOT.map((_, i) => { const d = mkSlot(i + 1); d.onclick = () => { sel = i; refreshHotbar(); }; invHot.appendChild(d); return d; });
+        const catEls = CAT.map((c, i) => {
+            const d = mkSlot(); d.title = c[2];
+            d.onpointerenter = () => { invTip.textContent = c[2]; };
+            d.onpointerleave = () => { invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')'; };
+            d.onclick = () => pickItem(i);
+            invGrid.appendChild(d); return d;
+        });
+        function pickItem(i) { // coloca o item no slot selecionado; se ja estiver em outro slot, troca os dois
+            const c = CAT[i], j = HOT.findIndex(h => h[0] === c[0]);
+            if (j >= 0 && j !== sel) { const t = HOT[sel]; HOT[sel] = HOT[j]; HOT[j] = t; }
+            else if (j < 0) HOT[sel] = [c[0], c[1]];
+            refreshHotbar(); invTip.textContent = c[2] + '  (slot ' + (sel + 1) + ')';
+            if (cur) requestSave();
+        }
+        function applyHot(ids) { // restaura a barra salva no mundo (ou a padrao)
+            for (let i = 0; i < 10; i++) { const c = catOf(Array.isArray(ids) ? ids[i] : DEFHOT[i]) || catOf(DEFHOT[i]); HOT[i] = [c[0], c[1]]; }
+        }
+        function refreshHotbar() {
+            for (let i = 0; i < 10; i++) {
+                const p = tilePos(HOT[i][1]), on = i === sel;
+                slotEls[i].style.backgroundPosition = p; slotEls[i].classList.toggle('sel', on);
+                invHotEls[i].style.backgroundPosition = p; invHotEls[i].classList.toggle('sel', on);
+            }
+            for (let i = 0; i < CAT.length; i++) catEls[i].style.backgroundPosition = tilePos(CAT[i][1]);
+        }
+        function setBucket(f) { bucketFull = !!f; const t = f ? 15 : 14; for (const h of HOT) if (h[0] === BUCKET) h[1] = t; catOf(BUCKET)[1] = t; refreshHotbar(); }
+        refreshHotbar();
+
+        /* ---------- WebGL ---------- */
+        const canvas = $('c');
+        const gl = canvas.getContext('webgl2', { antialias: false });
+        if (!gl) { $('status').textContent = 'Seu navegador nao suporta WebGL2.'; throw new Error('no webgl2'); }
+        function mkProg(vs, fs) {
+            const p = gl.createProgram();
+            for (const [t, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+                const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+                if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+                gl.attachShader(p, s);
+            }
+            gl.linkProgram(p);
+            if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+            return p;
+        }
+        const prog = mkProg(`#version 300 es
+layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt;
+uniform mat4 mvp; uniform vec3 cam; uniform vec3 off; uniform float tm;
+out vec2 vUv; out vec3 vLt; out vec3 vW; out float vD;
+void main(){
+  vec3 w=p+off;
+  if(lt.y>3.5){ // folhas (marcadas no atributo de luz): balanco leve; depende so da posicao, entao blocos vizinhos nunca se separam
+    vec3 q=w; float g=0.65+0.35*sin(tm*0.37+q.x*0.05);
+    w.x+=g*0.07*sin(tm*1.9+q.z*0.8+q.y*0.5);
+    w.z+=g*0.07*sin(tm*1.6+q.x*0.7+q.y*0.9+1.7);
+    w.y+=0.025*sin(tm*2.3+q.x*0.9+q.z*0.8);
+  }
+  vUv=uv; vLt=lt; vW=w; vD=length(w-cam); gl_Position=mvp*vec4(w,1.0);
+}`,
+            `#version 300 es
+precision highp float;
+uniform sampler2D tex; uniform vec3 sky; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform float alpha; uniform float flash; uniform float tm;
+in vec2 vUv; in vec3 vLt; in vec3 vW; in float vD; out vec4 o;
+void main(){
+  vec4 c=texture(tex,vUv);
+  if(c.a<0.5) discard;
+  float a=vLt.y; a-=4.0*step(3.5,a); float cn=step(1.5,a); a-=2.0*cn; // decodifica: +4 folha, +2 sob copa
+  float sB=pow(0.8,15.0-a*15.0)*light;
+  float bB=pow(0.8,15.0-vLt.z*15.0)*fl;
+  vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
+  vec3 col=c.rgb*vLt.x*lc;
+  col=mix(col,vec3(1.0),flash);
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  col=mix(col,sky,f);
+  o=vec4(col,c.a*alpha);
+}`);
+        const lprog = mkProg(`#version 300 es
+layout(location=0) in vec3 p; uniform mat4 mvp; uniform vec3 off; uniform vec3 sc;
+void main(){ gl_Position=mvp*vec4(p*sc+off,1.0); }`,
+            `#version 300 es
+precision mediump float; out vec4 o; void main(){ o=vec4(0.0,0.0,0.0,0.9); }`);
+        /* ---------- Agua: shader proprio (ondas, fluxo, fresnel, brilho do sol) ---------- */
+        const wprog = mkProg(`#version 300 es
+layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt; layout(location=3) in vec4 fa;
+uniform mat4 mvp; uniform vec3 cam; uniform vec3 off; uniform float tm;
+out vec2 vUv; out vec3 vLt; out vec3 vW; out vec4 vFa; out float vD;
+void main(){
+  vec3 w=p+off;
+  w.y+=fa.w*0.018*(sin(w.x*2.1+tm*1.7)+sin(w.z*1.7-tm*1.4)+sin((w.x-w.z)*1.1+tm*1.1));
+  vUv=uv; vLt=lt; vW=w; vFa=fa; vD=length(w-cam);
+  gl_Position=mvp*vec4(w,1.0);
+}`,
+            `#version 300 es
+precision highp float;
+uniform sampler2D tex; uniform vec3 sky; uniform vec3 cam; uniform vec3 sun;
+uniform float sunI; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform float tm;
+in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; out vec4 o;
+void main(){
+  vec2 u1=vUv*0.23+vec2(tm*0.011,tm*0.007)-vFa.xy*tm*0.16;
+  vec2 u2=vUv*0.41+vec2(-tm*0.009,tm*0.013)-vFa.xy*tm*0.27;
+  float h=texture(tex,u1).r*0.6+texture(tex,u2).g*0.4;
+  vec3 dpx=dFdx(vW), dpy=dFdy(vW);
+  vec3 N0=normalize(cross(dpx,dpy));
+  vec3 V=normalize(cam-vW);
+  if(dot(N0,V)<0.0) N0=-N0;
+  vec3 r1=cross(dpy,N0), r2=cross(N0,dpx);
+  float det=dot(dpx,r1);
+  vec3 N=normalize(abs(det)*N0-BUMP*sign(det)*(dFdx(h)*r1+dFdy(h)*r2));
+  float fr=clamp((0.03+0.97*pow(1.0-max(dot(N,V),0.0),5.0))*1.6,0.0,0.9);
+  vec3 R=reflect(-V,N);
+  vec3 refl=sky*(0.85+0.45*clamp(R.y,0.0,1.0));
+  float spec=pow(max(dot(R,sun),0.0),110.0)*sunI*3.0;
+  float sB=pow(0.8,15.0-vLt.y*15.0)*light;
+  float bB=pow(0.8,15.0-vLt.z*15.0)*fl;
+  vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
+  vec3 base=mix(vec3(0.15,0.43,0.62),vec3(0.04,0.17,0.38),vFa.z)*(0.82+0.36*h);
+  vec3 col=base*vLt.x*lc;
+  col=mix(col,refl*max(vLt.y,0.1),fr);
+  col+=vec3(1.0,0.95,0.8)*spec*vLt.y;
+  float foam=smoothstep(0.74,0.96,h)*step(0.05,length(vFa.xy))*(1.0-vFa.z*0.6);
+  col=mix(col,vec3(0.86,0.94,1.0)*max(max(lc.r,lc.g),lc.b)*vLt.x,foam*0.45);
+  float a=clamp(mix(0.5,0.86,vFa.z)+fr*0.18+foam*0.25,0.4,0.95);
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  o=vec4(mix(col,sky,f),a);
+}`.replace('BUMP', '1.6'));
+        const WU = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'tm', 'sky', 'sun', 'sunI', 'light', 'fl', 'fogN', 'fogF']) WU[n] = gl.getUniformLocation(wprog, n);
+        // textura de ruido 64x64 que se repete sem emenda (R e G = duas camadas de altura)
+        const waterTex = (() => {
+            const N = 64, hash = (i, j, sd) => { let h = Math.imul(i * 374761393 + j * 668265263 + sd * 1274126177, 1103515245); h ^= h >>> 13; h = Math.imul(h, 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+            const noise = (x, y, f, sd) => {
+                const gx = x / N * f, gy = y / N * f, i = Math.floor(gx), j = Math.floor(gy), fx = gx - i, fy = gy - j;
+                const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+                const a = hash(i % f, j % f, sd), b = hash((i + 1) % f, j % f, sd), c = hash(i % f, (j + 1) % f, sd), e = hash((i + 1) % f, (j + 1) % f, sd);
+                return a + (b - a) * sx + (c - a) * sy + (a - b - c + e) * sx * sy;
+            };
+            const ch = [new Float32Array(N * N), new Float32Array(N * N)], lo = [9, 9], hi = [-9, -9];
+            for (let k = 0; k < 2; k++) for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+                const v = 0.5 * noise(x, y, 4, 1 + k * 3) + 0.3 * noise(x, y, 8, 2 + k * 3) + 0.2 * noise(x, y, 16, 3 + k * 3);
+                ch[k][y * N + x] = v; if (v < lo[k]) lo[k] = v; if (v > hi[k]) hi[k] = v;
+            }
+            const d = new Uint8Array(N * N * 4);
+            for (let i = 0; i < N * N; i++) {
+                d[i * 4] = 255 * (ch[0][i] - lo[0]) / (hi[0] - lo[0]); d[i * 4 + 1] = 255 * (ch[1][i] - lo[1]) / (hi[1] - lo[1]); d[i * 4 + 2] = 128; d[i * 4 + 3] = 255;
+            }
+            const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, d);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            return t;
+        })();
+        const U = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'sky', 'light', 'fl', 'fogN', 'fogF', 'alpha', 'flash', 'tm']) U[n] = gl.getUniformLocation(prog, n);
+        const LU = { mvp: gl.getUniformLocation(lprog, 'mvp'), off: gl.getUniformLocation(lprog, 'off'), sc: gl.getUniformLocation(lprog, 'sc') };
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlas);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        function makeMesh(arr, fl = 8) { // fl = floats por vertice (8 = bloco; 12 = agua, com fluxo/profundidade/onda)
+            if (!arr.length) return null;
+            const st = fl * 4;
+            const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+            const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, st, 0);
+            gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, st, 12);
+            gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, st, 20);
+            if (fl === 12) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, st, 32); }
+            gl.bindVertexArray(null);
+            return { vao, vbo, count: arr.length / fl };
+        }
+        function freeMesh(m) { if (m) { gl.deleteBuffer(m.vbo); gl.deleteVertexArray(m.vao); } }
+
+        /* ---------- Matematica ---------- */
+        function persp(fov, asp, n, f) { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); }
+        function lookAt(e, c, u) {
+            let zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+            let xx = u[1] * zz - u[2] * zy, xy = u[2] * zx - u[0] * zz, xz = u[0] * zy - u[1] * zx; l = Math.hypot(xx, xy, xz); xx /= l; xy /= l; xz /= l;
+            const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+            return new Float32Array([xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0, -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1]);
+        }
+        function mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+
+        /* ---------- Mundo ---------- */
+        const chunks = new Map();
+        const saved = new Map();        // chunks editados, descarregados da memoria ou lidos do disco
+        const savedDirty = new Set();   // subconjunto de `saved` ainda nao gravado
+        const dbKeys = new Set();       // chunks que existem no banco para o mundo atual
+        const pending = new Set();
+        const ckey = (cx, cz) => cx + ',' + cz;
+        const active = new Set();
+        const history = [];
+        let renderDist = 6;
+        let cur = null, state = 'menu', epoch = 0; // state: menu | loading | playing | paused
+
+        function getBlock(x, y, z, def = 0) {
+            if (y < 0) return 3;
+            if (y >= CH) return 0;
+            const ch = chunks.get(ckey(x >> 4, z >> 4));
+            if (!ch) return def;
+            return ch.data[idx(x & 15, y, z & 15)];
+        }
+        function dirtyAt(cx, cz) { const c = chunks.get(ckey(cx, cz)); if (c) c.dirty = true; }
+        function wake(x, y, z) {
+            active.add(x + ',' + y + ',' + z);
+            active.add((x + 1) + ',' + y + ',' + z); active.add((x - 1) + ',' + y + ',' + z);
+            active.add(x + ',' + (y + 1) + ',' + z); active.add(x + ',' + (y - 1) + ',' + z);
+            active.add(x + ',' + y + ',' + (z + 1)); active.add(x + ',' + y + ',' + (z - 1));
+        }
+        function setBlock(x, y, z, id, rec = true) {
+            if (y < 0 || y >= CH) return false;
+            const cx = x >> 4, cz = z >> 4;
+            const ch = chunks.get(ckey(cx, cz)); if (!ch) return false;
+            const lx = x & 15, lz = z & 15, i = idx(lx, y, lz), old = ch.data[i];
+            if (old === id) return false;
+            ch.data[i] = id; ch.modified = true; ch.sd = true; ch.dirty = true;
+            if (ch.lit && (OP[old] !== OP[id] || EM[old] !== EM[id])) relight(x, y, z, old, id);
+            if (rec) { history.push(x, y, z, old, id); if (history.length > 2500000) history.splice(0, 500000); }
+            if (lx === 0) dirtyAt(cx - 1, cz); if (lx === 15) dirtyAt(cx + 1, cz);
+            if (lz === 0) dirtyAt(cx, cz - 1); if (lz === 15) dirtyAt(cx, cz + 1);
+            wake(x, y, z);
+            return true;
+        }
+
+        /* ---------- Malha por chunk ---------- */
+        const FACES = [
+            { n: [0, 1, 0], s: 1.0, k: 0, v: [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]] },
+            { n: [0, -1, 0], s: 0.5, k: 1, v: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]] },
+            { n: [1, 0, 0], s: 0.8, k: 2, v: [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]] },
+            { n: [-1, 0, 0], s: 0.8, k: 2, v: [[0, 0, 1], [0, 1, 1], [0, 1, 0], [0, 0, 0]] },
+            { n: [0, 0, 1], s: 0.65, k: 2, v: [[1, 0, 1], [1, 1, 1], [0, 1, 1], [0, 0, 1]] },
+            { n: [0, 0, -1], s: 0.65, k: 2, v: [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]] },
+        ];
+        const ORDER = [0, 1, 2, 0, 2, 3];
+        // cada vertice: posicao(3) uv(2) [sombra da face, luz do ceu 0-1, luz de bloco 0-1]
+        function pushFace(arr, F, ox, oy, oz, t, hTop, sk = 1, bk = 0) {
+            const u0 = t / NT, u1 = (t + 1) / NT;
+            const uv = [[u0, 1], [u0, 0], [u1, 0], [u1, 1]];
+            for (const q of ORDER) {
+                const v = F.v[q];
+                arr.push(ox + v[0], oy + (v[1] ? hTop : 0), oz + v[2], uv[q][0], uv[q][1], F.s, sk, bk);
+            }
+        }
+        // tocha: prisma fino de 2x10 pixels, sempre com brilho maximo de luz de bloco
+        function pushTorch(arr, ox, oy, oz, sk, b) {
+            const wd = b === TORCH ? null : WDIR[b - 11]; // tocha de parede: base encostada, topo inclinado para fora
+            const yo = wd ? 0.2 : 0;
+            const u0 = (13 + 7 / 16) / NT, u1 = (13 + 9 / 16) / NT;
+            for (let f = 0; f < 6; f++) {
+                if (f === 1) continue;
+                const F = FACES[f], vt = 6 / 16, vb = f === 0 ? 8 / 16 : 1;
+                const uv = [[u0, vb], [u0, vt], [u1, vt], [u1, vb]];
+                for (const q of ORDER) {
+                    const v = F.v[q];
+                    const hy = v[1] * 0.625, sh = wd ? 0.4375 - 0.5 * hy : 0;
+                    arr.push(ox + 0.5 + (wd ? wd[0] * sh : 0) + (v[0] - 0.5) * 0.125, oy + yo + hy, oz + 0.5 + (wd ? wd[1] * sh : 0) + (v[2] - 0.5) * 0.125, uv[q][0], uv[q][1], F.s, sk, 1);
+                }
+            }
+        }
+        const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b);
+        function buildMesh(ch) {
+            const o = [], w = [], d = ch.data, L = ch.light, X0 = ch.cx * 16, Z0 = ch.cz * 16;
+            const lt = (x, y, z) => {
+                if (y >= CH) return 0xF0; if (y < 0) return 0;
+                if (x >= 0 && x < 16 && z >= 0 && z < 16) return L[idx(x, y, z)];
+                const c = chunkAt((X0 + x) >> 4, (Z0 + z) >> 4); return c && c.lit ? c.light[idx((X0 + x) & 15, y, (Z0 + z) & 15)] : 0xF0;
+            };
+            const nb = (x, y, z) => {
+                if (y < 0) return 3; if (y >= CH) return 0;
+                if (x >= 0 && x < 16 && z >= 0 && z < 16) return d[idx(x, y, z)];
+                return getBlock(X0 + x, y, Z0 + z, 3);
+            };
+            // ---- agua: altura por nivel (fonte = 8/9, cada nivel a menos = -1/9) e cantos suavizados como no Minecraft
+            const wCell = n => (n - 15) / 9;
+            const wCorner = (x, y, z, cx, cz) => {
+                let tot = 0, wt = 0;
+                for (let i = 0; i < 4; i++) {
+                    const px = x + cx - (i & 1), pz = z + cz - (i >> 1);
+                    if (isWater(nb(px, y + 1, pz))) return 1;
+                    const n = nb(px, y, pz);
+                    if (isWater(n)) { const h = wCell(n); if (h >= 0.8) { tot += h * 10; wt += 10; } else { tot += h; wt += 1; } }
+                    else if (transp(n)) wt += 1;
+                }
+                return wt ? tot / wt : 0;
+            };
+            // vertice de agua (12 floats): pos(3) uv-mundo(2) [sombra, ceu, bloco] [fluxo x, fluxo z, profundidade, flag de onda]
+            const pushWater = (x, y, z, b) => {
+                const faces = [];
+                for (let f = 0; f < 6; f++) { const F = FACES[f]; if (transp(nb(x + F.n[0], y + F.n[1], z + F.n[2]))) faces.push(f); }
+                if (!faces.length) return;
+                const up = isWater(nb(x, y + 1, z)), hc = wCell(b);
+                const H = up ? [1, 1, 1, 1] : [wCorner(x, y, z, 0, 0), wCorner(x, y, z, 1, 0), wCorner(x, y, z, 0, 1), wCorner(x, y, z, 1, 1)];
+                let fx = 0, fz = 0; // direcao em que a agua escorre (para onde a superficie desce)
+                if (b !== WSRC) {
+                    const hm = up ? 1 : hc;
+                    for (let i = 0; i < 4; i++) {
+                        const dx = DIRS[i][0], dz = DIRS[i][1], nn = nb(x + dx, y, z + dz);
+                        let df = 0;
+                        if (isWater(nn)) df = hm - (isWater(nb(x + dx, y + 1, z + dz)) ? 1 : wCell(nn)); else if (transp(nn)) df = hm;
+                        fx += dx * df; fz += dz * df;
+                    }
+                    const l = Math.hypot(fx, fz); if (l > 0.05) { fx /= l; fz /= l; } else fx = fz = 0;
+                }
+                const sf = b !== WSRC ? -1 : 0;
+                let nd = 1; while (nd < 4 && isWater(nb(x, y - nd, z))) nd++;
+                const dpt = (nd - 1) / 3;
+                for (const f of faces) {
+                    const F = FACES[f], lv = lt(x + F.n[0], y + F.n[1], z + F.n[2]), sk = (lv >> 4) / 15, bk = (lv & 15) / 15;
+                    for (const q of ORDER) {
+                        const v = F.v[q], wx = X0 + x + v[0], wy = y + (v[1] ? H[v[0] + 2 * v[2]] : 0), wz = Z0 + z + v[2];
+                        if (f < 2) w.push(wx, wy, wz, wx, wz, F.s, sk, bk, fx, fz, dpt, v[1] && !up ? 1 : 0);
+                        else w.push(wx, wy, wz, F.n[0] ? wz : wx, wy, F.s, sk, bk, 0, sf, dpt, v[1] && !up ? 1 : 0);
+                    }
+                }
+            };
+            // topo de folhas por coluna (i cresce com y, entao o ultimo valor e o mais alto) e pontos de onde as folhas caem
+            const lTop = new Int8Array(256).fill(-1), drops = []; let dn = 0;
+            for (let i = 0; i < d.length; i++) if (LEAF[d[i]] === 1) lTop[i & 255] = i >> 8;
+            for (let y = 0; y < CH; y++) for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
+                const b = d[idx(x, y, z)]; if (!b) continue;
+                if (isTorch(b)) { pushTorch(o, X0 + x, y, Z0 + z, (L[idx(x, y, z)] >> 4) / 15, b); continue; }
+                if (isWater(b)) { pushWater(x, y, z, b); continue; }
+                const tl = TILES[b], isL = LEAF[b] === 1, fg = isL ? 4 : (y < lTop[(z << 4) | x] ? 2 : 0);
+                for (let f = 0; f < 6; f++) {
+                    const F = FACES[f], n = nb(x + F.n[0], y + F.n[1], z + F.n[2]);
+                    let draw;
+                    if (LEAF[b] === 1 || b === 9) draw = n !== b && (transp(n) || isWater(n));
+                    else draw = transp(n) || isWater(n);
+                    if (!draw) continue;
+                    const lv = lt(x + F.n[0], y + F.n[1], z + F.n[2]);
+                    if (isL && f === 1) { // face de baixo exposta: candidata a soltar folha (amostragem de ate 24 por chunk)
+                        if (dn < 24) drops.push(X0 + x, y, Z0 + z, b); else { const j = (Math.random() * (dn + 1)) | 0; if (j < 24) { drops[j * 4] = X0 + x; drops[j * 4 + 1] = y; drops[j * 4 + 2] = Z0 + z; drops[j * 4 + 3] = b; } }
+                        dn++;
+                    }
+                    pushFace(o, F, X0 + x, y, Z0 + z, tl[F.k], 1, (lv >> 4) / 15 + fg, (lv & 15) / 15);
+                }
+            }
+            freeMesh(ch.mo); freeMesh(ch.mw);
+            ch.drops = drops;
+            ch.mo = makeMesh(new Float32Array(o));
+            ch.mw = makeMesh(new Float32Array(w), 12);
+            ch.dirty = false;
+        }
+        const cubeArr = []; FACES.forEach(F => pushFace(cubeArr, F, 0, 0, 0, [10, 10, 9][F.k], 1));
+        const cubeMesh = makeMesh(new Float32Array(cubeArr));
+        const edge = (() => {
+            const a = -0.003, b = 1.003, v = [[a, a, a], [b, a, a], [b, a, b], [a, a, b], [a, b, a], [b, b, a], [b, b, b], [a, b, b]];
+            const e = [0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7], arr = [];
+            e.forEach(i => arr.push(...v[i]));
+            const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+            const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+            gl.bindVertexArray(null);
+            return { vao, count: e.length };
+        })();
+
+        /* ============================================================
+           LUZ: propagacao por inundacao (BFS), uma para ceu e outra para blocos.
+           - ceu: 15 em coluna aberta, desce sem perder luz, perde 1 ao andar de lado.
+           - bloco: tochas emitem 14 e perdem 1 por celula.
+           - editar um bloco recalcula so a regiao afetada (remocao + reabastecimento).
+           Chunks nao carregados ou ainda sem luz funcionam como parede e puxam luz
+           dos vizinhos quando ficam prontos.
+           ============================================================ */
+        const DX = [1, -1, 0, 0, 0, 0], DY = [0, 0, 1, -1, 0, 0], DZ = [0, 0, 0, 0, 1, -1];
+        let _lcx = 1e9, _lcz = 1e9, _lch = null;
+        function chunkAt(cx, cz) {
+            if (cx !== _lcx || cz !== _lcz) { _lcx = cx; _lcz = cz; _lch = chunks.get(cx + ',' + cz) || null; }
+            return _lch;
+        }
+        function gL(x, y, z) {
+            if (y < 0) return 0; if (y >= CH) return 0xF0;
+            const c = chunkAt(x >> 4, z >> 4); return c && c.lit ? c.light[idx(x & 15, y, z & 15)] : 0;
+        }
+        function markL(c, lx, lz) {
+            c.dirty = true;
+            if (lx === 0) dirtyAt(c.cx - 1, c.cz); else if (lx === 15) dirtyAt(c.cx + 1, c.cz);
+            if (lz === 0) dirtyAt(c.cx, c.cz - 1); else if (lz === 15) dirtyAt(c.cx, c.cz + 1);
+        }
+        function addBFS(sky, q) {
+            for (let h = 0; h < q.length; h += 3) {
+                const x = q[h], y = q[h + 1], z = q[h + 2];
+                if (y < 0 || y >= CH) continue;
+                const c0 = chunkAt(x >> 4, z >> 4); if (!c0 || !c0.lit) continue;
+                const lv = c0.light[idx(x & 15, y, z & 15)], v = sky ? lv >> 4 : lv & 15;
+                if (v <= 1) continue;
+                for (let d = 0; d < 6; d++) {
+                    const ny = y + DY[d]; if (ny < 0 || ny >= CH) continue;
+                    const nx = x + DX[d], nz = z + DZ[d];
+                    const c = chunkAt(nx >> 4, nz >> 4); if (!c || !c.lit) continue;
+                    const lx = nx & 15, lz = nz & 15, ni = idx(lx, ny, lz), op = OP[c.data[ni]];
+                    if (op >= 15) continue;
+                    const nv = (sky && d === 3 && v === 15) ? 15 - op : v - 1 - op;
+                    const cl = c.light[ni];
+                    if (nv > (sky ? cl >> 4 : cl & 15)) {
+                        c.light[ni] = sky ? (cl & 15) | (nv << 4) : (cl & 0xF0) | nv;
+                        markL(c, lx, lz); q.push(nx, ny, nz);
+                    }
+                }
+            }
+        }
+        function removeLight(sky, x, y, z, refill) {
+            const c0 = chunkAt(x >> 4, z >> 4); if (!c0 || !c0.lit) return;
+            const i0 = idx(x & 15, y, z & 15), l0 = c0.light[i0], v0 = sky ? l0 >> 4 : l0 & 15;
+            if (!v0) return;
+            c0.light[i0] = sky ? l0 & 15 : l0 & 0xF0;
+            const q = [x, y, z, v0];
+            for (let h = 0; h < q.length; h += 4) {
+                const cx = q[h], cy = q[h + 1], cz = q[h + 2], v = q[h + 3];
+                for (let d = 0; d < 6; d++) {
+                    const ny = cy + DY[d]; if (ny < 0 || ny >= CH) continue;
+                    const nx = cx + DX[d], nz = cz + DZ[d];
+                    const c = chunkAt(nx >> 4, nz >> 4); if (!c || !c.lit) continue;
+                    const lx = nx & 15, lz = nz & 15, ni = idx(lx, ny, lz), cl = c.light[ni], nv = sky ? cl >> 4 : cl & 15;
+                    if (!nv) continue;
+                    if (nv < v || (sky && d === 3 && v === 15)) {
+                        c.light[ni] = sky ? cl & 15 : cl & 0xF0; markL(c, lx, lz); q.push(nx, ny, nz, nv);
+                    } else refill.push(nx, ny, nz);
+                }
+            }
+        }
+        function relight(x, y, z, old, id) {
+            const c = chunkAt(x >> 4, z >> 4); if (!c || !c.lit) return;
+            const opCh = OP[old] !== OP[id], qB = [], qS = [];
+            removeLight(0, x, y, z, qB);
+            if (opCh) removeLight(1, x, y, z, qS);
+            if (EM[id]) { const i = idx(x & 15, y, z & 15); c.light[i] = (c.light[i] & 0xF0) | EM[id]; qB.push(x, y, z); }
+            if (opCh && OP[id] < 15) for (let d = 0; d < 6; d++) { qB.push(x + DX[d], y + DY[d], z + DZ[d]); qS.push(x + DX[d], y + DY[d], z + DZ[d]); }
+            addBFS(0, qB); addBFS(1, qS);
+            markL(c, x & 15, z & 15);
+        }
+        // celula com luz que ainda pode iluminar algum vizinho transparente mais escuro?
+        function scanCell(x, y, z, qB, qS) {
+            const c = chunkAt(x >> 4, z >> 4); if (!c || !c.lit) return;
+            const v = c.light[idx(x & 15, y, z & 15)]; if (!v) return;
+            const sv = v >> 4, bv = v & 15; let pb = false, ps = false;
+            for (let d = 0; d < 6; d++) {
+                const ny = y + DY[d]; if (ny < 0 || ny >= CH) continue;
+                const nx = x + DX[d], nz = z + DZ[d];
+                const n = chunkAt(nx >> 4, nz >> 4); if (!n || !n.lit) continue;
+                const ni = idx(nx & 15, ny, nz & 15), op = OP[n.data[ni]]; if (op >= 15) continue;
+                const nl = n.light[ni];
+                if (!pb && bv - 1 - op > (nl & 15)) { pb = true; qB.push(x, y, z); }
+                if (!ps) { const pv = (d === 3 && sv === 15) ? 15 - op : sv - 1 - op; if (pv > (nl >> 4)) { ps = true; qS.push(x, y, z); } }
+                if (pb && ps) break;
+            }
+        }
+        function initLight(ch) {
+            const d = ch.data, L = ch.light, X0 = ch.cx * 16, Z0 = ch.cz * 16;
+            for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
+                let v = 15;
+                for (let y = CH - 1; y >= 0; y--) {
+                    const i = idx(x, y, z), b = d[i], o = OP[b];
+                    v = o >= 15 ? 0 : (v > 0 ? Math.max(0, v - o) : 0);
+                    L[i] = (v << 4) | EM[b];
+                }
+            }
+            ch.lit = true;
+            const qB = [], qS = [];
+            for (let y = 0; y < CH; y++) for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++)
+                if (L[idx(x, y, z)]) scanCell(X0 + x, y, Z0 + z, qB, qS);
+            for (const [dx, dz] of DIRS) { // puxa luz da borda dos vizinhos ja prontos
+                const nc = chunks.get(ckey(ch.cx + dx, ch.cz + dz)); if (!nc || !nc.lit) continue;
+                for (let y = 0; y < CH; y++) for (let t = 0; t < 16; t++) {
+                    const lx = dx > 0 ? 0 : dx < 0 ? 15 : t, lz = dz > 0 ? 0 : dz < 0 ? 15 : t;
+                    scanCell(nc.cx * 16 + lx, y, nc.cz * 16 + lz, qB, qS);
+                }
+            }
+            addBFS(0, qB); addBFS(1, qS);
+            ch.dirty = true; for (const [dx, dz] of DIRS) dirtyAt(ch.cx + dx, ch.cz + dz);
+        }
+        // so gera malha quando o chunk e os vizinhos carregados ja tem luz calculada
+        function canMesh(ch) {
+            if (!ch.lit) return false;
+            for (const [dx, dz] of DIRS) { const n = chunks.get(ckey(ch.cx + dx, ch.cz + dz)); if (n && !n.lit) return false; }
+            return true;
+        }
+
+        /* ---------- Carregamento infinito ---------- */
+        function requestChunk(cx, cz) {
+            const k = ckey(cx, cz);
+            if (chunks.has(k) || pending.has(k)) return;
+            if (saved.has(k)) {
+                const sd = savedDirty.delete(k);
+                addChunk(cx, cz, saved.get(k), true); chunks.get(k).sd = sd; saved.delete(k); return;
+            }
+            const w = workers.find(w => !w.busy); if (!w) return;
+            const ep = epoch;
+            w.busy = true; pending.add(k);
+            w.onmessage = e => {
+                w.busy = false; if (ep !== epoch) return;
+                pending.delete(ckey(e.data.cx, e.data.cz));
+                addChunk(e.data.cx, e.data.cz, e.data.data, false);
+            };
+            w.postMessage({ cx, cz, seed: cur.seed });
+        }
+        function addChunk(cx, cz, data, modified) {
+            chunks.set(ckey(cx, cz), { cx, cz, data, dirty: true, modified, sd: false, mo: null, mw: null, light: new Uint8Array(CS * CS * CH), lit: false });
+            _lcx = 1e9;
+            dirtyAt(cx - 1, cz); dirtyAt(cx + 1, cz); dirtyAt(cx, cz - 1); dirtyAt(cx, cz + 1);
+        }
+        function streamChunks() {
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4, R = renderDist;
+            const want = [];
+            for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
+                const d = dx * dx + dz * dz; if (d > R * R + 1) continue;
+                want.push([d, pcx + dx, pcz + dz]);
+            }
+            want.sort((a, b) => a[0] - b[0]);
+            for (const w of want) requestChunk(w[1], w[2]);
+            for (const [k, ch] of chunks) {
+                if (Math.abs(ch.cx - pcx) > R + 2 || Math.abs(ch.cz - pcz) > R + 2) {
+                    freeMesh(ch.mo); freeMesh(ch.mw);
+                    if (ch.modified) { saved.set(k, ch.data); if (ch.sd) savedDirty.add(k); }
+                    chunks.delete(k); _lcx = 1e9;
+                }
+            }
+        }
+
+        /* ---------- Jogador e fisica ---------- */
+        const P = { x: 8.5, y: 70, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: -0.2, ground: false, fly: false, sneak: false, sprint: false, eh: 1.62, fk: 0 };
+        let sprintLatch = false, lastW = 0, lastSpace = 0;
+        const GAMEMODE = 'creative'; // no futuro modo sobrevivencia: voo desligado
+        function toggleFly(keepVy) { if (GAMEMODE !== 'creative') return; P.fly = !P.fly; if (!keepVy) P.vy = 0; }
+        function spaceTap() { const n = performance.now(); if (n - lastSpace < 300) { toggleFly(true); lastSpace = 0; } else lastSpace = n; } // toque duplo em Espaco: liga/desliga o voo
+        let spawned = false, spawnAt = [8, 8];
+        const keys = {};
+        const joy = { x: 0, y: 0, mag: 0 };
+        const solidAt = (x, y, z) => { const b = getBlock(x, y, z, 3); return b !== 0 && !isWater(b) && !isTorch(b); };
+        function hits(px, py, pz) {
+            const r = 0.3;
+            for (let x = Math.floor(px - r); x <= Math.floor(px + r); x++)
+                for (let y = Math.floor(py); y <= Math.floor(py + (P.sneak ? 1.49 : 1.79)); y++)
+                    for (let z = Math.floor(pz - r); z <= Math.floor(pz + r); z++)
+                        if (solidAt(x, y, z)) return true;
+            return false;
+        }
+        // ha bloco sob algum canto dos pes? (usado para nao cair da borda ao agachar)
+        function supported(px, py, pz) {
+            const r = 0.3, y = Math.floor(py - 0.05);
+            for (let x = Math.floor(px - r); x <= Math.floor(px + r); x++)
+                for (let z = Math.floor(pz - r); z <= Math.floor(pz + r); z++)
+                    if (solidAt(x, y, z)) return true;
+            return false;
+        }
+        function updatePlayer(dt) {
+            const bx = Math.floor(P.x), bz = Math.floor(P.z);
+            // na agua se o pe OU o torso estiver num bloco de agua (evita "sair" da agua na superficie e cair de volta)
+            const inW = isWater(getBlock(bx, Math.floor(P.y + 0.4), bz, 0)) || isWater(getBlock(bx, Math.floor(P.y), bz, 0));
+            const fy = -Math.sin(P.yaw), fx = -Math.cos(P.yaw);
+            const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+            let ix = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + joy.x, iz = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) + joy.y;
+            const l = Math.max(1, Math.hypot(ix, iz)); ix /= l; iz /= l;
+            const ctrl = keys.ControlLeft || keys.ControlRight, shift = keys.ShiftLeft || keys.ShiftRight;
+            // agachar: Shift (nao voando nem nadando). So levanta se houver espaco acima da cabeca.
+            let wantSneak = shift && !P.fly && !inW;
+            if (!wantSneak && P.sneak) { P.sneak = false; if (hits(P.x, P.y, P.z)) wantSneak = true; }
+            P.sneak = wantSneak;
+            // correr: Ctrl (ou toque duplo em W) com o jogador indo para frente; joystick no celular
+            const run = !P.sneak && (((ctrl || sprintLatch) && iz > 0.1) || joy.mag > 0);
+            P.sprint = run && !P.fly;
+            const flySprint = P.fly && (ctrl || sprintLatch) && iz > 0.1; // voo rapido: Ctrl (ou toque duplo em W) indo para frente
+            let speed = P.fly ? (flySprint ? 22 : (joy.mag > 0 ? 16 : 11)) : (P.sneak ? 1.8 : (run ? 7 : 4.5)); // voo como no Minecraft criativo: ~11 b/s, ~22 b/s correndo
+            if (inW && !P.fly) speed *= 0.6;
+            P.eh += ((P.sneak ? 1.27 : 1.62) - P.eh) * Math.min(1, dt * 15);
+            P.fk += (((P.sprint || flySprint) ? 0.12 : 0) - P.fk) * Math.min(1, dt * 8);
+            const wx = fy * iz + rx * ix, wz = fx * iz + rz * ix;
+            const k = Math.min(1, dt * (P.fly ? 6 : (P.ground || inW ? 12 : 3))); // voando: um pouco de deslize ao parar
+            P.vx += (wx * speed - P.vx) * k; P.vz += (wz * speed - P.vz) * k;
+            if (P.fly) {
+                const t = ((keys.Space ? 1 : 0) - (shift ? 1 : 0)) * 8; // subir/descer: Espaco / Shift, ~8 b/s
+                P.vy += (t - P.vy) * Math.min(1, dt * 9);
+            } else {
+                P.vy -= (inW ? 7 : 28) * dt;
+                if (inW) { P.vy *= (1 - Math.min(1, dt * 3)); if (keys.Space) P.vy = Math.min(P.vy + 30 * dt, 3.6); else if (shift) P.vy = Math.max(P.vy - 25 * dt, -3.5); }
+                else if (keys.Space && P.ground) P.vy = 8.8;
+                if (P.vy < -50) P.vy = -50;
+            }
+            const mx = Math.max(Math.abs(P.vx), Math.abs(P.vy), Math.abs(P.vz));
+            const n = Math.max(4, Math.ceil(mx * dt / 0.2)), sd = dt / n;
+            const guard = P.sneak && P.ground && P.vy <= 0; // agachado no chao: nao cai da borda
+            P.ground = false;
+            let wall = false, landed = false;
+            for (let i = 0; i < n; i++) {
+                P.x += P.vx * sd;
+                if (hits(P.x, P.y, P.z)) { P.x -= P.vx * sd; P.vx = 0; wall = true; }
+                else if (guard && !supported(P.x, P.y, P.z)) { P.x -= P.vx * sd; P.vx = 0; }
+                P.z += P.vz * sd;
+                if (hits(P.x, P.y, P.z)) { P.z -= P.vz * sd; P.vz = 0; wall = true; }
+                else if (guard && !supported(P.x, P.y, P.z)) { P.z -= P.vz * sd; P.vz = 0; }
+                P.y += P.vy * sd;
+                if (hits(P.x, P.y, P.z)) { P.y -= P.vy * sd; if (P.vy < 0) { P.ground = true; if (P.fly) landed = true; } P.vy = 0; }
+            }
+            if (landed) P.fly = false; // tocar o chao descendo encerra o voo (como no Minecraft)
+            // Impulso de saida da agua (igual ao Minecraft): batendo de lado numa margem,
+            // com espaco livre acima dela, o jogador ganha um empurrao para cima, sem precisar apertar pulo.
+            if (inW && !P.fly && wall && (ix || iz)) {
+                if (!hits(P.x + wx * 0.45, P.y + 1.5, P.z + wz * 0.45)) P.vy = Math.max(P.vy, 9.8);
+            }
+            if (P.y < -30) { P.y = 80; P.vy = 0; }
+        }
+        function surfaceY(x, z) {
+            for (let y = CH - 1; y > 0; y--) { const b = getBlock(x, y, z, 0); if (b !== 0 && !isWater(b)) return y + 1; }
+            return 40;
+        }
+
+        /* ---------- Raycast ---------- */
+        // caixa de selecao da tocha (relativa a celula): [x0,y0,z0,x1,y1,z1]
+        function torchBox(b) {
+            if (b === TORCH) return [0.4375, 0, 0.4375, 0.5625, 0.625, 0.5625];
+            const wd = WDIR[b - 11]; // tocha de parede: base encostada no bloco, topo inclinado para fora
+            const c0 = [0.5 + wd[0] * 0.4375, 0.5 + wd[1] * 0.4375], c1 = [0.5 + wd[0] * 0.125, 0.5 + wd[1] * 0.125];
+            return [Math.min(c0[0], c1[0]) - 0.0625, 0.2, Math.min(c0[1], c1[1]) - 0.0625,
+            Math.max(c0[0], c1[0]) + 0.0625, 0.825, Math.max(c0[1], c1[1]) + 0.0625];
+        }
+        function rayBox(o, d, bx, by, bz, B, maxD) {
+            let t0 = 0, t1 = maxD;
+            const mn = [bx + B[0], by + B[1], bz + B[2]], mx = [bx + B[3], by + B[4], bz + B[5]];
+            for (let i = 0; i < 3; i++) {
+                if (d[i] === 0) { if (o[i] < mn[i] || o[i] > mx[i]) return -1; continue; }
+                let a = (mn[i] - o[i]) / d[i], c = (mx[i] - o[i]) / d[i];
+                if (a > c) { const t = a; a = c; c = t; }
+                if (a > t0) t0 = a; if (c < t1) t1 = c;
+                if (t0 > t1) return -1;
+            }
+            return t0;
+        }
+        function raycast(o, d, maxD, src = false) { // src: tambem acerta fontes de agua (para o balde)
+            let x = Math.floor(o[0]), y = Math.floor(o[1]), z = Math.floor(o[2]);
+            const sx = d[0] > 0 ? 1 : -1, sy = d[1] > 0 ? 1 : -1, sz = d[2] > 0 ? 1 : -1;
+            const tdx = d[0] === 0 ? Infinity : Math.abs(1 / d[0]), tdy = d[1] === 0 ? Infinity : Math.abs(1 / d[1]), tdz = d[2] === 0 ? Infinity : Math.abs(1 / d[2]);
+            let tx = d[0] === 0 ? Infinity : (d[0] > 0 ? x + 1 - o[0] : o[0] - x) * tdx;
+            let ty = d[1] === 0 ? Infinity : (d[1] > 0 ? y + 1 - o[1] : o[1] - y) * tdy;
+            let tz = d[2] === 0 ? Infinity : (d[2] > 0 ? z + 1 - o[2] : o[2] - z) * tdz;
+            let px = x, py = y, pz = z;
+            for (let i = 0; i < 200; i++) {
+                const b = getBlock(x, y, z, 0);
+                if (src && b === WSRC) return { x, y, z, px, py, pz, b };
+                if (b !== 0 && !isWater(b)) {
+                    if (!isTorch(b)) return { x, y, z, px, py, pz, b };
+                    const B = torchBox(b); // tocha: so conta se o raio realmente tocar nela
+                    if (rayBox(o, d, x, y, z, B, maxD) >= 0) return { x, y, z, px, py, pz, b, box: B };
+                }
+                px = x; py = y; pz = z;
+                if (tx < ty && tx < tz) { if (tx > maxD) break; x += sx; tx += tdx; }
+                else if (ty < tz) { if (ty > maxD) break; y += sy; ty += tdy; }
+                else { if (tz > maxD) break; z += sz; tz += tdz; }
+            }
+            return null;
+        }
+
+        /* ---------- TNT, explosoes, som ---------- */
+        const tnts = [];
+        let flashAmt = 0, shake = 0, audio;
+        function spawnTnt(x, y, z, fuse) { tnts.push({ x, y, z, vy: 0, fuse }); }
+        function boom() {
+            try {
+                audio = audio || new AudioContext();
+                const len = audio.sampleRate * 0.9, buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+                const s = audio.createBufferSource(); s.buffer = buf;
+                const f = audio.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+                const g = audio.createGain(); g.gain.value = 0.9;
+                s.connect(f); f.connect(g); g.connect(audio.destination); s.start();
+            } catch (e) { }
+        }
+        function explode(cx, cy, cz, r) {
+            const R = Math.ceil(r), bx = Math.floor(cx), by = Math.floor(cy), bz = Math.floor(cz);
+            for (let dy = -R; dy <= R; dy++) for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
+                const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (d > r * (0.75 + 0.25 * Math.random())) continue;
+                const x = bx + dx, y = by + dy, z = bz + dz;
+                const b = getBlock(x, y, z, 0);
+                if (b === 0 || y <= 0) continue;
+                setBlock(x, y, z, 0);
+                if (b === 8) spawnTnt(x + 0.5, y, z + 0.5, 0.25 + Math.random() * 0.8);
+            }
+            const ex = P.x - cx, ey = P.y + 0.9 - cy, ez = P.z - cz, dist = Math.hypot(ex, ey, ez);
+            if (dist < r * 2.5) {
+                const k = (1 - dist / (r * 2.5)) * 22 / (dist || 1);
+                P.vx += ex * k; P.vy += ey * k + 4; P.vz += ez * k;
+            }
+            const near = Math.max(0, 1 - dist / 30);
+            flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
+            boom();
+        }
+        function updateTnt(dt) {
+            for (let i = tnts.length - 1; i >= 0; i--) {
+                const t = tnts[i];
+                t.vy -= 22 * dt;
+                const ny = t.y + t.vy * dt;
+                if (solidAt(Math.floor(t.x), Math.floor(ny), Math.floor(t.z))) { t.y = Math.floor(ny) + 1; t.vy = 0; } else t.y = ny;
+                if (t.y < -10) { tnts.splice(i, 1); continue; }
+                t.fuse -= dt;
+                if (t.fuse <= 0) { tnts.splice(i, 1); explode(t.x, t.y + 0.5, t.z, 4); }
+            }
+        }
+
+        /* ---------- Tick: areia que cai e agua que flui ---------- */
+        const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        /* Agua estilo Minecraft. Ids 16..23 = nivel 0..7 (23 = fonte). A agua nunca cria fontes novas:
+           - uma celula com agua em cima vira "cachoeira" (nivel 6) e, ao pousar, espalha como forca maxima (7)
+           - o vizinho recebe a forca do vizinho - 1, ate zero (7 blocos); agua fluindo so espalha de lado se nao puder cair
+           - sem suprimento a celula seca, uma camada por passo (a agua recua quando a fonte some)
+           Um passo a cada 0.25 s (5 ticks), em duas fases (calcula tudo, depois aplica), com limite de celulas por passo. */
+        const wq = new Set();
+        let wCnt = 0;
+        function waterWant(x, y, z) {
+            if (isWater(getBlock(x, y + 1, z, 3))) return 22;
+            let best = -1;
+            for (let i = 0; i < 4; i++) {
+                const nx = x + DIRS[i][0], nz = z + DIRS[i][1], n = getBlock(nx, y, nz, 3);
+                if (!isWater(n)) continue;
+                let e;
+                if (n === WSRC) e = 7;
+                else {
+                    const bl = getBlock(nx, y - 1, nz, 3);
+                    if (bl === 0 || isTorch(bl) || isWater(bl)) continue; // vai cair (ou escorre por cima de agua): nao espalha de lado
+                    e = isWater(getBlock(nx, y + 1, nz, 3)) ? 7 : n - 16;
+                }
+                if (e - 1 > best) best = e - 1;
+            }
+            return best >= 0 ? 16 + best : 0;
+        }
+        function waterStep() {
+            const list = []; for (const k of wq) { list.push(k); if (list.length >= 700) break; }
+            for (const k of list) wq.delete(k);
+            const ch = [];
+            for (const k of list) {
+                const p = k.split(','), x = +p[0], y = +p[1], z = +p[2], b = getBlock(x, y, z, 3);
+                if (b === WSRC || !(b === 0 || isTorch(b) || isWater(b))) continue;
+                const want = waterWant(x, y, z), cur = isWater(b) ? b : 0;
+                if (want !== cur && !(want === 0 && cur === 0)) ch.push(x, y, z, want);
+            }
+            for (let i = 0; i < ch.length; i += 4) setBlock(ch[i], ch[i + 1], ch[i + 2], ch[i + 3]);
+        }
+        function tick() {
+            if (active.size) tickBlocks();
+            if (++wCnt >= 5) { wCnt = 0; if (wq.size) waterStep(); }
+        }
+        function tickBlocks() {
+            if (!active.size) return;
+            const list = []; for (const k of active) { list.push(k); if (list.length >= 500) break; }
+            for (const k of list) active.delete(k);
+            for (const k of list) {
+                const [x, y, z] = k.split(',').map(Number);
+                const b = getBlock(x, y, z, 3);
+                if (isTorch(b)) { // tocha cai se o bloco de apoio (embaixo ou na parede) sumir
+                    const wd = b === TORCH ? null : WDIR[b - 11];
+                    const sb = wd ? getBlock(x + wd[0], y, z + wd[1], 3) : getBlock(x, y - 1, z, 3);
+                    if (OP[sb] < 15) setBlock(x, y, z, 0); else wq.add(k);
+                }
+                else if (b === 4) {
+                    const bl = getBlock(x, y - 1, z, 3);
+                    if (bl === 0 || isWater(bl)) { setBlock(x, y, z, 0); setBlock(x, y - 1, z, 4); }
+                } else if (b === 0 || isWater(b)) wq.add(k);
+            }
+        }
+
+        /* ============================================================
+           SALVAMENTO
+           Banco IndexedDB "cubo-saves" (v1):
+             worlds : id -> metadados {v,id,name,seed,seedText,created,played,playTime,
+                                       player,time,sel,chunkCount,thumb}
+             chunks : "<worldId>/<cx>,<cz>" -> Uint8Array (so chunks editados)
+           Chunks nao editados nao sao gravados: nascem da semente. Isso mantem
+           o save pequeno e permite regenerar o terreno de forma identica.
+           Se IndexedDB estiver indisponivel, cai para memoria (nao persiste).
+           ============================================================ */
+        const kv = {
+            db: null, mem: { worlds: new Map(), chunks: new Map() },
+            init() {
+                return new Promise(res => {
+                    try {
+                        const q = indexedDB.open('cubo-saves', 1);
+                        q.onupgradeneeded = () => { q.result.createObjectStore('worlds'); q.result.createObjectStore('chunks'); };
+                        q.onsuccess = () => { this.db = q.result; res(); };
+                        q.onerror = q.onblocked = () => res();
+                    } catch (e) { res(); }
+                });
+            },
+            batch(ops) { // [store, key, valor] ; valor undefined = apagar
+                return new Promise(res => {
+                    if (!this.db) { for (const [s, k, v] of ops) v === undefined ? this.mem[s].delete(k) : this.mem[s].set(k, v); return res(true); }
+                    try {
+                        const t = this.db.transaction(['worlds', 'chunks'], 'readwrite');
+                        for (const [s, k, v] of ops) { const o = t.objectStore(s); v === undefined ? o.delete(k) : o.put(v, k); }
+                        t.oncomplete = () => res(true); t.onerror = t.onabort = () => res(false);
+                    } catch (e) { res(false); }
+                });
+            },
+            range(s, prefix) {
+                return new Promise(res => {
+                    if (!this.db) return res([...this.mem[s]].filter(([k]) => k.startsWith(prefix)));
+                    const out = [];
+                    try {
+                        const q = this.db.transaction(s).objectStore(s).openCursor(IDBKeyRange.bound(prefix, prefix + '\uffff'));
+                        q.onsuccess = () => { const c = q.result; if (c) { out.push([c.key, c.value]); c.continue(); } else res(out); };
+                        q.onerror = () => res(out);
+                    } catch (e) { res(out); }
+                });
+            }
+        };
+        const newId = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        function seedNum(t) {
+            t = (t || '').trim();
+            if (!t) return (Math.random() * 4294967296) >>> 0;
+            if (/^-?\d+$/.test(t)) return parseInt(t, 10) >>> 0;
+            let h = 2166136261; for (const c of t) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0;
+        }
+        let saving = Promise.resolve(), lastSave = 0, thumb = null, wantThumb = false, pendingSave = false, indT = 0;
+        function indicate(txt) {
+            const el = $('saveInd'); el.textContent = txt; el.style.opacity = 1;
+            clearTimeout(indT); indT = setTimeout(() => el.style.opacity = 0, 1600);
+        }
+        function saveWorld() {
+            if (!cur || !spawned) return saving;
+            const w = cur, ops = [];
+            for (const [k, ch] of chunks) if (ch.sd) { ops.push(['chunks', w.id + '/' + k, ch.data.slice()]); dbKeys.add(k); ch.sd = false; }
+            for (const k of savedDirty) { ops.push(['chunks', w.id + '/' + k, saved.get(k).slice()]); dbKeys.add(k); }
+            savedDirty.clear();
+            Object.assign(w, {
+                player: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, fly: P.fly },
+                time, sel, hot: HOT.map(h => h[0]), bucket: bucketFull, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
+            });
+            ops.push(['worlds', w.id, w]);
+            indicate('Salvando...');
+            saving = saving.then(() => kv.batch(ops)).then(ok => {
+                if (ok) {
+                    lastSave = Date.now();
+                    $('saveInfo').textContent = 'Último salvamento: ' + new Date(lastSave).toLocaleTimeString('pt-BR');
+                    indicate('Mundo salvo');
+                } else { // tenta tudo de novo no proximo ciclo
+                    for (const ch of chunks.values()) if (ch.modified) ch.sd = true;
+                    for (const k of saved.keys()) savedDirty.add(k);
+                    indicate('Falha ao salvar');
+                }
+            });
+            return saving;
+        }
+        function requestSave() { wantThumb = true; pendingSave = true; }
+        setInterval(() => { if (state === 'playing') requestSave(); }, 20000);
+        addEventListener('pagehide', () => saveWorld());
+        document.addEventListener('visibilitychange', () => { if (document.hidden) { if (state === 'playing' && isTouch) pause(); else saveWorld(); } });
+        const tcv = document.createElement('canvas'); tcv.width = 160; tcv.height = 90;
+        function grabThumb() {
+            try {
+                let sw = canvas.width, sh = canvas.height, sx = 0, sy = 0; const a = 16 / 9;
+                if (sw / sh > a) { const nw = sh * a; sx = (sw - nw) / 2; sw = nw; } else { const nh = sw / a; sy = (sh - nh) / 2; sh = nh; }
+                tcv.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, 160, 90);
+                thumb = tcv.toDataURL('image/jpeg', 0.6);
+            } catch (e) { }
+        }
+
+        /* ---------- Ciclo de vida do mundo ---------- */
+        function resetWorld() {
+            for (const c of chunks.values()) { freeMesh(c.mo); freeMesh(c.mw); }
+            chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear(); setBucket(false);
+            tnts.length = 0; bN = 0; history.length = 0; spawned = false; thumb = null; flashAmt = 0; shake = 0;
+            P.vx = P.vy = P.vz = 0; P.fly = false; pendingSave = wantThumb = false;
+        }
+        async function openWorld(m) {
+            epoch++; resetWorld(); cur = m; state = 'loading';
+            $('lTitle').textContent = m.name; $('enter').disabled = true; $('status').textContent = 'Lendo salvamento...';
+            show('load');
+            const rows = await kv.range('chunks', m.id + '/');
+            if (cur !== m) return;
+            for (const [k, v] of rows) { const ck = k.slice(m.id.length + 1); saved.set(ck, v); dbKeys.add(ck); }
+            const pl = m.player;
+            if (pl) { P.x = pl.x; P.y = pl.y; P.z = pl.z; P.yaw = pl.yaw; P.pitch = pl.pitch; spawnAt = [Math.floor(pl.x), Math.floor(pl.z)]; }
+            else { P.x = 8.5; P.z = 8.5; P.yaw = 0; P.pitch = -0.2; spawnAt = [8, 8]; }
+            time = m.time ?? 0.2; applyHot(m.hot); sel = (m.sel || 0) % 10; setBucket(!!m.bucket); refreshHotbar(); streamT = 0;
+        }
+        function pause() {
+            if (state !== 'playing') return;
+            state = 'paused'; locked = false; held[0] = held[2] = false; rewinding = false; touchReset();
+            for (const k in keys) keys[k] = false;
+            sprintLatch = false; $('bSneak').classList.remove('on');
+            joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
+            requestSave(); show('pause');
+        }
+        async function quitToTitle() {
+            $('quit').disabled = true;
+            await saveWorld();
+            $('quit').disabled = false;
+            epoch++; cur = null; state = 'menu'; resetWorld();
+            gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            showWorlds();
+        }
+        function enter() { if (isTouch) startTouch(); else canvas.requestPointerLock(); }
+
+        /* ---------- Telas do menu ---------- */
+        const menu = $('menu'), statusEl = $('status');
+        let curScr = 'title', back = 'title', editing = null;
+        const SPLASH = ['Agora com salvamento!', 'Mundos infinitos!', 'Cuidado com a TNT!', 'Feito só com código!', 'Segure R para voltar no tempo!', 'Barragens! Água!', 'Cada mundo tem sua semente!'];
+        $('splash').textContent = SPLASH[Math.floor(Math.random() * SPLASH.length)];
+        function show(name) {
+            if (name === 'settings') { back = curScr; cancelCapture(); }
+            curScr = name;
+            document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === 's-' + name));
+            menu.classList.toggle('ingame', state === 'paused');
+            menu.style.display = 'flex';
+        }
+        const fmtDur = s => { s = Math.floor(s || 0); if (s < 60) return '< 1 min'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'min' : m + ' min'; };
+        const fmtSize = n => { const kb = n * 16; return kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'; };
+        const fmtDate = t => new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        const seedLabel = m => m.seedText ? m.seedText : String(m.seed);
+        function metaLine(m) { return 'Semente ' + seedLabel(m) + ' · ' + fmtDur(m.playTime) + ' jogados · ' + (m.chunkCount ? fmtSize(m.chunkCount) + ' salvos' : 'sem edições'); }
+        async function showWorlds() {
+            state = 'menu'; show('worlds');
+            const list = (await kv.range('worlds', '')).map(r => r[1]).sort((a, b) => b.played - a.played);
+            const wl = $('wl'); wl.textContent = '';
+            if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nenhum mundo ainda. Crie o primeiro!'; wl.appendChild(e); }
+            for (const m of list) {
+                const row = document.createElement('div'); row.className = 'wr';
+                const t = document.createElement(m.thumb ? 'img' : 'div'); t.className = 'wt'; if (m.thumb) t.src = m.thumb;
+                const info = document.createElement('div'); info.className = 'wi';
+                const n = document.createElement('div'); n.className = 'wn'; n.textContent = m.name;
+                const d = document.createElement('div'); d.className = 'wm'; d.textContent = 'Jogado em ' + fmtDate(m.played);
+                const d2 = document.createElement('div'); d2.className = 'wm'; d2.textContent = metaLine(m);
+                info.append(n, d, d2);
+                const ed = document.createElement('button'); ed.className = 'btn we'; ed.textContent = 'Editar'; ed.title = 'Editar';
+                ed.onclick = e => { e.stopPropagation(); openEdit(m); };
+                row.append(t, info, ed);
+                row.onclick = () => openWorld(m);
+                wl.appendChild(row);
+            }
+            wl.dataset.n = list.length;
+        }
+        function openEdit(m) {
+            editing = m; $('eName').value = m.name; $('eInfo').textContent = 'Criado em ' + fmtDate(m.created) + ' · ' + metaLine(m);
+            show('edit');
+        }
+        function confirm2(b, fn) {
+            const t = b.textContent; let armed = false, tm;
+            b.onclick = () => {
+                if (!armed) { armed = true; b.textContent = 'Toque de novo para confirmar'; tm = setTimeout(() => { armed = false; b.textContent = t; }, 3000); }
+                else { clearTimeout(tm); armed = false; b.textContent = t; fn(); }
+            };
+        }
+        menu.addEventListener('click', e => {
+            const b = e.target.closest('[data-go]'); if (!b) return;
+            const g = b.dataset.go;
+            if (g === 'worlds') showWorlds(); else show(g === 'back' ? back : g);
+        });
+        $('newW').onclick = () => { $('cName').value = 'Mundo ' + (+$('wl').dataset.n + 1); $('cSeed').value = ''; show('create'); };
+        $('cDo').onclick = async () => {
+            const name = ($('cName').value.trim() || 'Novo mundo').slice(0, 32), st = $('cSeed').value.trim();
+            const m = { v: 1, id: newId(), name, seedText: st, seed: seedNum(st), created: Date.now(), played: Date.now(), playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null };
+            await kv.batch([['worlds', m.id, m]]);
+            openWorld(m);
+        };
+        $('eSave').onclick = async () => {
+            editing.name = ($('eName').value.trim() || editing.name).slice(0, 32);
+            await kv.batch([['worlds', editing.id, editing]]); showWorlds();
+        };
+        $('eDup').onclick = async () => {
+            const o = editing, n = { ...o, id: newId(), name: (o.name + ' (cópia)').slice(0, 40), created: Date.now(), played: Date.now() };
+            const rows = await kv.range('chunks', o.id + '/');
+            await kv.batch([...rows.map(([k, v]) => ['chunks', n.id + k.slice(o.id.length), v]), ['worlds', n.id, n]]);
+            showWorlds();
+        };
+        confirm2($('eReset'), async () => {
+            const rows = await kv.range('chunks', editing.id + '/');
+            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2 });
+            await kv.batch([...rows.map(([k]) => ['chunks', k, undefined]), ['worlds', editing.id, editing]]); showWorlds();
+        });
+        confirm2($('eDel'), async () => {
+            const rows = await kv.range('chunks', editing.id + '/');
+            await kv.batch([...rows.map(([k]) => ['chunks', k, undefined]), ['worlds', editing.id, undefined]]); showWorlds();
+        });
+        $('enter').onclick = enter;
+        $('resume').onclick = enter;
+        $('lCancel').onclick = () => { epoch++; cur = null; state = 'menu'; resetWorld(); showWorlds(); };
+        $('quit').onclick = quitToTitle;
+
+        /* ---------- Entrada ---------- */
+        let locked = false, rewinding = false, rewHold = 0, held = [false, false, false], holdT = 0;
+        const aim = { on: false, x: 0, y: 0 }; // toque: mira no ponto da tela onde o dedo esta
+        const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+        if (isTouch) { document.body.classList.add('touch'); renderDist = 4; }
+        /* ---------- Teclas configuráveis (computador) ----------
+           O jogo continua lendo os codigos originais (KeyW, Space, ControlLeft...).
+           Aqui so traduzimos a tecla fisica apertada para a tecla "logica" da acao. */
+        const ACTIONS = [
+            ['forward', 'Andar para frente', 'KeyW'],
+            ['left', 'Andar para a esquerda', 'KeyA'],
+            ['back', 'Andar para trás', 'KeyS'],
+            ['right', 'Andar para a direita', 'KeyD'],
+            ['jump', 'Pular / nadar / subir', 'Space'],
+            ['sprint', 'Correr / acelerar no voo', 'ControlLeft'],
+            ['sneak', 'Agachar / descer no voo', 'ShiftLeft'],
+            ['fly', 'Voar (liga/desliga)', 'KeyF'],
+            ['rewind', 'Voltar no tempo (segurar)', 'KeyR'],
+            ['inventory', 'Abrir inventário (criativo)', 'KeyI']
+        ];
+        const DEF = {}; for (const a of ACTIONS) DEF[a[0]] = a[2];
+        const MANAGED = new Set([...Object.values(DEF), 'ControlRight', 'ShiftRight']);
+        const normKey = c => c === 'ControlRight' ? 'ControlLeft' : c === 'ShiftRight' ? 'ShiftLeft' : c;
+        let binds = { ...DEF }, phys2log = {};
+        function rebuildKeyMap() { phys2log = {}; for (const a of ACTIONS) phys2log[binds[a[0]]] = DEF[a[0]]; }
+        function lc(code) { // tecla fisica -> tecla logica (null = tecla sem acao agora)
+            const n = normKey(code);
+            if (n in phys2log) return phys2log[n];
+            return MANAGED.has(n) ? null : code;
+        }
+        function loadBinds(k) {
+            if (!k || typeof k !== 'object') return;
+            const nb = {}, used = new Set();
+            for (const a of ACTIONS) if (typeof k[a[0]] === 'string') {
+                const v = normKey(k[a[0]]);
+                if (used.has(v)) return; // salvamento invalido: mantem o padrao
+                used.add(v); nb[a[0]] = v;
+            }
+            for (const a of ACTIONS) if (!nb[a[0]]) { // acao nova (ex.: inventario): usa a tecla padrao se estiver livre
+                if (used.has(DEF[a[0]])) return;
+                used.add(DEF[a[0]]); nb[a[0]] = DEF[a[0]];
+            }
+            binds = nb;
+        }
+        rebuildKeyMap();
+        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); } catch (e) { }
+        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2 })); } catch (e) { } }
+        function updDist() { $('dVal').textContent = renderDist; saveSettings(); }
+        updDist();
+        const KNAMES = { Space: 'Espaço', ControlLeft: 'Ctrl', ShiftLeft: 'Shift', AltLeft: 'Alt', AltRight: 'Alt Dir.', CapsLock: 'Caps Lock', Enter: 'Enter', Backspace: 'Backspace', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Backquote: '`', Minus: '-', Equal: '=', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', NumpadEnter: 'Num Enter' };
+        function keyName(c) {
+            if (KNAMES[c]) return KNAMES[c];
+            if (c.startsWith('Key')) return c.slice(3);
+            if (c.startsWith('Numpad')) return 'Num ' + c.slice(6);
+            return c;
+        }
+        function updateHints() {
+            document.querySelectorAll('[data-k]').forEach(el => {
+                const k = el.dataset.k;
+                if (k === 'move') { const n = ['forward', 'left', 'back', 'right'].map(x => keyName(binds[x])); el.textContent = n.every(x => x.length === 1) ? n.join('') : n.join('/'); }
+                else if (binds[k]) el.textContent = keyName(binds[k]);
+            });
+        }
+        let capturing = null;
+        const keyMsg = (t) => { $('keyMsg').textContent = t || ''; };
+        function renderKeys() {
+            const box = $('keyRows'); box.textContent = '';
+            for (const [id, label] of ACTIONS) {
+                const row = document.createElement('div'); row.className = 'kbrow';
+                const sp = document.createElement('span'); sp.textContent = label;
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (capturing === id ? ' cap' : '');
+                b.textContent = capturing === id ? 'Aperte uma tecla...' : keyName(binds[id]);
+                b.onclick = () => { capturing = capturing === id ? null : id; keyMsg(''); renderKeys(); };
+                row.append(sp, b); box.append(row);
+            }
+            updateHints();
+        }
+        function cancelCapture() { if (capturing) { capturing = null; renderKeys(); } }
+        addEventListener('blur', cancelCapture);
+        addEventListener('keydown', e => {
+            if (!capturing) return;
+            if (curScr !== 'settings') { capturing = null; return; }
+            e.preventDefault(); e.stopImmediatePropagation();
+            if (e.repeat) return;
+            if (e.code === 'Escape') { cancelCapture(); keyMsg(''); return; }
+            if (/^(Digit|Bracket|F\d|Meta|OS|ContextMenu|Tab|Numpad\d)/.test(e.code) || e.code === 'Unidentified' || e.code === 'Dead') {
+                keyMsg('Essa tecla é reservada. Escolha outra.'); return;
+            }
+            const nk = normKey(e.code), id = capturing, old = binds[id];
+            const other = ACTIONS.find(a => a[0] !== id && binds[a[0]] === nk);
+            if (other) { binds[other[0]] = old; keyMsg('Troca feita: "' + other[1] + '" agora usa ' + keyName(old) + '.'); }
+            else keyMsg('');
+            binds[id] = nk; capturing = null;
+            rebuildKeyMap(); saveSettings(); renderKeys();
+        }, true);
+        $('keyReset').onclick = () => { binds = { ...DEF }; capturing = null; rebuildKeyMap(); saveSettings(); keyMsg('Teclas restauradas.'); renderKeys(); };
+        renderKeys();
+        $('dMinus').onclick = () => { renderDist = Math.max(2, renderDist - 1); updDist(); };
+        $('dPlus').onclick = () => { renderDist = Math.min(12, renderDist + 1); updDist(); };
+        document.addEventListener('pointerlockchange', () => {
+            locked = document.pointerLockElement === canvas;
+            if (locked) lockKeys(); else unlockKeys();
+            if (locked) { state = 'playing'; menu.style.display = 'none'; }
+            else if (state === 'playing') pause();
+        });
+        document.addEventListener('mousemove', e => {
+            if (!locked) return;
+            P.yaw -= e.movementX * 0.0025;
+            P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - e.movementY * 0.0025));
+        });
+        const NOSCROLL = ['Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight'];
+        addEventListener('keydown', e => {
+            if (state === 'inv') { // inventario aberto: fechar com Esc ou com a tecla do inventario; 1-9/0 escolhem o slot
+                if (e.code === 'Escape' || lc(e.code) === DEF.inventory) { if (!e.repeat) closeInv(); return; }
+                if (e.code.startsWith('Digit')) { let n = +e.code.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
+                return;
+            }
+            if (state !== 'playing') return;
+            const c = lc(e.code); // tecla logica (respeita as teclas configuradas)
+            if (NOSCROLL.includes(e.code) || (c && NOSCROLL.includes(c))) e.preventDefault();
+            if (c === null) return;
+            keys[c] = true;
+            if (c === 'KeyF' && !e.repeat) toggleFly();
+            if (c === 'Space' && !e.repeat) spaceTap();
+            if (c === 'KeyR') rewinding = true;
+            if (c === DEF.inventory && !e.repeat) openInv();
+            if (c.startsWith('Digit')) { let n = +c.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
+            if (c === 'BracketLeft') { renderDist = Math.max(2, renderDist - 1); updDist(); }
+            if (c === 'BracketRight') { renderDist = Math.min(12, renderDist + 1); updDist(); }
+            if (c === 'KeyW' && !e.repeat) { const n = performance.now(); if (n - lastW < 300) sprintLatch = true; lastW = n; }
+        });
+        addEventListener('keyup', e => { const c = lc(e.code); if (c === null) return; keys[c] = false; if (c === 'KeyW') sprintLatch = false; if (c === 'KeyR') { rewinding = false; rewHold = 0; } });
+        /* ---------- Teclado/mouse so para o jogo ----------
+           Enquanto joga (ou com o inventario aberto) os atalhos do navegador sao bloqueados (Ctrl+E, Ctrl+F, Ctrl+S, F5, Alt, Tab,
+           botoes laterais do mouse...). Fora do jogo (menus, digitar nome do mundo) tudo volta ao normal. F11 e F12 continuam livres.
+           Ctrl+W/T/N sao reservados pelo navegador e nao podem ser bloqueados por pagina: ha um aviso de seguranca ao fechar,
+           e em tela cheia (F11) o Keyboard Lock (Chrome/Edge) captura essas teclas tambem. */
+        const gameOwnsInput = () => state === 'playing' || state === 'inv';
+        const KEEP_BROWSER = new Set(['F11', 'F12']);
+        const swallowKey = e => { if (gameOwnsInput() && !KEEP_BROWSER.has(e.code)) e.preventDefault(); };
+        addEventListener('keydown', swallowKey, true);
+        addEventListener('keyup', swallowKey, true);
+        addEventListener('keypress', swallowKey, true);
+        const swallowMouse = e => { if (gameOwnsInput() && e.button !== 0 && e.button !== 2) e.preventDefault(); }; // meio / voltar / avancar
+        addEventListener('mousedown', swallowMouse, true);
+        addEventListener('mouseup', swallowMouse, true);
+        addEventListener('auxclick', swallowMouse, true);
+        addEventListener('beforeunload', e => { if (gameOwnsInput()) { e.preventDefault(); e.returnValue = ''; } });
+        const LOCKED_KEYS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(c => 'Key' + c).concat([...'0123456789'].map(c => 'Digit' + c),
+            ['Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight', 'Tab', 'Backspace', 'Enter', 'BracketLeft', 'BracketRight',
+                'Backquote', 'Minus', 'Equal', 'Semicolon', 'Quote', 'Comma', 'Period', 'Slash', 'Backslash', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+        function lockKeys() { try { const k = navigator.keyboard; if (k && k.lock) { const r = k.lock(LOCKED_KEYS); if (r && r.catch) r.catch(() => { }); } } catch (e) { } }
+        function unlockKeys() { try { const k = navigator.keyboard; if (k && k.unlock) k.unlock(); } catch (e) { } }
+
+        /* ---------- Inventario ---------- */
+        function openInv() {
+            if (state !== 'playing') return;
+            state = 'inv'; held[0] = held[2] = false; rewinding = false; touchReset();
+            for (const k in keys) keys[k] = false;
+            sprintLatch = false; $('bSneak').classList.remove('on');
+            joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
+            if (isTouch) locked = false; else document.exitPointerLock();
+            invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')';
+            invEl.classList.add('on');
+        }
+        function closeInv() {
+            if (state !== 'inv') return;
+            invEl.classList.remove('on');
+            if (isTouch) { state = 'playing'; locked = true; return; }
+            state = 'paused'; // se o mouse for recapturado, pointerlockchange volta para 'playing'
+            const fail = () => { if (state === 'paused') show('pause'); };
+            try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(fail); } catch (e) { fail(); }
+        }
+        $('invClose').onclick = closeInv;
+        addEventListener('wheel', e => { if (!locked) return; sel = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; refreshHotbar(); });
+        addEventListener('contextmenu', e => e.preventDefault());
+        canvas.addEventListener('mousedown', e => { if (!locked) return; held[e.button] = true; holdT = 0; act(e.button); });
+        addEventListener('mouseup', e => { held[e.button] = false; });
+        function aimDir() { // direcao do raio: no toque, passa pelo ponto tocado; senao, centro da tela
+            const f = lookDir(); if (!aim.on) return f;
+            const w = innerWidth, h = innerHeight, th = Math.tan((1.2 + P.fk) / 2);
+            const nx = (aim.x / w * 2 - 1) * th * (w / h), ny = (1 - aim.y / h * 2) * th;
+            const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw); // direita (horizontal)
+            const ux = -rz * f[1], uy = rz * f[0] - rx * f[2], uz = rx * f[1]; // cima = direita x frente
+            const d = [f[0] + rx * nx + ux * ny, f[1] + uy * ny, f[2] + rz * nx + uz * ny], l = Math.hypot(d[0], d[1], d[2]);
+            return [d[0] / l, d[1] / l, d[2] / l];
+        }
+        function eyePos() { return [P.x, P.y + P.eh, P.z]; }
+        function lookDir() { return [-Math.sin(P.yaw) * Math.cos(P.pitch), Math.sin(P.pitch), -Math.cos(P.yaw) * Math.cos(P.pitch)]; }
+        function useBucket() {
+            if (!bucketFull) { // vazio: pega a fonte de agua mirada (so fontes; agua corrente e atravessada)
+                const h = raycast(eyePos(), aimDir(), 6, true);
+                if (h && h.b === WSRC && setBlock(h.x, h.y, h.z, 0)) setBucket(true);
+            } else { // cheio: solta uma fonte na celula livre diante do bloco mirado
+                const h = raycast(eyePos(), aimDir(), 6); if (!h || h.py <= 0) return;
+                const c = getBlock(h.px, h.py, h.pz, 3);
+                if ((c === 0 || isTorch(c) || (isWater(c) && c !== WSRC)) && setBlock(h.px, h.py, h.pz, WSRC)) setBucket(false);
+            }
+        }
+        function act(btn, rep) {
+            if (btn === 2 && HOT[sel][0] === BUCKET) { if (!rep) useBucket(); return; } // balde: um clique por uso
+            const hit = raycast(eyePos(), aimDir(), 6); if (!hit) return;
+            if (btn === 0) {
+                if (hit.y <= 0) return;
+                setBlock(hit.x, hit.y, hit.z, 0);
+                if (hit.b === 8) spawnTnt(hit.x + 0.5, hit.y, hit.z + 0.5, 3);
+            } else if (btn === 2) {
+                const id = HOT[sel][0], x = hit.px, y = hit.py, z = hit.pz;
+                const c = getBlock(x, y, z, 3);
+                if (c !== 0 && !isWater(c)) return;
+                let pid = id;
+                if (id === TORCH) { // chao: tocha em pe; parede: tocha inclinada. Apoio precisa ser bloco opaco.
+                    const nx = hit.px - hit.x, ny = hit.py - hit.y, nz = hit.pz - hit.z;
+                    if (isWater(c) || OP[hit.b] < 15 || ny < 0) return;
+                    if (ny === 0) pid = 11 + WDIR.findIndex(d => d[0] === -nx && d[1] === -nz);
+                }
+                if (!isWater(id) && id !== TORCH) {
+                    const r = 0.3;
+                    if (x + 1 > P.x - r && x < P.x + r && z + 1 > P.z - r && z < P.z + r && y + 1 > P.y && y < P.y + 1.8) return;
+                }
+                setBlock(x, y, z, pid);
+            }
+        }
+
+        /* ---------- Controles de toque ---------- */
+        function startTouch() {
+            locked = true; state = 'playing'; menu.style.display = 'none';
+            try { const el = document.documentElement; const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => { }); } catch (e) { }
+            try { const r = screen.orientation.lock('landscape'); if (r && r.catch) r.catch(() => { }); } catch (e) { }
+        }
+        const joyEl = $('joy'), knob = $('knob');
+        let joyId = null, joyC = [0, 0];
+        const JR = 52;
+        function joySet(t) {
+            let dx = t.clientX - joyC[0], dy = t.clientY - joyC[1];
+            const d = Math.hypot(dx, dy);
+            if (d > JR) { dx *= JR / d; dy *= JR / d; }
+            joy.x = dx / JR; joy.y = -dy / JR; joy.mag = Math.min(1, d / JR);
+            knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        }
+        joyEl.addEventListener('touchstart', e => {
+            e.preventDefault(); const t = e.changedTouches[0]; joyId = t.identifier;
+            const r = joyEl.getBoundingClientRect(); joyC = [r.left + r.width / 2, r.top + r.height / 2]; joySet(t);
+        }, { passive: false });
+        joyEl.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === joyId) joySet(t); }, { passive: false });
+        const joyEnd = e => { for (const t of e.changedTouches) if (t.identifier === joyId) { joyId = null; joy.x = joy.y = joy.mag = 0; knob.style.transform = ''; } };
+        joyEl.addEventListener('touchend', joyEnd); joyEl.addEventListener('touchcancel', joyEnd);
+
+        /* Toque na tela (estilo Bedrock): arrastar = olhar · toque curto = colocar bloco · segurar = quebrar o bloco sob o dedo */
+        let lookId = null, lx = 0, ly = 0, tx0 = 0, ty0 = 0, tT0 = 0, tMoved = false, tBreak = false, holdTimer = 0;
+        const HOLD_MS = 320, MOVE_PX = 12;
+        function touchReset() { clearTimeout(holdTimer); if (tBreak) held[0] = false; tBreak = false; tMoved = false; lookId = null; aim.on = false; }
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault(); if (!locked || state !== 'playing') return;
+            for (const t of e.changedTouches) if (lookId === null) {
+                lookId = t.identifier; lx = tx0 = t.clientX; ly = ty0 = t.clientY; tT0 = performance.now(); tMoved = false; tBreak = false;
+                aim.on = true; aim.x = tx0; aim.y = ty0;
+                clearTimeout(holdTimer);
+                holdTimer = setTimeout(() => {
+                    if (lookId === null || tMoved || !locked || state !== 'playing') return;
+                    tBreak = true; held[0] = true; holdT = 0; act(0);
+                    try { navigator.vibrate && navigator.vibrate(12); } catch (e) { }
+                }, HOLD_MS);
+            }
+        }, { passive: false });
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            for (const t of e.changedTouches) if (t.identifier === lookId) {
+                if (tBreak) { aim.x = t.clientX; aim.y = t.clientY; continue; } // quebrando: a mira acompanha o dedo
+                if (!tMoved) {
+                    if (Math.hypot(t.clientX - tx0, t.clientY - ty0) < MOVE_PX) continue; // pequena tremida nao vira giro
+                    tMoved = true; clearTimeout(holdTimer); aim.on = false; lx = t.clientX; ly = t.clientY; continue;
+                }
+                P.yaw -= (t.clientX - lx) * 0.006;
+                P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - (t.clientY - ly) * 0.006));
+                lx = t.clientX; ly = t.clientY;
+            }
+        }, { passive: false });
+        const lookEnd = e => {
+            for (const t of e.changedTouches) if (t.identifier === lookId) {
+                const tap = e.type === 'touchend' && !tMoved && !tBreak && performance.now() - tT0 < HOLD_MS && locked && state === 'playing';
+                if (tap) { aim.on = true; aim.x = tx0; aim.y = ty0; act(2); }
+                touchReset();
+            }
+        };
+        canvas.addEventListener('touchend', lookEnd); canvas.addEventListener('touchcancel', lookEnd);
+
+        function holdBtn(id, on, off) {
+            const el = $(id);
+            el.addEventListener('touchstart', e => { e.preventDefault(); el.classList.add('on'); on(); }, { passive: false });
+            const end = e => { e.preventDefault(); el.classList.remove('on'); if (off) off(); };
+            el.addEventListener('touchend', end, { passive: false }); el.addEventListener('touchcancel', end, { passive: false });
+        }
+        holdBtn('bJump', () => { keys.Space = true; spaceTap(); }, () => { keys.Space = false; });
+        holdBtn('bDown', () => { keys.ShiftLeft = true; }, () => { keys.ShiftLeft = false; });
+        holdBtn('bRew', () => { rewinding = true; }, () => { rewinding = false; rewHold = 0; });
+        holdBtn('bFly', () => { toggleFly(); });
+        $('bSneak').addEventListener('touchstart', e => { e.preventDefault(); keys.ShiftLeft = !keys.ShiftLeft; e.currentTarget.classList.toggle('on', !!keys.ShiftLeft); }, { passive: false });
+        $('bPause').addEventListener('touchstart', e => { e.preventDefault(); pause(); }, { passive: false });
+        $('bPage').addEventListener('touchstart', e => { e.preventDefault(); openInv(); }, { passive: false });
+        [...hotbar.children].forEach((c, i) => c.addEventListener('pointerdown', e => { sel = i; refreshHotbar(); e.stopPropagation(); }));
+
+        /* ---------- Loop principal ---------- */
+        const info = $('info'), flashEl = $('flash'), waterEl = $('water'), rewEl = $('rew');
+        let time = 0.2, last = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0;
+        const DAY = 240;
+        function resize() { const d = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2); canvas.width = innerWidth * d; canvas.height = innerHeight * d; gl.viewport(0, 0, canvas.width, canvas.height); }
+        addEventListener('resize', resize); resize();
+
+        function update(dt) {
+            streamT -= dt;
+            if (streamT <= 0) { streamT = 0.25; streamChunks(); }
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
+            // luz dos chunks recem-chegados: mais proximos primeiro, com orcamento de tempo
+            const unlit = []; for (const ch of chunks.values()) if (!ch.lit) unlit.push(ch);
+            if (unlit.length) {
+                unlit.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
+                const tl = performance.now();
+                for (const ch of unlit) { initLight(ch); if (performance.now() - tl > 5) break; }
+            }
+            const t0 = performance.now(); let n = 0;
+            const dirty = []; for (const ch of chunks.values()) if (ch.dirty && canMesh(ch)) dirty.push(ch);
+            dirty.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
+            for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > 6 && n >= 1) break; }
+            if (!spawned) {
+                const c = chunks.get(ckey(spawnAt[0] >> 4, spawnAt[1] >> 4));
+                statusEl.textContent = 'Gerando o mundo... (' + chunks.size + ' chunks)';
+                if (c && !c.dirty && chunks.size > 12) {
+                    if (cur.player) { P.fly = !!cur.player.fly; if (hits(P.x, P.y, P.z)) P.y = surfaceY(Math.floor(P.x), Math.floor(P.z)) + 0.1; }
+                    else { P.y = surfaceY(8, 8) + 0.1; P.x = 8.5; P.z = 8.5; }
+                    spawned = true; statusEl.textContent = 'Pronto!'; $('enter').disabled = false;
+                }
+                return;
+            }
+            if (rewinding) {
+                rewHold += dt;
+                let cnt = Math.ceil((300 + rewHold * 2500) * dt);
+                while (cnt-- > 0 && history.length >= 5) {
+                    const nw = history.pop(), old = history.pop(), z = history.pop(), y = history.pop(), x = history.pop();
+                    setBlock(x, y, z, old, false);
+                }
+                active.clear(); wq.clear(); tnts.length = 0;
+            } else {
+                time += dt / DAY;
+                acc += dt; let g = 0;
+                while (acc >= 0.05 && g++ < 3) { acc -= 0.05; tick(); }
+                if (acc > 0.2) acc = 0;
+                updateTnt(dt);
+            }
+            updatePlayer(dt);
+            if (state === 'playing') { updateLeaves(dt); updateBeams(dt); }
+            if (state === 'playing') cur.playTime = (cur.playTime || 0) + dt;
+            if (locked) {
+                holdT += dt;
+                if (holdT > 0.25) { holdT = 0; if (held[0]) act(0, true); else if (held[2]) act(2, true); }
+            }
+        }
+
+
+        /* ---------- Folhas caindo: ate 56 particulas, uma unica chamada de desenho, sem blend, sem alocacao por quadro ---------- */
+        const NLP = 56, lpA = new Float32Array(NLP * 8); // x y z tamanho rot r g b
+        const lpX = new Float32Array(NLP), lpY = new Float32Array(NLP), lpZ = new Float32Array(NLP), lpAge = new Float32Array(NLP), lpLife = new Float32Array(NLP), lpPh = new Float32Array(NLP), lpRest = new Uint8Array(NLP);
+        const lpR = new Float32Array(NLP), lpG = new Float32Array(NLP), lpB = new Float32Array(NLP);
+        let lpN = 0, lpAcc = 0;
+        const LCOL = { 6: [62, 138, 44], 26: [112, 168, 70], 28: [40, 92, 60] };
+        function spawnLeaf() {
+            if (lpN >= NLP) return;
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
+            const ch = chunks.get(ckey(pcx + ((Math.random() * 5) | 0) - 2, pcz + ((Math.random() * 5) | 0) - 2));
+            if (!ch || !ch.drops || !ch.drops.length) return;
+            const dd = ch.drops, k = ((Math.random() * dd.length / 4) | 0) * 4;
+            const x = dd[k] + Math.random(), y = dd[k + 1] - 0.05, z = dd[k + 2] + Math.random();
+            const dx = x - P.x, dz = z - P.z; if (dx * dx + dz * dz > 576) return; // so perto do jogador (24 blocos)
+            const c = LCOL[dd[k + 3]] || LCOL[6], v = 0.82 + Math.random() * 0.36, yl = Math.random() < 0.12 && dd[k + 3] !== 28;
+            const i = lpN++;
+            lpX[i] = x; lpY[i] = y; lpZ[i] = z; lpAge[i] = 0; lpLife[i] = 30; lpPh[i] = Math.random() * 6.28; lpRest[i] = 0;
+            lpR[i] = (yl ? 190 : c[0]) * v / 255; lpG[i] = (yl ? 160 : c[1]) * v / 255; lpB[i] = (yl ? 50 : c[2]) * v / 255;
+        }
+        function updateLeaves(dt) {
+            lpAcc += dt * 9; while (lpAcc >= 1) { lpAcc -= 1; spawnLeaf(); }
+            const tt = performance.now() / 1000, wx = 0.35 * Math.sin(tt * 0.21), wz = 0.22 * Math.cos(tt * 0.17);
+            for (let i = lpN - 1; i >= 0; i--) {
+                lpAge[i] += dt; let dead = lpAge[i] > lpLife[i];
+                if (!dead && !lpRest[i]) {
+                    const ph = lpPh[i] + lpAge[i] * 2.6;
+                    lpX[i] += (Math.sin(ph) * 0.55 + wx) * dt; lpZ[i] += (Math.cos(ph * 0.8 + 1) * 0.45 + wz) * dt;
+                    lpY[i] -= (0.9 + 0.35 * Math.sin(ph * 1.7)) * dt;
+                    const fx = Math.floor(lpX[i]), fy = Math.floor(lpY[i]), fz = Math.floor(lpZ[i]), b = getBlock(fx, fy, fz, -1);
+                    if (b < 0) dead = true;
+                    else if (OP[b] >= 15) { lpY[i] = fy + 1.03; lpRest[i] = 1; lpAge[i] = 0; lpLife[i] = 2.5; }
+                    else if (isWater(b)) { lpY[i] = fy + 0.85; lpRest[i] = 1; lpAge[i] = 0; lpLife[i] = 1.2; }
+                }
+                if (dead) { const l = --lpN; if (i !== l) { lpX[i] = lpX[l]; lpY[i] = lpY[l]; lpZ[i] = lpZ[l]; lpAge[i] = lpAge[l]; lpLife[i] = lpLife[l]; lpPh[i] = lpPh[l]; lpRest[i] = lpRest[l]; lpR[i] = lpR[l]; lpG[i] = lpG[l]; lpB[i] = lpB[l]; } }
+            }
+            for (let i = 0; i < lpN; i++) { // dados de desenho
+                const o = i * 8, rest = lpRest[i], sz = rest ? 0.13 * Math.min(1, (lpLife[i] - lpAge[i]) * 1.5) : 0.13;
+                lpA[o] = lpX[i]; lpA[o + 1] = lpY[i]; lpA[o + 2] = lpZ[i]; lpA[o + 3] = sz; lpA[o + 4] = rest ? lpPh[i] : lpPh[i] + lpAge[i] * 3.3;
+                lpA[o + 5] = lpR[i]; lpA[o + 6] = lpG[i]; lpA[o + 7] = lpB[i];
+            }
+        }
+        const lpProg = mkProg(`#version 300 es
+layout(location=0) in vec3 p; layout(location=1) in vec2 sr; layout(location=2) in vec3 c;
+uniform mat4 mvp; uniform vec3 cam; uniform float k;
+out vec3 vC; out float vR; out float vD;
+void main(){ gl_Position=mvp*vec4(p,1.0); vD=length(p-cam); gl_PointSize=clamp(sr.x*k/gl_Position.w,2.0,24.0); vC=c; vR=sr.y; }`,
+            `#version 300 es
+precision mediump float;
+uniform vec3 sky; uniform float light; uniform float fogN; uniform float fogF;
+in vec3 vC; in float vR; in float vD; out vec4 o;
+void main(){
+  vec2 q=gl_PointCoord-0.5; float cs=cos(vR), sn=sin(vR);
+  q=vec2(cs*q.x-sn*q.y, sn*q.x+cs*q.y);
+  if(abs(q.x)>0.5||abs(q.y)>0.32) discard;
+  vec3 col=vC*(q.y>0.0?1.0:0.82)*max(light,0.22);
+  col=mix(col,sky,clamp((vD-fogN)/(fogF-fogN),0.0,1.0));
+  o=vec4(col,1.0);
+}`);
+        const LPU = {}; for (const n of ['mvp', 'cam', 'k', 'sky', 'light', 'fogN', 'fogF']) LPU[n] = gl.getUniformLocation(lpProg, n);
+        const lpVao = gl.createVertexArray(); gl.bindVertexArray(lpVao);
+        const lpVbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, lpVbo); gl.bufferData(gl.ARRAY_BUFFER, lpA.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+        gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
+        gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
+        gl.bindVertexArray(null);
+
+        /* ---------- Raios de sol saindo pelos furos das folhas ----------
+           Ate 14 faixas suaves (aditivas) que nascem na parte de baixo da copa, seguem a direcao do sol, aparecem/somem devagar
+           e terminam antes do chao. Uma unica chamada de desenho, sem alocacao por quadro. */
+        const NB = 14, bA = new Float32Array(NB * 6 * 6); // 6 vertices x (x y z u v a)
+        const bX = new Float32Array(NB), bY = new Float32Array(NB), bZ = new Float32Array(NB), bL = new Float32Array(NB), bW = new Float32Array(NB), bAge = new Float32Array(NB), bLife = new Float32Array(NB), bPh = new Float32Array(NB);
+        var bN = 0; let bI = 0, bDx = 0, bDy = -1, bDz = 0;
+        function spawnBeam() {
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
+            const ch = chunks.get(ckey(pcx + ((Math.random() * 3) | 0) - 1, pcz + ((Math.random() * 3) | 0) - 1));
+            if (!ch || !ch.drops || !ch.drops.length) return;
+            const dd = ch.drops, k = ((Math.random() * dd.length / 4) | 0) * 4;
+            const x = dd[k] + 0.15 + Math.random() * 0.7, y = dd[k + 1] - 0.02, z = dd[k + 2] + 0.15 + Math.random() * 0.7;
+            const dx = x - P.x, dz = z - P.z; if (dx * dx + dz * dz > 400) return;
+            let L = 2.2 + Math.random() * 1.3; // o raio morre sempre ~1 bloco antes de qualquer bloco solido (nunca toca o chao)
+            for (let t = 0.5; t <= L + 1.2; t += 0.5) {
+                const b = getBlock(Math.floor(x + bDx * t), Math.floor(y + bDy * t), Math.floor(z + bDz * t), -1);
+                if (b < 0 || OP[b] >= 15) { L = Math.min(L, t - 1.2); break; }
+            }
+            if (L < 1) return;
+            const i = bN++;
+            bX[i] = x; bY[i] = y; bZ[i] = z; bL[i] = L; bW[i] = 0.2 + Math.random() * 0.22; bAge[i] = 0; bLife[i] = 7 + Math.random() * 5; bPh[i] = Math.random() * 6.28;
+        }
+        function updateBeams(dt) {
+            const sa = time * Math.PI * 2, sh = Math.sin(sa), sx = Math.cos(sa) * 0.8, sl = Math.hypot(sx, sh, 0.35);
+            bI = Math.max(0, Math.min(1, (sh - 0.12) * 2.5));
+            bDx = -sx / sl; bDy = -sh / sl; bDz = -0.35 / sl;
+            if (bI <= 0.02) { bN = 0; return; }
+            for (let i = bN - 1; i >= 0; i--) {
+                bAge[i] += dt;
+                if (bAge[i] > bLife[i]) { const l = --bN; if (i !== l) { bX[i] = bX[l]; bY[i] = bY[l]; bZ[i] = bZ[l]; bL[i] = bL[l]; bW[i] = bW[l]; bAge[i] = bAge[l]; bLife[i] = bLife[l]; bPh[i] = bPh[l]; } }
+            }
+            if (bN < NB && Math.random() < dt * 2.5) spawnBeam();
+        }
+        function buildBeams(ex, ey, ez) {
+            let o = 0;
+            for (let i = 0; i < bN; i++) {
+                const t = bAge[i] / bLife[i], e = Math.sin(Math.PI * t), a = e * e * (0.8 + 0.2 * Math.sin(bAge[i] * 1.1 + bPh[i]));
+                const sx = bX[i], sy = bY[i], sz = bZ[i], L = bL[i], ex2 = sx + bDx * L, ey2 = sy + bDy * L, ez2 = sz + bDz * L;
+                const vx = (sx + ex2) * 0.5 - ex, vy = (sy + ey2) * 0.5 - ey, vz = (sz + ez2) * 0.5 - ez;
+                let qx = bDy * vz - bDz * vy, qy = bDz * vx - bDx * vz, qz = bDx * vy - bDy * vx;
+                const ql = Math.hypot(qx, qy, qz) || 1, w = bW[i] / ql; qx *= w; qy *= w; qz *= w;
+                const V = [sx - qx, sy - qy, sz - qz, -1, 0, sx + qx, sy + qy, sz + qz, 1, 0, ex2 + qx, ey2 + qy, ez2 + qz, 1, 1,
+                sx - qx, sy - qy, sz - qz, -1, 0, ex2 + qx, ey2 + qy, ez2 + qz, 1, 1, ex2 - qx, ey2 - qy, ez2 - qz, -1, 1];
+                for (let v = 0; v < 30; v += 5) { bA[o++] = V[v]; bA[o++] = V[v + 1]; bA[o++] = V[v + 2]; bA[o++] = V[v + 3]; bA[o++] = V[v + 4]; bA[o++] = a; }
+            }
+        }
+        const bProg = mkProg(`#version 300 es
+layout(location=0) in vec3 p; layout(location=1) in vec3 q;
+uniform mat4 mvp; uniform vec3 cam;
+out vec3 vq; out float vD;
+void main(){ gl_Position=mvp*vec4(p,1.0); vD=length(p-cam); vq=q; }`,
+            `#version 300 es
+precision mediump float;
+uniform float fogN; uniform float fogF; uniform float I;
+in vec3 vq; in float vD; out vec4 o;
+void main(){
+  float u=1.0-abs(vq.x); float a=u*u*(3.0-2.0*u);
+  a*=smoothstep(0.0,0.25,vq.y)*(1.0-smoothstep(0.2,1.0,vq.y));
+  a*=vq.z*I*smoothstep(1.0,3.5,vD)*(1.0-clamp((vD-fogN)/(fogF-fogN),0.0,1.0));
+  o=vec4(1.0,0.93,0.72,a*0.3);
+}`);
+        const BU = {}; for (const n of ['mvp', 'cam', 'fogN', 'fogF', 'I']) BU[n] = gl.getUniformLocation(bProg, n);
+        const bVao = gl.createVertexArray(); gl.bindVertexArray(bVao);
+        const bVbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bVbo); gl.bufferData(gl.ARRAY_BUFFER, bA.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+        gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+        gl.bindVertexArray(null);
+
+        function render() {
+            const asp = canvas.width / canvas.height;
+            const eye = eyePos();
+            const sh = shake > 0 ? shake : 0;
+            const dir = lookDir();
+            const e2 = [eye[0] + (Math.random() - 0.5) * sh * 0.3, eye[1] + (Math.random() - 0.5) * sh * 0.3, eye[2] + (Math.random() - 0.5) * sh * 0.3];
+            const view = lookAt(e2, [e2[0] + dir[0], e2[1] + dir[1], e2[2] + dir[2]], [0, 1, 0]);
+            const mvp = mul(persp(1.2 + P.fk, asp, 0.08, 400), view);
+            const sunH = Math.sin(time * Math.PI * 2);
+            const day = Math.max(0, Math.min(1, 0.5 + sunH * 1.2));
+            const dusk = Math.max(0, 1 - Math.abs(sunH) * 5) * 0.5;
+            let sky = [0.02 + 0.51 * day, 0.03 + 0.78 * day, 0.08 + 0.84 * day];
+            sky = sky.map((v, i) => v + ([0.95, 0.5, 0.3][i] - v) * dusk);
+            let light = 0.15 + 0.85 * day; // brilho do ceu (dia/noite); a luz de bloco nao depende dele
+            const headW = isWater(getBlock(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2]), 0));
+            let fogN = renderDist * 16 * 0.55, fogF = renderDist * 16 * 0.95;
+            if (headW) { sky = [0.08 * light + 0.04, 0.22 * light + 0.05, 0.5 * light + 0.05]; fogN = 1; fogF = 24; }
+            gl.clearColor(sky[0], sky[1], sky[2], 1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+            gl.useProgram(prog);
+            gl.uniformMatrix4fv(U.mvp, false, mvp);
+            gl.uniform3f(U.cam, eye[0], eye[1], eye[2]);
+            gl.uniform3f(U.sky, sky[0], sky[1], sky[2]);
+            gl.uniform1f(U.light, light); gl.uniform1f(U.fogN, fogN); gl.uniform1f(U.fogF, fogF);
+            const pt = performance.now(); gl.uniform1f(U.tm, pt / 1000); gl.uniform1f(U.fl, 1 + 0.05 * Math.sin(pt / 85) * Math.sin(pt / 230)); // tremulo leve das tochas
+            gl.uniform1f(U.alpha, 1); gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texture); gl.uniform1i(U.tex, 0);
+            const vis = [];
+            for (const ch of chunks.values()) {
+                const dx = ch.cx * 16 + 8 - eye[0], dy = 32 - eye[1], dz = ch.cz * 16 + 8 - eye[2];
+                if (dx * dir[0] + dy * dir[1] + dz * dir[2] < -34) continue;
+                vis.push(ch);
+            }
+            for (const ch of vis) if (ch.mo) { gl.bindVertexArray(ch.mo.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.mo.count); }
+            for (const t of tnts) {
+                gl.uniform3f(U.off, t.x - 0.5, t.y, t.z - 0.5);
+                gl.uniform1f(U.flash, (Math.floor(t.fuse * 5) % 2 === 0) ? 0.75 : 0);
+                gl.bindVertexArray(cubeMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, cubeMesh.count);
+            }
+            gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
+            const hit = (locked && (!isTouch || aim.on)) ? raycast(eyePos(), aimDir(), 6, HOT[sel][0] === BUCKET && !bucketFull) : null;
+            if (hit) {
+                gl.useProgram(lprog); gl.uniformMatrix4fv(LU.mvp, false, mvp); if (hit.box) { const B = hit.box; gl.uniform3f(LU.off, hit.x + B[0], hit.y + B[1], hit.z + B[2]); gl.uniform3f(LU.sc, B[3] - B[0], B[4] - B[1], B[5] - B[2]); }
+                else { gl.uniform3f(LU.off, hit.x, hit.y, hit.z); gl.uniform3f(LU.sc, 1, 1, 1); }
+                gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                gl.bindVertexArray(edge.vao); gl.drawArrays(gl.LINES, 0, edge.count);
+                gl.useProgram(prog);
+            }
+            if (lpN) { // folhas caindo (opacas, antes da agua)
+                gl.disable(gl.BLEND); gl.useProgram(lpProg);
+                gl.uniformMatrix4fv(LPU.mvp, false, mvp); gl.uniform3f(LPU.cam, eye[0], eye[1], eye[2]);
+                gl.uniform1f(LPU.k, canvas.height / (2 * Math.tan((1.2 + P.fk) / 2)));
+                gl.uniform3f(LPU.sky, sky[0], sky[1], sky[2]); gl.uniform1f(LPU.light, light); gl.uniform1f(LPU.fogN, fogN); gl.uniform1f(LPU.fogF, fogF);
+                gl.bindVertexArray(lpVao); gl.bindBuffer(gl.ARRAY_BUFFER, lpVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, lpA, 0, lpN * 8);
+                gl.drawArrays(gl.POINTS, 0, lpN);
+            }
+            if (bN && !headW) { // raios de sol entre as folhas (aditivos, sem escrever profundidade)
+                buildBeams(eye[0], eye[1], eye[2]);
+                gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false); gl.useProgram(bProg);
+                gl.uniformMatrix4fv(BU.mvp, false, mvp); gl.uniform3f(BU.cam, eye[0], eye[1], eye[2]);
+                gl.uniform1f(BU.fogN, fogN); gl.uniform1f(BU.fogF, fogF); gl.uniform1f(BU.I, bI);
+                gl.bindVertexArray(bVao); gl.bindBuffer(gl.ARRAY_BUFFER, bVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, bA, 0, bN * 36);
+                gl.drawArrays(gl.TRIANGLES, 0, bN * 6);
+            }
+            gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+            gl.useProgram(wprog);
+            gl.uniformMatrix4fv(WU.mvp, false, mvp); gl.uniform3f(WU.cam, eye[0], eye[1], eye[2]); gl.uniform3f(WU.off, 0, 0, 0);
+            gl.uniform3f(WU.sky, sky[0], sky[1], sky[2]); gl.uniform1f(WU.light, light); gl.uniform1f(WU.fl, 1);
+            gl.uniform1f(WU.fogN, fogN); gl.uniform1f(WU.fogF, fogF); gl.uniform1f(WU.tm, pt / 1000);
+            const sa = time * Math.PI * 2, sl = Math.hypot(Math.cos(sa) * 0.8, Math.sin(sa), 0.35);
+            gl.uniform3f(WU.sun, Math.cos(sa) * 0.8 / sl, Math.sin(sa) / sl, 0.35 / sl);
+            gl.uniform1f(WU.sunI, headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)));
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, waterTex); gl.uniform1i(WU.tex, 1); gl.activeTexture(gl.TEXTURE0);
+            for (const ch of vis) if (ch.mw) { gl.bindVertexArray(ch.mw.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.mw.count); }
+            gl.depthMask(true); gl.disable(gl.BLEND);
+            gl.bindVertexArray(null);
+            waterEl.style.opacity = headW ? 1 : 0;
+        }
+
+        function frame(now) {
+            const dt = Math.min(0.05, (now - last) / 1000); last = now;
+            if (cur) {
+                if (state === 'playing' || state === 'loading') update(dt);
+                flashAmt = Math.max(0, flashAmt - dt * 1.4); shake = Math.max(0, shake - dt * 1.2);
+                flashEl.style.opacity = flashAmt;
+                rewEl.style.opacity = rewinding ? 1 : 0;
+                if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
+                render();
+                if (spawned) {
+                    if (wantThumb) { wantThumb = false; grabThumb(); }
+                    if (pendingSave) { pendingSave = false; saveWorld(); }
+                }
+                frames++; fpsT += dt;
+                if (fpsT >= 0.5) {
+                    fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
+                    document.body.classList.toggle('flying', P.fly);
+                    const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
+                    info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
+                        'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
+                        'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '   TNT ativas ' + tnts.length +
+                        (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
+                }
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+        kv.init().then(() => {
+            if (!kv.db) $('dbNote').textContent = 'Armazenamento indisponível: os mundos não serão mantidos ao fechar a página.';
+            try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { }
+        });
+    </script>
+</body>
+
+</html>
