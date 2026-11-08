@@ -1241,7 +1241,8 @@
         const prog = mkProg(`#version 300 es
 layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt;
 uniform mat4 mvp; uniform vec3 cam; uniform vec3 off; uniform float tm;
-out vec2 vUv; out vec3 vLt; out vec3 vW; out float vD;
+uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
+out vec2 vUv; out vec3 vLt; out vec3 vW; out float vD; out vec3 vFog;
 void main(){
   vec3 w=p+off;
   if(lt.y>3.5){ // folhas (marcadas no atributo de luz): balanco leve; depende so da posicao, entao blocos vizinhos nunca se separam
@@ -1251,11 +1252,16 @@ void main(){
     w.y+=0.025*sin(tm*2.3+q.x*0.9+q.z*0.8);
   }
   vUv=uv; vLt=lt; vW=w; vD=length(w-cam); gl_Position=mvp*vec4(w,1.0);
+  { // cor da neblina na direcao deste vertice: ceu + brilho do sol/lua (varia suave, por isso por vertice e nao por pixel)
+    vec3 dv=(w-cam)/max(vD,0.001);
+    float sd=max(dot(dv,sun),0.0); sd*=sd; float md=max(-dot(dv,sun),0.0); md*=md;
+    vFog=sky+glow*(sd*sd*sd)+mglow*(md*md*md);
+  }
 }`,
             `#version 300 es
 precision highp float;
 uniform sampler2D tex; uniform vec3 sky; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform float alpha; uniform float flash; uniform float tm;
-in vec2 vUv; in vec3 vLt; in vec3 vW; in float vD; out vec4 o;
+in vec2 vUv; in vec3 vLt; in vec3 vW; in float vD; in vec3 vFog; out vec4 o;
 void main(){
   vec4 c=texture(tex,vUv);
   if(c.a<0.5) discard;
@@ -1266,7 +1272,7 @@ void main(){
   vec3 col=c.rgb*vLt.x*lc;
   col=mix(col,vec3(1.0),flash);
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
-  col=mix(col,sky,f);
+  col=mix(col,vFog,f); // vFog: cor do ceu naquela direcao (mesma formula do domo, entao a emenda some)
   o=vec4(col,c.a*alpha);
 }`);
         const lprog = mkProg(`#version 300 es
@@ -1274,22 +1280,138 @@ layout(location=0) in vec3 p; uniform mat4 mvp; uniform vec3 off; uniform vec3 s
 void main(){ gl_Position=mvp*vec4(p*sc+off,1.0); }`,
             `#version 300 es
 precision mediump float; out vec4 o; void main(){ o=vec4(0.0,0.0,0.0,0.9); }`);
+
+        /* ---------- Ceu: GLSL compartilhado pelo domo e pelo reflexo da agua ----------
+           Tudo em estilo Minecraft: sol e lua quadrados, estrelas em pixels, nuvens em blocos 12x12x4 com lado e fundo sombreados. */
+        const CLOUD_Y = 84, CLOUD_CELL = 12, CLOUD_N = 128;
+        const SKN = ['sky', 'cam', 'sun', 'sunI', 'tm', 'zen', 'glow', 'mglow', 'sunC', 'starI', 'moonI', 'moonPh', 'cThr', 'cTop', 'cSide', 'cBot', 'cOff', 'starM', 'ctex', 'ntex', 'skyQ'];
+        const SKYGLSL = `
+uniform vec3 sky; uniform vec3 cam; uniform vec3 sun; uniform float sunI; uniform float tm;
+uniform vec3 zen; uniform vec3 glow; uniform vec3 mglow; uniform vec3 sunC;
+uniform float starI; uniform float moonI; uniform float moonPh; uniform float cThr; uniform float skyQ;
+uniform vec3 cTop; uniform vec3 cSide; uniform vec3 cBot; uniform vec2 cOff; uniform mat3 starM;
+uniform highp sampler2D ctex; uniform highp sampler2D ntex;
+float h11(vec2 p){ vec3 q=fract(vec3(p.xyx)*0.1031); q+=dot(q,q.yzx+33.33); return fract((q.x+q.y)*q.z); }
+vec3 fogCol(vec3 d){
+  float s=max(dot(d,sun),0.0); s*=s; float s6=s*s*s;
+  float m=max(-dot(d,sun),0.0); m*=m; float m6=m*m*m;
+  return sky+glow*s6+mglow*m6;
+}
+vec4 clouds(vec3 d, vec3 o, bool lite){
+  float ay=abs(d.y);
+  if(ay<0.012 || (lite && skyQ<0.5)) return vec4(0.0);
+  const float Y0=${CLOUD_Y}.0; const float TH=4.0; const float K=1.0/${CLOUD_CELL * CLOUD_N}.0;
+  bool below=o.y<Y0; float yA, yB;
+  if(below && d.y>0.0){ yA=Y0; yB=Y0+TH; }
+  else if(o.y>Y0+TH && d.y<0.0){ yA=Y0+TH; yB=Y0; }
+  else return vec4(0.0);
+  float tA=(yA-o.y)/d.y, tB=(yB-o.y)/d.y;
+  vec2 pA=o.xz+d.xz*tA+cOff, pB=o.xz+d.xz*tB+cOff;
+  bool fA=textureLod(ctex,pA*K,0.0).r>cThr;
+  bool fM=false, fB=false;
+  if(!fA){
+    if(lite) return vec4(0.0);
+    vec2 tv=pB-pA; // paredes laterais so aparecem quando o raio atravessa a laje em < ~1 celula
+    if(dot(tv,tv)<196.0){ fM=textureLod(ctex,(pA+pB)*(0.5*K),0.0).r>cThr; fB=!fM && textureLod(ctex,pB*K,0.0).r>cThr; }
+    if(!(fM||fB)) return vec4(0.0);
+  }
+  vec3 c;
+  if(fA){ // face de frente: fundo (visto de baixo) ou topo (visto de cima)
+    float nb=0.5;
+    if(!lite && skyQ>0.5){ vec2 sh=normalize(sun.xz)*${CLOUD_CELL}.0; nb=textureLod(ctex,(pA+sh)*K,0.0).r>cThr?1.0:0.0; }
+    c=below ? cBot*(1.0+0.35*(1.0-nb)*sunI) : cTop*(1.0-0.14*nb);
+  } else c=cSide;
+  c*=0.95+0.1*h11(floor(pA*(1.0/${CLOUD_CELL}.0)));
+  float sg=max(dot(d,sun),0.0); sg*=sg; c+=glow*(sg*sg*sg)*0.7; // nuvens acendem perto do sol (dourado/laranja no amanhecer e no por do sol)
+  c=mix(fogCol(d),c,smoothstep(0.0,0.10,ay)); // longe, a nuvem se dissolve na cor do horizonte
+  return vec4(c,0.92*smoothstep(0.012,0.06,ay));
+}
+vec3 skyCol(vec3 d, vec3 o, bool lite){
+  float e=d.y;
+  vec3 col=mix(sky,zen,pow(clamp(e,0.0,1.0),0.55));
+  float s=max(dot(d,sun),0.0), s2=s*s, s4=s2*s2;
+  float ms=max(-dot(d,sun),0.0), m2=ms*ms, m4=m2*m2;
+  col+=glow*(s4*s2)+mglow*(m4*m2);
+  float hm=smoothstep(-0.02,0.05,e);
+  if(starI>0.001){ // estrelas: cada celula e um pixel quadrado; giram com o ceu
+    vec3 p=starM*d; vec3 a=abs(p); vec2 uv; float fid;
+    if(a.x>a.y && a.x>a.z){ uv=p.yz/a.x; fid=p.x>0.0?1.0:2.0; }
+    else if(a.y>a.z){ uv=p.xz/a.y; fid=p.y>0.0?3.0:4.0; }
+    else { uv=p.xy/a.z; fid=p.z>0.0?5.0:6.0; }
+    float band=0.0;
+    if(!lite && skyQ>0.5){ // via lactea sutil
+      vec3 bn=normalize(vec3(0.3,0.75,0.55)); float dd=dot(p,bn);
+      band=exp(-dd*dd*14.0);
+      if(band>0.02){
+        vec3 bu=normalize(cross(bn,vec3(0.0,1.0,0.0))); vec3 bv=cross(bn,bu);
+        float an=atan(dot(p,bv),dot(p,bu));
+        float n=textureLod(ntex,vec2(an*2.546479,dd*2.5),0.0).r;
+        col+=mix(vec3(0.20,0.25,0.50),vec3(0.55,0.35,0.50),n)*(band*n*0.30*starI*smoothstep(0.0,0.2,e));
+      }
+    }
+    vec2 c=floor(uv*160.0); float r=h11(c+fid*23.17); float thr=0.9965-band*0.01;
+    if(r>thr){
+      float b=(r-thr)/(1.0-thr);
+      float tw=0.75+0.25*sin(tm*(1.2+2.5*b)+r*600.0);
+      vec3 sc=mix(vec3(0.65,0.78,1.0),vec3(1.0,0.88,0.7),h11(c*1.31+fid));
+      col+=sc*((0.35+0.65*b)*tw*starI*smoothstep(0.0,0.1,e));
+    }
+  }
+  if(s>0.7){ // sol: quadrado, com brilho que abre ao redor
+    vec3 r=normalize(vec3(sun.y,-sun.x,0.0)); vec3 u=cross(r,sun);
+    vec2 q=vec2(dot(d,r),dot(d,u))/s; float m=max(abs(q.x),abs(q.y));
+    const float SS=0.095;
+    float disc=(1.0-smoothstep(SS-0.003,SS,m))*hm;
+    vec3 sc=mix(sunC,vec3(1.0),0.45)*((1.15-0.18*m/SS)*(0.97+0.06*h11(floor(q/SS*4.0)+3.0)));
+    float hl=(exp(-max(m-SS,0.0)*9.0)*0.2+pow(s,26.0)*0.3)*smoothstep(-0.35,0.05,sun.y)*(1.0-disc);
+    col=mix(col,sc,disc)+sunC*hl*(0.25+0.75*smoothstep(-0.1,0.1,e));
+  }
+  if(moonI>0.001){ // lua: quadrado 8x8 com crateras e fases
+    vec3 md=-sun; float mdot=dot(d,md);
+    if(mdot>0.7){
+      vec3 r=normalize(vec3(md.y,-md.x,0.0)); vec3 u=cross(r,md);
+      vec2 q=vec2(dot(d,r),dot(d,u))/mdot;
+      const float MS=0.075;
+      vec2 g=q/MS; float m=max(abs(g.x),abs(g.y));
+      float ph=moonPh*0.7853982; float litF=0.5+0.5*cos(ph); float mdisc=0.0;
+      if(m<1.0){
+        vec2 cell=floor((g*0.5+0.5)*8.0); vec2 cc=(cell+0.5)/4.0-1.0;
+        float cr=(h11(cell+7.0)>0.80?0.5:1.0)*(0.92+0.08*h11(cell+31.0));
+        float zc=sqrt(max(1.0-0.5*dot(cc,cc),0.0));
+        float lit=smoothstep(-0.12,0.12,dot(vec3(cc,zc),vec3(sin(ph),0.0,cos(ph))));
+        vec3 mc=mix(vec3(0.045,0.06,0.11),vec3(0.80,0.85,0.95)*cr,lit);
+        mdisc=hm*moonI*(1.0-smoothstep(0.97,1.0,m));
+        col=mix(col,mc,mdisc);
+      }
+      col+=vec3(0.30,0.40,0.70)*((exp(-max(m*MS-MS,0.0)*12.0)*0.22+pow(mdot,40.0)*0.2)*moonI*(0.15+0.85*litF)*(1.0-mdisc));
+    }
+  }
+  vec4 cl=clouds(d,o,lite);
+  return mix(col,cl.rgb,cl.a);
+}
+`;
         /* ---------- Agua: shader proprio (ondas, fluxo, fresnel, brilho do sol) ---------- */
         const wprog = mkProg(`#version 300 es
 layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt; layout(location=3) in vec4 fa;
 uniform mat4 mvp; uniform vec3 cam; uniform vec3 off; uniform float tm;
-out vec2 vUv; out vec3 vLt; out vec3 vW; out vec4 vFa; out float vD;
+uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
+out vec2 vUv; out vec3 vLt; out vec3 vW; out vec4 vFa; out float vD; out vec3 vFog;
 void main(){
   vec3 w=p+off;
   w.y+=fa.w*0.018*(sin(w.x*2.1+tm*1.7)+sin(w.z*1.7-tm*1.4)+sin((w.x-w.z)*1.1+tm*1.1));
   vUv=uv; vLt=lt; vW=w; vFa=fa; vD=length(w-cam);
   gl_Position=mvp*vec4(w,1.0);
+  {
+    vec3 dv=(w-cam)/max(vD,0.001);
+    float sd=max(dot(dv,sun),0.0); sd*=sd; float md=max(-dot(dv,sun),0.0); md*=md;
+    vFog=sky+glow*(sd*sd*sd)+mglow*(md*md*md);
+  }
 }`,
             `#version 300 es
 precision highp float;
-uniform sampler2D tex; uniform vec3 sky; uniform vec3 cam; uniform vec3 sun;
-uniform float sunI; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform float tm;
-in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; out vec4 o;
+${SKYGLSL}
+uniform sampler2D tex; uniform float light; uniform float fl; uniform float fogN; uniform float fogF;
+in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; in vec3 vFog; out vec4 o;
 void main(){
   vec2 u1=vUv*0.23+vec2(tm*0.011,tm*0.007)-vFa.xy*tm*0.16;
   vec2 u2=vUv*0.41+vec2(-tm*0.009,tm*0.013)-vFa.xy*tm*0.27;
@@ -1301,24 +1423,26 @@ void main(){
   vec3 r1=cross(dpy,N0), r2=cross(N0,dpx);
   float det=dot(dpx,r1);
   vec3 N=normalize(abs(det)*N0-BUMP*sign(det)*(dFdx(h)*r1+dFdy(h)*r2));
-  float fr=clamp((0.03+0.97*pow(1.0-max(dot(N,V),0.0),5.0))*1.6,0.0,0.9);
-  vec3 R=reflect(-V,N);
-  vec3 refl=sky*(0.85+0.45*clamp(R.y,0.0,1.0));
-  float spec=pow(max(dot(R,sun),0.0),110.0)*sunI*3.0;
+  float fr=clamp((0.05+0.95*pow(1.0-max(dot(N,V),0.0),5.0))*1.7,0.0,0.92);
+  vec3 R=reflect(-V,N); R.y=max(R.y,0.02); R=normalize(R);
+  vec3 refl=min(skyCol(R,vW,true),vec3(1.5));
+  float sdR=max(dot(R,sun),0.0);
+  float spec=(pow(sdR,110.0)*3.0+pow(sdR,900.0)*5.0)*sunI;
+  float mspec=pow(max(-dot(R,sun),0.0),160.0)*moonI*1.2;
   float sB=pow(0.8,15.0-vLt.y*15.0)*light;
   float bB=pow(0.8,15.0-vLt.z*15.0)*fl;
   vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
   vec3 base=mix(vec3(0.15,0.43,0.62),vec3(0.04,0.17,0.38),vFa.z)*(0.82+0.36*h);
   vec3 col=base*vLt.x*lc;
   col=mix(col,refl*max(vLt.y,0.1),fr);
-  col+=vec3(1.0,0.95,0.8)*spec*vLt.y;
+  col+=vec3(1.0,0.95,0.8)*spec*vLt.y+vec3(0.6,0.75,1.0)*mspec*vLt.y;
   float foam=smoothstep(0.74,0.96,h)*step(0.05,length(vFa.xy))*(1.0-vFa.z*0.6);
   col=mix(col,vec3(0.86,0.94,1.0)*max(max(lc.r,lc.g),lc.b)*vLt.x,foam*0.45);
   float a=clamp(mix(0.5,0.86,vFa.z)+fr*0.18+foam*0.25,0.4,0.95);
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
-  o=vec4(mix(col,sky,f),a);
+  o=vec4(mix(col,vFog,f),a);
 }`.replace('BUMP', '1.6'));
-        const WU = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'tm', 'sky', 'sun', 'sunI', 'light', 'fl', 'fogN', 'fogF']) WU[n] = gl.getUniformLocation(wprog, n);
+        const WU = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'tm', 'sky', 'sun', 'sunI', 'light', 'fl', 'fogN', 'fogF', ...SKN]) WU[n] = gl.getUniformLocation(wprog, n);
         // textura de ruido 64x64 que se repete sem emenda (R e G = duas camadas de altura)
         const waterTex = (() => {
             const N = 64, hash = (i, j, sd) => { let h = Math.imul(i * 374761393 + j * 668265263 + sd * 1274126177, 1103515245); h ^= h >>> 13; h = Math.imul(h, 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
@@ -1346,7 +1470,63 @@ void main(){
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
             return t;
         })();
-        const U = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'sky', 'light', 'fl', 'fogN', 'fogF', 'alpha', 'flash', 'tm']) U[n] = gl.getUniformLocation(prog, n);
+
+        /* ---------- Domo do ceu: 1 triangulo de tela cheia, desenhado DEPOIS do terreno e so onde a profundidade e 1.0 ----------
+           O teste de profundidade descarta cedo todo pixel coberto por terreno, entao o custo e so a area de ceu visivel. */
+        const sprog = mkProg(`#version 300 es
+uniform vec3 uF; uniform vec3 uR; uniform vec3 uU;
+out vec3 vRay;
+void main(){
+  vec2 p=vec2(gl_VertexID==1?3.0:-1.0, gl_VertexID==2?3.0:-1.0);
+  vRay=uF+uR*p.x+uU*p.y;
+  gl_Position=vec4(p,1.0,1.0);
+}`, `#version 300 es
+precision highp float;
+${SKYGLSL}
+in vec3 vRay; out vec4 o;
+void main(){
+  vec3 col=skyCol(normalize(vRay),cam,false);
+  col+=(h11(gl_FragCoord.xy)-0.5)*(1.0/255.0); // dither: sem faixas no degrade
+  o=vec4(col,1.0);
+}`);
+        const SU = {}; for (const n of ['uF', 'uR', 'uU', ...SKN]) SU[n] = gl.getUniformLocation(sprog, n);
+        // texturas 128x128 que se repetem sem emenda: nuvens (blocos, NEAREST) e nebulosa suave (LINEAR)
+        function mkNoiseTex(lats, wts, seed, nearest) {
+            const N = CLOUD_N, hash = (i, j, sd) => { let h = Math.imul(i * 374761393 + j * 668265263 + sd * 1274126177, 1103515245); h ^= h >>> 13; h = Math.imul(h, 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+            const noise = (x, y, f, sd) => {
+                const gx = x / N * f, gy = y / N * f, i = Math.floor(gx), j = Math.floor(gy), fx = gx - i, fy = gy - j;
+                const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+                const a = hash(i % f, j % f, sd), b = hash((i + 1) % f, j % f, sd), c = hash(i % f, (j + 1) % f, sd), e = hash((i + 1) % f, (j + 1) % f, sd);
+                return a + (b - a) * sx + (c - a) * sy + (a - b - c + e) * sx * sy;
+            };
+            const v = new Float32Array(N * N); let lo = 9, hi = -9;
+            for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+                let t = 0; for (let k = 0; k < lats.length; k++) t += wts[k] * noise(x, y, lats[k], seed + k * 3);
+                v[y * N + x] = t; if (t < lo) lo = t; if (t > hi) hi = t;
+            }
+            const d = new Uint8Array(N * N); for (let i = 0; i < N * N; i++) d[i] = 255 * (v[i] - lo) / (hi - lo);
+            const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, N, N, 0, gl.RED, gl.UNSIGNED_BYTE, d);
+            gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+            const f = nearest ? gl.NEAREST : gl.LINEAR;
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            return t;
+        }
+        const cloudTex = mkNoiseTex([8, 16, 32], [0.5, 0.3, 0.2], 11, true);
+        const nebTex = mkNoiseTex([4, 8, 16], [0.5, 0.3, 0.2], 41, false);
+        // parametros do ceu, calculados uma vez por quadro (buffers fixos: nada e alocado no loop)
+        const SK = { sky: new Float32Array(3), cam: new Float32Array(3), sun: new Float32Array(3), zen: new Float32Array(3), glow: new Float32Array(3), mglow: new Float32Array(3), sunC: new Float32Array(3), cTop: new Float32Array(3), cSide: new Float32Array(3), cBot: new Float32Array(3), cOff: new Float32Array(2), starM: new Float32Array(9), q: 1, sunI: 0, starI: 0, moonI: 0, moonPh: 0, cThr: 0.56, tm: 0 };
+        const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+        function setSkyU(L) {
+            gl.uniform3fv(L.sky, SK.sky); gl.uniform3fv(L.cam, SK.cam); gl.uniform3fv(L.sun, SK.sun); gl.uniform1f(L.sunI, SK.sunI); gl.uniform1f(L.tm, SK.tm);
+            gl.uniform3fv(L.zen, SK.zen); gl.uniform3fv(L.glow, SK.glow); gl.uniform3fv(L.mglow, SK.mglow); gl.uniform3fv(L.sunC, SK.sunC);
+            gl.uniform1f(L.starI, SK.starI); gl.uniform1f(L.moonI, SK.moonI); gl.uniform1f(L.moonPh, SK.moonPh); gl.uniform1f(L.cThr, SK.cThr);
+            gl.uniform3fv(L.cTop, SK.cTop); gl.uniform3fv(L.cSide, SK.cSide); gl.uniform3fv(L.cBot, SK.cBot); gl.uniform2fv(L.cOff, SK.cOff);
+            gl.uniformMatrix3fv(L.starM, false, SK.starM); gl.uniform1i(L.ctex, 2); gl.uniform1i(L.ntex, 3); gl.uniform1f(L.skyQ, SK.q);
+        }
+        const U = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'sky', 'light', 'fl', 'fogN', 'fogF', 'alpha', 'flash', 'tm', 'sun', 'glow', 'mglow']) U[n] = gl.getUniformLocation(prog, n);
         const LU = { mvp: gl.getUniformLocation(lprog, 'mvp'), off: gl.getUniformLocation(lprog, 'off'), sc: gl.getUniformLocation(lprog, 'sc') };
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -2479,7 +2659,7 @@ void main(){
 
         /* ---------- Loop principal ---------- */
         const info = $('info'), flashEl = $('flash'), waterEl = $('water'), rewEl = $('rew');
-        let time = 0.2, last = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0;
+        let time = 0.2, last = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0, lowT = 0;
         const DAY = 240;
         function resize() { const d = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2); canvas.width = innerWidth * d; canvas.height = innerHeight * d; gl.viewport(0, 0, canvas.width, canvas.height); }
         addEventListener('resize', resize); resize();
@@ -2680,11 +2860,41 @@ void main(){
             const day = Math.max(0, Math.min(1, 0.5 + sunH * 1.2));
             const dusk = Math.max(0, 1 - Math.abs(sunH) * 5) * 0.5;
             let sky = [0.02 + 0.51 * day, 0.03 + 0.78 * day, 0.08 + 0.84 * day];
-            sky = sky.map((v, i) => v + ([0.95, 0.5, 0.3][i] - v) * dusk);
+            sky = sky.map((v, i) => v + ([1.0, 0.56, 0.36][i] - v) * Math.min(0.7, dusk * 1.4));
             let light = 0.15 + 0.85 * day; // brilho do ceu (dia/noite); a luz de bloco nao depende dele
             const headW = isWater(getBlock(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2]), 0));
             let fogN = renderDist * 16 * 0.55, fogF = renderDist * 16 * 0.95;
             if (headW) { sky = [0.08 * light + 0.04, 0.22 * light + 0.05, 0.5 * light + 0.05]; fogN = 1; fogF = 24; }
+
+            /* ---- Ceu: sol, lua, brilho do horizonte, estrelas e nuvens deste quadro ---- */
+            const SA = time * Math.PI * 2, sxn = Math.cos(SA) * 0.8, syn = Math.sin(SA), sln = Math.hypot(sxn, syn, 0.35);
+            const sdx = sxn / sln, sdy = syn / sln, sdz = 0.35 / sln;
+            const dk = Math.min(1, dusk * 2), cb = sstep(0, 0.6, day), warmK = sstep(0, 0.4, sdy);
+            const moonI = headW ? 0 : 1 - sstep(0.25, 0.85, day), starI = headW ? 0 : 1 - sstep(0.05, 0.5, day);
+            SK.sky.set(sky); SK.cam.set(eye); SK.sun.set([sdx, sdy, sdz]);
+            SK.sunI = headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)); SK.starI = starI; SK.moonI = moonI;
+            SK.moonPh = ((Math.floor(time) % 8) + 8) % 8; SK.tm = performance.now() / 1000;
+            const zr = 0.01 + 0.17 * day, zg = 0.02 + 0.42 * day, zb = 0.06 + 0.80 * day;
+            SK.zen[0] = zr + (0.26 - zr) * dk * 0.6; SK.zen[1] = zg + (0.20 - zg) * dk * 0.6; SK.zen[2] = zb + (0.50 - zb) * dk * 0.6;
+            const dg = headW ? 0 : 0.09 * day * (1 - dk), dd = headW ? 0 : dk;
+            SK.glow[0] = dg + 0.85 * dd; SK.glow[1] = dg * 0.92 + 0.42 * dd; SK.glow[2] = dg * 0.7 + 0.12 * dd;
+            SK.mglow[0] = 0.03 * moonI; SK.mglow[1] = 0.045 * moonI; SK.mglow[2] = 0.09 * moonI;
+            SK.sunC[0] = 1.0; SK.sunC[1] = 0.97 - 0.47 * (1 - warmK); SK.sunC[2] = 0.82 - 0.62 * (1 - warmK);
+            const wk = dk * 0.75 * cb, tr = 0.12 + 0.88 * cb, tg = 0.13 + 0.87 * cb, tb = 0.22 + 0.78 * cb;
+            const tR = (tr + (1.0 - tr) * wk) * 0.98, tG = (tg + (0.6 - tg) * wk) * 0.98, tB = (tb + (0.45 - tb) * wk) * 0.98;
+            SK.cTop[0] = tR; SK.cTop[1] = tG; SK.cTop[2] = tB;
+            SK.cSide[0] = tR * 0.84; SK.cSide[1] = tG * 0.87; SK.cSide[2] = tB * 0.94;
+            SK.cBot[0] = tR * 0.64 + sky[0] * 0.12; SK.cBot[1] = tG * 0.68 + sky[1] * 0.12; SK.cBot[2] = tB * 0.80 + sky[2] * 0.12;
+            const wt = performance.now() / 1000;
+            SK.cOff[0] = (wt * 1.4) % (CLOUD_CELL * CLOUD_N); SK.cOff[1] = (wt * 0.6) % (CLOUD_CELL * CLOUD_N);
+            SK.cThr = 0.56 + 0.05 * Math.sin(time * 6.2832 * 0.31 + 1.3) + 0.025 * Math.sin(time * 6.2832 * 0.83);
+            { // estrelas giram junto com o ceu: rotacao de -SA em torno de um eixo levemente inclinado
+                let kx = 0.12, ky = 0.20, kz = 1.0; const kl = Math.hypot(kx, ky, kz); kx /= kl; ky /= kl; kz /= kl;
+                const c = Math.cos(-SA), sn = Math.sin(-SA), t = 1 - c, M = SK.starM;
+                M[0] = t * kx * kx + c; M[1] = t * kx * ky + sn * kz; M[2] = t * kx * kz - sn * ky;
+                M[3] = t * kx * ky - sn * kz; M[4] = t * ky * ky + c; M[5] = t * ky * kz + sn * kx;
+                M[6] = t * kx * kz + sn * ky; M[7] = t * ky * kz - sn * kx; M[8] = t * kz * kz + c;
+            }
             gl.clearColor(sky[0], sky[1], sky[2], 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
@@ -2693,9 +2903,11 @@ void main(){
             gl.uniform3f(U.cam, eye[0], eye[1], eye[2]);
             gl.uniform3f(U.sky, sky[0], sky[1], sky[2]);
             gl.uniform1f(U.light, light); gl.uniform1f(U.fogN, fogN); gl.uniform1f(U.fogF, fogF);
+            gl.uniform3f(U.sun, sdx, sdy, sdz); gl.uniform3fv(U.glow, SK.glow); gl.uniform3fv(U.mglow, SK.mglow);
             const pt = performance.now(); gl.uniform1f(U.tm, pt / 1000); gl.uniform1f(U.fl, 1 + 0.05 * Math.sin(pt / 85) * Math.sin(pt / 230)); // tremulo leve das tochas
             gl.uniform1f(U.alpha, 1); gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
             gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texture); gl.uniform1i(U.tex, 0);
+            gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, cloudTex); gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, nebTex); gl.activeTexture(gl.TEXTURE0);
             const vis = [];
             for (const ch of chunks.values()) {
                 const dx = ch.cx * 16 + 8 - eye[0], dy = 32 - eye[1], dz = ch.cz * 16 + 8 - eye[2];
@@ -2725,6 +2937,16 @@ void main(){
                 gl.bindVertexArray(lpVao); gl.bindBuffer(gl.ARRAY_BUFFER, lpVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, lpA, 0, lpN * 8);
                 gl.drawArrays(gl.POINTS, 0, lpN);
             }
+            if (!headW) { // ceu: so onde nada opaco foi desenhado (profundidade == 1.0)
+                const th = Math.tan((1.2 + P.fk) / 2);
+                let rx = -dir[2], ry = 0, rz = dir[0]; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl; // direita = frente x cima
+                const ux = ry * dir[2] - rz * dir[1], uy = rz * dir[0] - rx * dir[2], uz = rx * dir[1] - ry * dir[0]; // cima = direita x frente
+                gl.useProgram(sprog); gl.disable(gl.BLEND); gl.depthFunc(gl.LEQUAL); gl.depthMask(false);
+                gl.uniform3f(SU.uF, dir[0], dir[1], dir[2]); gl.uniform3f(SU.uR, rx * th * asp, ry * th * asp, rz * th * asp); gl.uniform3f(SU.uU, ux * th, uy * th, uz * th);
+                setSkyU(SU);
+                gl.bindVertexArray(null); gl.drawArrays(gl.TRIANGLES, 0, 3);
+                gl.depthFunc(gl.LESS); gl.depthMask(true);
+            }
             if (bN && !headW) { // raios de sol entre as folhas (aditivos, sem escrever profundidade)
                 buildBeams(eye[0], eye[1], eye[2]);
                 gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false); gl.useProgram(bProg);
@@ -2738,6 +2960,7 @@ void main(){
             gl.uniformMatrix4fv(WU.mvp, false, mvp); gl.uniform3f(WU.cam, eye[0], eye[1], eye[2]); gl.uniform3f(WU.off, 0, 0, 0);
             gl.uniform3f(WU.sky, sky[0], sky[1], sky[2]); gl.uniform1f(WU.light, light); gl.uniform1f(WU.fl, 1);
             gl.uniform1f(WU.fogN, fogN); gl.uniform1f(WU.fogF, fogF); gl.uniform1f(WU.tm, pt / 1000);
+            setSkyU(WU);
             const sa = time * Math.PI * 2, sl = Math.hypot(Math.cos(sa) * 0.8, Math.sin(sa), 0.35);
             gl.uniform3f(WU.sun, Math.cos(sa) * 0.8 / sl, Math.sin(sa) / sl, 0.35 / sl);
             gl.uniform1f(WU.sunI, headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)));
@@ -2764,6 +2987,7 @@ void main(){
                 frames++; fpsT += dt;
                 if (fpsT >= 0.5) {
                     fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
+                if (state === 'playing' && SK.q > 0.5) { lowT = fps < 30 ? lowT + 0.5 : 0; if (lowT >= 8) SK.q = 0; } // governador: FPS baixo sustentado -> desliga via lactea, paredes das nuvens e reflexos de nuvem/estrela na agua
                     document.body.classList.toggle('flying', P.fly);
                     const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
                     info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
