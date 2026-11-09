@@ -918,10 +918,6 @@
             display: flex
         }
 
-        body.flying #bFly {
-            background: rgba(90, 150, 210, .6)
-        }
-
         #bPause {
             right: calc(12px + env(safe-area-inset-right, 0px));
             top: calc(10px + env(safe-area-inset-top, 0px))
@@ -932,7 +928,7 @@
             top: calc(10px + env(safe-area-inset-top, 0px))
         }
 
-        #bFly {
+        #bCmd {
             right: calc(108px + env(safe-area-inset-right, 0px));
             top: calc(10px + env(safe-area-inset-top, 0px))
         }
@@ -968,6 +964,12 @@
 
         body.touch .slot span {
             font-size: 8px
+        }
+
+        /* celular: 16px no campo ao focar impede o iOS Safari de dar zoom automatico na pagina */
+        body.touch #invSearch,
+        body.touch #chatInput {
+            font-size: 16px
         }
 
         @media (max-height:480px) {
@@ -1149,18 +1151,12 @@
                 <rect x="2" y="5" width="4" height="1" />
                 <rect x="3" y="6" width="2" height="1" />
             </svg></button>
-        <button class="tb sm" id="bFly" aria-label="Voar"><svg viewBox="0 0 10 6" shape-rendering="crispEdges"
+        <button class="tb sm" id="bCmd" aria-label="Comandos"><svg viewBox="0 0 10 6" shape-rendering="crispEdges"
                 fill="currentColor" aria-hidden="true">
-                <rect x="0" y="0" width="2" height="1" />
-                <rect x="8" y="0" width="2" height="1" />
-                <rect x="0" y="1" width="4" height="1" />
-                <rect x="6" y="1" width="4" height="1" />
-                <rect x="0" y="2" width="10" height="1" />
-                <rect x="1" y="3" width="8" height="1" />
-                <rect x="2" y="4" width="2" height="1" />
-                <rect x="6" y="4" width="2" height="1" />
-                <rect x="3" y="5" width="1" height="1" />
-                <rect x="6" y="5" width="1" height="1" />
+                <rect x="0" y="0" width="10" height="5" />
+                <rect x="1" y="5" width="3" height="1" />
+                <rect x="2" y="1" width="2" height="2" fill-opacity="0" />
+                <rect x="6" y="1" width="2" height="2" fill-opacity="0" />
             </svg></button>
         <button class="tb sm" id="bRew" aria-label="Voltar no tempo"><svg viewBox="0 0 10 7"
                 shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">
@@ -1299,9 +1295,8 @@
                 <p class="kb">Segure <b data-k="rewind">R</b> para voltar no tempo (desfaz explosões, água e
                     construções)</p>
                 <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco: colocar ·
-                    <b>Segure</b> o dedo num bloco: quebrar · botões: pular, agachar (liga/desliga), voar, voltar no
-                    tempo,
-                    inventário (ao lado da barra) e pausa
+                    <b>Segure</b> o dedo num bloco: quebrar · <b>2x no botão de pular</b>: voar · botões: pular, agachar
+                    (liga/desliga), comandos, voltar no tempo, inventário (ao lado da barra) e pausa
                 </p>
                 <p>Dica: faça uma barragem com água, depois quebre um bloco dela.</p>
             </div>
@@ -1310,7 +1305,7 @@
     </div>
     <div id="chat">
         <input id="chatInput" type="text" autocomplete="off" spellcheck="false" maxlength="96" placeholder="Comando..."
-            aria-label="Comando">
+            aria-label="Comando" autocapitalize="off" autocorrect="off" enterkeyhint="send">
         <div id="chatHint">/ajuda</div>
     </div>
     <script>
@@ -3415,14 +3410,16 @@ void main(){
             sprintLatch = false;
         }
         function openChat() {
+            if (chatOpen) return;
             if (state !== 'playing' || rewinding) return; // no menu o T continua valendo para o texto
             chatOpen = true;
-            clearChatKeys();
+            clearChatKeys(); touchReset(); // cancela toque em andamento no canvas (nao pode quebrar bloco enquanto digita)
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
             chatEl.classList.add('on');
             setChatHint('Digite /ajuda e aperte Enter');
             chatInput.value = '/';
             chatInput.focus();
+            chatKbLift();
             setTimeout(() => { try { chatInput.setSelectionRange(1, 1); } catch (e) { } }, 0);
         }
         function closeChat() {
@@ -3430,6 +3427,22 @@ void main(){
             chatOpen = false;
             chatEl.classList.remove('on');
             chatInput.blur();
+            chatKbLift();
+        }
+        /* Celular: com o teclado virtual aberto, a caixa de comandos sobe para ficar por cima dele.
+           resize/scroll do visualViewport acompanham o teclado entrando e saindo; sem teclado
+           (cover ~ 0) volta a posicao padrao do CSS (bottom 84px). */
+        function chatKbLift() {
+            if (!chatOpen || !window.visualViewport) { chatEl.style.bottom = ''; return; }
+            const vv = visualViewport;
+            const cover = Math.max(0, innerHeight - (vv.offsetTop + vv.height)); // area encoberta pelo teclado
+            if (cover <= 40) { chatEl.style.bottom = ''; return; }
+            const h = chatEl.offsetHeight || 60;
+            chatEl.style.bottom = Math.min(cover + 8, Math.max(0, innerHeight - h - 8)) + 'px';
+        }
+        if (window.visualViewport) {
+            visualViewport.addEventListener('resize', chatKbLift);
+            visualViewport.addEventListener('scroll', chatKbLift);
         }
         function execCommand(raw) {
             const parts = raw.trim().split(/\s+/), name = (parts[0] || '').toLowerCase(), arg = (parts[1] || '').toLowerCase();
@@ -3651,6 +3664,7 @@ void main(){
         /* ---------- Inventario ---------- */
         function openInv() {
             if (state !== 'playing') return;
+            if (chatOpen) closeChat(); // celular: nao deixa o chat aberto por baixo do inventario
             state = 'inv'; held[0] = held[2] = false; rewinding = false; touchReset();
             for (const k in keys) keys[k] = false;
             sprintLatch = false; $('bSneak').classList.remove('on');
@@ -3783,7 +3797,9 @@ void main(){
         const HOLD_MS = 320, MOVE_PX = 12;
         function touchReset() { clearTimeout(holdTimer); if (tBreak) held[0] = false; tBreak = false; tMoved = false; lookId = null; aim.on = false; }
         canvas.addEventListener('touchstart', e => {
-            e.preventDefault(); if (!locked || state !== 'playing') return;
+            e.preventDefault();
+            if (chatOpen) { closeChat(); return; } // toque fora da caixa de comandos: fecha (o preventDefault acima evita blur de teclado antes do fechamento ordenado)
+            if (!locked || state !== 'playing') return;
             for (const t of e.changedTouches) if (lookId === null) {
                 lookId = t.identifier; lx = tx0 = t.clientX; ly = ty0 = t.clientY; tT0 = performance.now(); tMoved = false; tBreak = false;
                 aim.on = true; aim.x = tx0; aim.y = ty0;
@@ -3826,9 +3842,11 @@ void main(){
         holdBtn('bJump', () => { keys.Space = true; spaceTap(); }, () => { keys.Space = false; });
         holdBtn('bDown', () => { keys.ShiftLeft = true; }, () => { keys.ShiftLeft = false; });
         holdBtn('bRew', () => { rewinding = true; }, () => { rewinding = false; rewHold = 0; });
-        holdBtn('bFly', () => { toggleFly(); });
         $('bSneak').addEventListener('touchstart', e => { e.preventDefault(); keys.ShiftLeft = !keys.ShiftLeft; e.currentTarget.classList.toggle('on', !!keys.ShiftLeft); }, { passive: false });
         $('bPause').addEventListener('touchstart', e => { e.preventDefault(); pause(); }, { passive: false });
+        $('bCmd').addEventListener('touchstart', e => { // balao: abre/fecha o chat de comandos (o celular nao tem tecla T)
+            e.preventDefault(); chatOpen ? closeChat() : openChat();
+        }, { passive: false });
         $('bPage').addEventListener('touchstart', e => { e.preventDefault(); openInv(); }, { passive: false });
         [...hotbar.children].forEach((c, i) => c.addEventListener('pointerdown', e => { sel = i; refreshHotbar(); e.stopPropagation(); }));
 
