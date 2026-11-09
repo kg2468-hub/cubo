@@ -78,8 +78,10 @@
             display: flex;
             gap: 4px;
             padding: 4px;
-            background: rgba(0, 0, 0, .45);
-            border-radius: 6px
+            background: rgba(10, 13, 18, .5);
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .35)
         }
 
         .slot {
@@ -88,7 +90,8 @@
             border: 3px solid #555;
             box-sizing: border-box;
             image-rendering: pixelated;
-            background-color: #222;
+            background-color: rgba(18, 21, 26, .8);
+            border-radius: 6px;
             position: relative
         }
 
@@ -113,9 +116,10 @@
             z-index: 5;
             padding: 12px;
             box-sizing: border-box;
-            background: rgba(0, 0, 0, .6);
-            font-family: "Courier New", ui-monospace, monospace;
-            color: #fff
+            background: rgba(0, 0, 0, .65);
+            color: #404040;
+            font-family: "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
+            image-rendering: pixelated
         }
 
         #inv.on {
@@ -123,66 +127,169 @@
         }
 
         #invBox {
-            width: min(560px, 100%);
+            width: min(362px, 100%);
             max-height: 100%;
             overflow: auto;
             box-sizing: border-box;
-            padding: 12px;
-            background: rgba(40, 40, 44, .92);
+            padding: 10px 10px 8px;
+            background: #c6c6c6;
             border: 2px solid #000;
-            box-shadow: inset 3px 3px 0 #6a6a70, inset -3px -3px 0 #26262a;
-            text-align: center
+            box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #555, inset -4px -4px 0 #373737, 0 16px 48px rgba(0, 0, 0, .6);
+            text-align: left
         }
 
-        #invBox h2 {
-            margin: 0 0 8px;
-            font-size: 18px;
-            text-shadow: 2px 2px 0 #333
-        }
-
-        #invBox p {
-            margin: 6px 0;
-            font-size: 12px;
-            line-height: 1.5;
-            opacity: .9
-        }
-
-        #invGrid,
-        #invHot {
+        #invHead {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 4px;
-            padding: 6px;
-            background: rgba(0, 0, 0, .35)
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
         }
 
-        #invGrid .slot,
-        #invHot .slot {
-            cursor: pointer
+        #invHead h2 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #404040;
+            text-shadow: none;
+            white-space: nowrap
         }
 
-        #invGrid .slot:hover {
-            border-color: #ffd24a
+        #invSearch {
+            flex: 1;
+            min-width: 0;
+            box-sizing: border-box;
+            background: #000;
+            color: #fff;
+            border: 2px solid;
+            border-color: #373737 #fff #fff #373737;
+            padding: 5px 7px;
+            font: 12px/1.2 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
+            outline: none
+        }
+
+        #invSearch::placeholder {
+            color: #909090
+        }
+
+        #invSearch:focus {
+            border-color: #4a6 #fff #fff #4a6
         }
 
         #invTip {
-            min-height: 18px;
-            color: #ffd24a
+            min-height: 16px;
+            margin: 0 0 4px;
+            font-size: 11px;
+            color: #404040
         }
 
-        #invBox .btn {
-            margin-top: 8px
+        #invGrid {
+            display: grid;
+            grid-template-columns: repeat(9, 36px);
+            gap: 0;
+            padding: 0;
+            background: none;
+            border: none;
+            margin-bottom: 8px;
+            min-height: 72px;
+            align-content: start
         }
 
-        #info {
+        #invSep {
+            height: 0;
+            margin: 2px 0 6px;
+            border-top: 2px solid #555;
+            border-bottom: 2px solid #fff
+        }
+
+        #invHot {
+            display: flex;
+            gap: 0;
+            padding: 0;
+            background: none;
+            border: none;
+            justify-content: flex-start
+        }
+
+        #inv .slot {
+            width: 36px;
+            height: 36px;
+            box-sizing: border-box;
+            border: 2px solid;
+            border-color: #373737 #fff #fff #373737;
+            background-color: #8b8b8b;
+            border-radius: 0;
+            position: relative;
+            cursor: default
+        }
+
+        #inv .slot span {
+            position: absolute;
+            left: 2px;
+            top: 0;
+            font-size: 9px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #3f3f3f;
+            pointer-events: none
+        }
+
+        #inv .slot.sel {
+            outline: 2px solid #fff;
+            outline-offset: -4px;
+            border-color: #373737 #fff #fff #373737
+        }
+
+        #inv #invGrid .slot {
+            cursor: grab
+        }
+
+        #inv #invGrid .slot:active {
+            cursor: grabbing
+        }
+
+        #inv #invHot .slot {
+            cursor: pointer
+        }
+
+        #inv #invHot .slot.drag-over {
+            background-color: #a8a8a8;
+            border-color: #fff #373737 #373737 #fff
+        }
+
+        #invGhost {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            pointer-events: none;
+            z-index: 20;
+            image-rendering: pixelated;
+            opacity: .95;
+            display: none;
+            filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, .5))
+        }
+
+        #invHint {
+            margin: 6px 0 0;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #555
+        }
+
+        /* canto superior esquerdo: FPS/hora (#info) e, logo abaixo, os avisos de comando e de salvamento, no mesmo estilo discreto */
+        #hudTop {
             position: fixed;
             left: 8px;
             top: 8px;
+            z-index: 11;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
             font: 12px monospace;
             text-shadow: 0 0 3px #000;
-            white-space: pre;
             pointer-events: none
+        }
+
+        #info {
+            white-space: pre
         }
 
         #flash {
@@ -217,193 +324,380 @@
         }
 
         #saveInd {
-            position: fixed;
-            left: 50%;
-            top: calc(10px + env(safe-area-inset-top, 0px));
-            transform: translateX(-50%);
-            font: 12px monospace;
-            background: rgba(0, 0, 0, .6);
-            padding: 4px 10px;
-            border-radius: 4px;
+            color: rgba(255, 255, 255, .6);
             opacity: 0;
-            transition: opacity .4s;
-            pointer-events: none
+            transition: opacity .4s
         }
 
-        /* ===== Menu estilo Bedrock ===== */
+        /* ===== Menu estilo Bedrock moderno (mundo 3D girando ao fundo) ===== */
+        #bgFade {
+            position: fixed;
+            inset: 0;
+            background: #2b1d12;
+            /* a textura de terra e aplicada por JS (ver atlasURL) */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1
+        }
+
+        #bgFade.on {
+            opacity: 1
+        }
+
+        #bgFade.fade {
+            opacity: 0;
+            transition: opacity 1s ease
+        }
+
         #menu {
             position: fixed;
             z-index: 10;
             inset: 0;
             display: flex;
             overflow: auto;
-            padding: 16px;
+            padding: max(20px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
             box-sizing: border-box;
-            image-rendering: pixelated;
-            background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55)), var(--dirt) 0 0/96px 96px;
-            font-family: "Courier New", ui-monospace, monospace
+            color: #f2f6fb;
+            background:
+                radial-gradient(120% 100% at 50% 0%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .4) 100%),
+                linear-gradient(rgba(3, 6, 12, .32), rgba(3, 6, 12, .12) 42%, rgba(3, 6, 12, .48));
+            font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif
         }
 
         #menu.ingame {
-            background: rgba(0, 0, 0, .6)
+            background: linear-gradient(rgba(3, 6, 12, .5), rgba(3, 6, 12, .68))
+        }
+
+        #menu::-webkit-scrollbar {
+            width: 10px
+        }
+
+        #menu::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, .04)
+        }
+
+        #menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .22);
+            border-radius: 8px
         }
 
         .scr {
             display: none;
             flex-direction: column;
             gap: 8px;
-            width: min(440px, 100%);
+            width: min(460px, 100%);
             margin: auto;
-            text-align: center
+            padding: 20px 18px;
+            text-align: center;
+            background: rgba(10, 13, 19, .62);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 18px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08);
+            backdrop-filter: blur(16px) saturate(1.25);
+            -webkit-backdrop-filter: blur(16px) saturate(1.25)
         }
 
         .scr.on {
-            display: flex
+            display: flex;
+            animation: screenIn .28s ease
+        }
+
+        .scr.noPanel {
+            padding: 0;
+            background: none;
+            border: none;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none
+        }
+
+        @keyframes screenIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
         }
 
         .scr h2 {
-            margin: 0 0 4px;
-            font-size: 22px;
-            text-shadow: 2px 2px 0 #333;
-            letter-spacing: 1px
+            margin: 0 0 6px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: .02em
         }
 
         .scr p {
-            margin: 2px 0;
-            font-size: 12px;
-            line-height: 1.5;
-            opacity: .9
+            margin: 3px 0;
+            font-size: 13px;
+            line-height: 1.55;
+            color: rgba(235, 241, 248, .82)
         }
 
         .scr label {
+            display: block;
             text-align: left;
             font-size: 12px;
-            opacity: .85;
-            margin-top: 4px
+            font-weight: 600;
+            color: rgba(235, 241, 248, .75);
+            margin: 8px 2px 4px
         }
 
         .scr b {
-            color: #ffd24a
+            color: #ffd24a;
+            font-weight: 600
         }
 
         .btn {
             display: block;
             width: 100%;
             box-sizing: border-box;
-            font: 700 15px/1 "Courier New", monospace;
+            appearance: none;
+            -webkit-appearance: none;
+            font: 700 15px/1.15 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+            letter-spacing: .01em;
             color: #fff;
-            text-shadow: 2px 2px 0 #3f3f3f;
-            background: #6d6d6d;
-            border: 2px solid #000;
-            box-shadow: inset 3px 3px 0 #a8a8a8, inset -3px -3px 0 #3d3d3d;
-            padding: 13px 10px;
+            text-shadow: 1px 1px 0 #262626;
+            background-color: #747474;
+            background-image:
+                linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .02) 46%, rgba(0, 0, 0, .14)),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' shape-rendering='crispEdges'%3E%3Cg fill='%23ffffff' fill-opacity='.07'%3E%3Crect x='2' y='2' width='4' height='2'/%3E%3Crect x='14' y='0' width='2' height='2'/%3E%3Crect x='22' y='6' width='6' height='2'/%3E%3Crect x='6' y='12' width='2' height='4'/%3E%3Crect x='18' y='14' width='4' height='2'/%3E%3Crect x='28' y='18' width='2' height='2'/%3E%3Crect x='0' y='24' width='4' height='2'/%3E%3Crect x='12' y='26' width='2' height='2'/%3E%3Crect x='20' y='24' width='2' height='4'/%3E%3Crect x='26' y='30' width='6' height='2'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='.11'%3E%3Crect x='8' y='4' width='2' height='2'/%3E%3Crect x='18' y='4' width='2' height='4'/%3E%3Crect x='28' y='2' width='2' height='4'/%3E%3Crect x='0' y='10' width='2' height='2'/%3E%3Crect x='10' y='10' width='4' height='2'/%3E%3Crect x='24' y='12' width='4' height='2'/%3E%3Crect x='4' y='18' width='2' height='2'/%3E%3Crect x='14' y='18' width='2' height='4'/%3E%3Crect x='22' y='20' width='2' height='2'/%3E%3Crect x='8' y='24' width='2' height='2'/%3E%3Crect x='18' y='28' width='4' height='2'/%3E%3Crect x='0' y='30' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: 100% 100%, 32px 32px;
+            background-repeat: no-repeat, repeat;
+            border: 2px solid #191919;
+            border-radius: 0;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .30),
+                inset -2px -2px 0 rgba(0, 0, 0, .36),
+                0 4px 0 #131313;
+            padding: 12px 16px;
             cursor: pointer;
-            touch-action: manipulation
+            transition: none;
+            touch-action: manipulation;
+            image-rendering: pixelated;
+            -webkit-tap-highlight-color: transparent
         }
 
         .btn:hover,
         .btn:focus-visible {
-            background: #7f7f7f;
-            outline: 2px solid #fff;
-            outline-offset: -5px
+            color: #fff;
+            background-color: #858585;
+            border-color: #f2f2f2;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .38),
+                inset -2px -2px 0 rgba(0, 0, 0, .32),
+                0 0 0 2px #0f0f0f,
+                0 4px 0 #131313;
+            outline: none
         }
 
         .btn.g {
-            background: #3c8527;
-            box-shadow: inset 3px 3px 0 #6ec04f, inset -3px -3px 0 #1f4a14
+            background-color: #4d8f33;
+            border-color: #14280d;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .30),
+                inset -2px -2px 0 rgba(0, 0, 0, .40),
+                0 4px 0 #0f1f09
         }
 
-        .btn.g:hover {
-            background: #4a9b32
+        .btn.g:hover,
+        .btn.g:focus-visible {
+            background-color: #5aa73d;
+            border-color: #eaffe2;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .38),
+                inset -2px -2px 0 rgba(0, 0, 0, .34),
+                0 0 0 2px #0c1c07,
+                0 4px 0 #0f1f09
         }
 
         .btn.r {
-            background: #a03232;
-            box-shadow: inset 3px 3px 0 #d36a6a, inset -3px -3px 0 #5c1818
+            background-color: #9c3a30;
+            border-color: #2a0c08;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .28),
+                inset -2px -2px 0 rgba(0, 0, 0, .40),
+                0 4px 0 #230a07
         }
 
-        .btn:disabled {
-            opacity: .45;
+        .btn.r:hover,
+        .btn.r:focus-visible {
+            background-color: #b1483d;
+            border-color: #ffe9e4;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .36),
+                inset -2px -2px 0 rgba(0, 0, 0, .34),
+                0 0 0 2px #240a07,
+                0 4px 0 #230a07
+        }
+
+        .btn:active,
+        .btn.g:active,
+        .btn.r:active {
+            transform: translateY(3px);
+            filter: brightness(.86);
+            border-color: #191919;
+            box-shadow:
+                inset 2px 2px 0 rgba(0, 0, 0, .32),
+                inset -2px -2px 0 rgba(255, 255, 255, .14),
+                0 1px 0 #131313
+        }
+
+        .btn:disabled,
+        .btn.g:disabled,
+        .btn.r:disabled {
+            color: #a6a6a6;
+            background-color: #575757;
+            border-color: #242424;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .10),
+                inset -2px -2px 0 rgba(0, 0, 0, .28),
+                0 2px 0 #191919;
+            text-shadow: 1px 1px 0 #242424;
+            opacity: 1;
+            filter: none;
+            transform: none;
+            cursor: default;
             pointer-events: none
         }
 
         .in {
             width: 100%;
             box-sizing: border-box;
-            background: #000;
+            background: rgba(0, 0, 0, .45);
             color: #fff;
-            border: 2px solid #777;
-            padding: 11px;
-            font: 15px "Courier New", monospace;
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font: 500 15px "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
             outline: none;
-            border-radius: 0
+            transition: border-color .15s, box-shadow .15s
         }
 
         .in:focus {
-            border-color: #fff
+            border-color: #7ed36f;
+            box-shadow: 0 0 0 3px rgba(105, 200, 92, .28)
+        }
+
+        .spin {
+            width: 30px;
+            height: 30px;
+            margin: 4px auto 2px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, .18);
+            border-top-color: #7ed36f;
+            animation: spin .8s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(1turn)
+            }
         }
 
         #logo {
-            font-size: 64px;
+            display: block;
+            height: clamp(72px, 16vh, 150px);
+            width: auto;
+            max-width: min(72vw, 480px);
+            object-fit: contain;
+            margin: 0 auto 10px;
+            filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .5))
+        }
+
+        /* fallback textual (caso a imagem do logo nao carregue) */
+        .logoTxt {
+            font-size: clamp(44px, 10vw, 84px);
             font-weight: 900;
-            letter-spacing: 8px;
-            color: #c6c6c6;
-            text-shadow: 0 4px 0 #6b6b6b, 0 8px 0 #333, 0 12px 0 #111;
-            margin-bottom: 6px
+            letter-spacing: .28em;
+            margin-right: -.28em;
+            line-height: 1;
+            background: linear-gradient(180deg, #ffffff 32%, #9cc4ff 92%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 3px 0 rgba(10, 20, 40, .5)) drop-shadow(0 14px 30px rgba(0, 0, 0, .55));
+            margin-bottom: 4px
         }
 
         #splash {
-            color: #ffe14a;
+            color: #ffe95c;
             font-weight: 700;
-            font-size: 14px;
-            transform: rotate(-4deg);
-            text-shadow: 2px 2px 0 #3b3300;
-            margin: 0 0 18px;
-            min-height: 18px
+            font-size: 15px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, .65);
+            margin: 2px 0 20px;
+            min-height: 20px;
+            animation: splashBump .9s ease-in-out infinite
+        }
+
+        @keyframes splashBump {
+
+            0%,
+            100% {
+                transform: rotate(-5deg) scale(1)
+            }
+
+            50% {
+                transform: rotate(-5deg) scale(1.08)
+            }
         }
 
         .foot {
             font-size: 11px !important;
-            opacity: .6 !important;
-            margin-top: 8px !important
+            color: rgba(235, 241, 248, .55) !important;
+            margin-top: 16px !important
         }
 
         .wl {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
             max-height: 48vh;
             overflow: auto;
-            padding: 2px;
-            background: rgba(0, 0, 0, .35);
-            border: 2px solid #000;
+            padding: 3px;
             min-height: 60px
+        }
+
+        .wl::-webkit-scrollbar {
+            width: 8px
+        }
+
+        .wl::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .2);
+            border-radius: 8px
         }
 
         .wr {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
-            padding: 8px;
+            padding: 10px;
             background: rgba(255, 255, 255, .07);
-            border: 2px solid #333;
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 12px;
             cursor: pointer;
-            text-align: left
+            text-align: left;
+            transition: background .15s, border-color .15s, transform .12s
         }
 
         .wr:hover {
-            border-color: #fff;
-            background: rgba(255, 255, 255, .14)
+            border-color: rgba(255, 255, 255, .55);
+            background: rgba(255, 255, 255, .14);
+            transform: translateY(-1px)
         }
 
         .wt {
             width: 96px;
             height: 54px;
             flex: none;
-            border: 2px solid #000;
-            background: var(--grass) 0 0/32px 32px;
-            image-rendering: auto;
-            object-fit: cover
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(150deg, #35526e, #1b2b3d);
+            object-fit: cover;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .4)
         }
 
         .wi {
@@ -412,7 +706,7 @@
         }
 
         .wn {
-            font-weight: 700;
+            font-weight: 600;
             font-size: 15px;
             white-space: nowrap;
             overflow: hidden;
@@ -421,23 +715,23 @@
 
         .wm {
             font-size: 11px;
-            opacity: .7;
-            line-height: 1.4
+            color: rgba(235, 241, 248, .6);
+            line-height: 1.45
         }
 
         .we {
             flex: none;
             width: auto;
-            height: 36px;
-            padding: 0 12px;
+            height: 38px;
+            padding: 0 14px;
             font-size: 13px
         }
 
         .empty {
             margin: auto;
-            opacity: .7;
+            color: rgba(235, 241, 248, .6);
             font-size: 13px;
-            padding: 14px
+            padding: 16px
         }
 
         .ctl p {
@@ -456,10 +750,10 @@
         }
 
         #keyCfg h3 {
-            margin: 6px 0 0;
+            margin: 8px 0 2px;
             font-size: 15px;
-            text-align: left;
-            text-shadow: 2px 2px 0 #333
+            font-weight: 600;
+            text-align: left
         }
 
         .ptabs {
@@ -473,8 +767,12 @@
         }
 
         .ptabs .btn.sel {
-            background: #3c8527;
-            box-shadow: inset 3px 3px 0 #6ec04f, inset -3px -3px 0 #1f4a14
+            background-color: #4d8f33;
+            border-color: #dfffd2;
+            box-shadow:
+                inset 2px 2px 0 rgba(0, 0, 0, .30),
+                inset -2px -2px 0 rgba(255, 255, 255, .18),
+                0 0 0 2px #0c1c07
         }
 
         .kbrow {
@@ -493,12 +791,17 @@
         .kbrow .btn {
             width: 130px;
             padding: 8px 6px;
-            font-size: 13px
+            font-size: 12px
         }
 
         .kbrow .btn.cap {
-            background: #a68a1f;
-            box-shadow: inset 3px 3px 0 #e0c34f, inset -3px -3px 0 #5e4c0c
+            background-color: #a88624;
+            border-color: #fff2b0;
+            box-shadow:
+                inset 2px 2px 0 rgba(255, 255, 255, .34),
+                inset -2px -2px 0 rgba(0, 0, 0, .34),
+                0 0 0 2px #2b2107,
+                0 4px 0 #131313
         }
 
         #keyMsg {
@@ -551,15 +854,15 @@
             box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .35), inset -2px -2px 0 rgba(0, 0, 0, .3)
         }
 
-        /* botoes no mesmo estilo dos menus do jogo: quadrados, chanfro de pixel, icones em pixel art */
+        /* botoes de toque do HUD: vidro escuro arredondado, icones em pixel art */
         .tb {
             position: fixed;
             width: 52px;
             height: 52px;
-            border: 2px solid rgba(0, 0, 0, .8);
-            border-radius: 0;
-            background: rgba(120, 120, 120, .5);
-            box-shadow: inset 3px 3px 0 rgba(255, 255, 255, .32), inset -3px -3px 0 rgba(0, 0, 0, .32);
+            border: 1px solid rgba(255, 255, 255, .3);
+            border-radius: 13px;
+            background: rgba(14, 18, 24, .42);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .12);
             color: #fff;
             display: flex;
             align-items: center;
@@ -572,12 +875,12 @@
         .tb svg {
             width: 55%;
             height: 55%;
-            filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, .7))
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7))
         }
 
         .tb.on {
-            background: rgba(190, 190, 190, .6);
-            box-shadow: inset 3px 3px 0 rgba(0, 0, 0, .32), inset -3px -3px 0 rgba(255, 255, 255, .25)
+            background: rgba(255, 255, 255, .22);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, .35)
         }
 
         .tb.big {
@@ -640,7 +943,7 @@
             display: none
         }
 
-        body.touch #info {
+        body.touch #hudTop {
             font-size: 10px;
             top: calc(8px + env(safe-area-inset-top, 0px));
             left: calc(10px + env(safe-area-inset-left, 0px))
@@ -664,16 +967,117 @@
 
         @media (max-height:480px) {
             #logo {
-                font-size: 44px
+                height: 52px
+            }
+
+            .logoTxt {
+                font-size: 40px
             }
 
             #splash {
-                margin-bottom: 8px
+                margin-bottom: 10px
             }
 
             .wl {
-                max-height: 34vh
+                max-height: 32vh
             }
+
+            .scr {
+                padding: 12px 14px
+            }
+        }
+
+        /* ===== HUD do jogo: oculto enquanto os menus estao na tela ===== */
+        body:not(.hud) #hotbar,
+        body:not(.hud) #cross,
+        body:not(.hud) #info,
+        body:not(.hud) #chat {
+            display: none
+        }
+
+        body.touch:not(.hud) #touch {
+            display: none
+        }
+
+        /* ===== Chuva (cheat): riscos diagonais sutis por cima da tela ===== */
+        #rain {
+            position: fixed;
+            inset: 0;
+            z-index: 7;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .25s;
+            background-image: repeating-linear-gradient(105deg,
+                    transparent 0 7px,
+                    rgba(190, 210, 235, .34) 7px 8px,
+                    transparent 8px 31px);
+            background-size: 90px 120px;
+            animation: rainFall .55s linear infinite;
+        }
+
+        @keyframes rainFall {
+            from {
+                background-position: 0 -120px;
+            }
+
+            to {
+                background-position: 24px 120px;
+            }
+        }
+
+        /* ===== Chat de cheats: aperte T ===== */
+        #chat {
+            position: fixed;
+            left: 14px;
+            bottom: 84px;
+            z-index: 30;
+            display: none;
+            pointer-events: auto;
+        }
+
+        #chat.on {
+            display: block;
+        }
+
+        #chatInput {
+            width: min(420px, 80vw);
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, .68);
+            border: 1px solid rgba(255, 255, 255, .35);
+            border-radius: 4px;
+            color: #fff;
+            font: 14px/1.35 monospace;
+            padding: 8px 10px;
+            outline: none;
+        }
+
+        #chatInput:focus {
+            border-color: rgba(255, 255, 255, .8);
+            background: rgba(0, 0, 0, .8);
+        }
+
+        #chatHint {
+            margin-top: 4px;
+            color: #cfcfe0;
+            font: 12px/1.35 monospace;
+            text-shadow: 0 1px 2px #000;
+            white-space: pre-wrap;
+            max-width: 420px;
+        }
+
+        #chatHint.err {
+            color: #ff9a9a;
+        }
+
+        #cmdMsg {
+            color: rgba(255, 244, 150, .85);
+            opacity: 0;
+            transition: opacity .3s;
+            white-space: nowrap
+        }
+
+        #cmdMsg.on {
+            opacity: 1
         }
     </style>
 </head>
@@ -687,16 +1091,25 @@
     <div id="hotbar"></div>
     <div id="inv">
         <div id="invBox">
-            <h2>Inventário · Criativo</h2>
-            <div id="invGrid"></div>
+            <div id="invHead">
+                <h2>Inventário</h2>
+                <input id="invSearch" type="text" placeholder="Pesquisar itens..." autocomplete="off"
+                    spellcheck="false">
+            </div>
             <p id="invTip">&nbsp;</p>
+            <div id="invGrid"></div>
+            <div id="invSep"></div>
             <div id="invHot"></div>
-            <p>Clique num item para colocá-lo no slot selecionado da barra (se ele já estiver em outro slot, os dois
-                trocam de lugar). Clique num slot da barra, ou aperte 1-9 e 0, para escolher qual slot trocar.</p>
-            <button class="btn" id="invClose" type="button">Fechar</button>
+            <p id="invHint">Arraste um item para a barra de baixo. Arraste na barra para trocar de lugar. 1-9 e 0
+                selecionam o slot · Esc fecha.</p>
         </div>
     </div>
-    <div id="info"></div>
+    <div id="invGhost"></div>
+    <div id="hudTop">
+        <div id="info"></div>
+        <div id="cmdMsg"></div>
+        <div id="saveInd"></div>
+    </div>
     <div id="touch">
         <div id="joy">
             <div id="knob"></div>
@@ -792,10 +1205,11 @@
                 <rect x="4" y="6" width="3" height="1" />
             </svg></button>
     </div>
+    <div id="bgFade"></div>
 
     <div id="menu">
-        <div class="scr on" id="s-title">
-            <div id="logo">CUBO</div>
+        <div class="scr noPanel on" id="s-title">
+            <img id="logo" src="logo_menu.png" alt="Cubo">
             <div id="splash"></div>
             <button class="btn g" data-go="worlds">Jogar</button>
             <button class="btn" data-go="settings">Configurações</button>
@@ -833,6 +1247,7 @@
 
         <div class="scr" id="s-load">
             <h2 id="lTitle">Mundo</h2>
+            <div class="spin" id="lSpin"></div>
             <p id="status">Gerando o mundo...</p>
             <button class="btn g" id="enter" disabled>Entrar no mundo</button>
             <button class="btn" id="lCancel">Cancelar</button>
@@ -888,8 +1303,11 @@
             <button class="btn" data-go="back">Voltar</button>
         </div>
     </div>
-    <div id="saveInd"></div>
-
+    <div id="chat">
+        <input id="chatInput" type="text" autocomplete="off" spellcheck="false" maxlength="96" placeholder="Comando..."
+            aria-label="Comando">
+        <div id="chatHint">/ajuda</div>
+    </div>
     <script>
         'use strict';
         /* ============================================================
@@ -898,25 +1316,36 @@
            ============================================================ */
         const $ = id => document.getElementById(id);
         const CS = 16, CH = 64, SEA = 22;
+
         const idx = (x, y, z) => (y << 8) | (z << 4) | x;
         const isWater = b => b >= 16 && b < 24;
         const WSRC = 23;
         const TORCH = 10;
         const BUCKET = 30; // item (nao e bloco): balde, vazio ou cheio de agua
+        // Biomas/clima: fonte unica (mkBiome, mais abaixo). ICE = gelo (35), SNOWL = neve fina (36, camada de 1/8 de bloco)
+        const BIO = mkBiome(), BIOMES = BIO.BIOMES, ICE = BIO.ICE, SNOWL = BIO.SNOWL;
         // Iluminacao estilo Minecraft: cada celula guarda luz do ceu (4 bits altos) e luz de bloco (4 bits baixos), de 0 a 15.
         // OP = quanto o bloco atenua a luz (15 = opaco). EM = luz emitida pelo bloco.
         const OP = new Uint8Array(64).fill(15), EM = new Uint8Array(64);
         OP[0] = 0; OP[6] = 1; OP[9] = 0; for (let i = 10; i < 24; i++) OP[i] = 0;
-        for (let i = 10; i < 15; i++) EM[i] = 14; // 10 = tocha em pe, 11-14 = tocha de parede
+        for (let i = 10; i < 15; i++) EM[i] = 11; // 10 = tocha em pe, 11-14 = tocha de parede (nivel 11: luz suave, alcance menor que o 14 padrao)
         OP[26] = OP[28] = 1; EM[34] = 15; // folhas de bétula/abeto, lâmpada
+        EM[52] = 7; EM[53] = 11; // magma e cristal brilham
+        OP[ICE] = 1; OP[SNOWL] = 0; // gelo deixa passar um pouco de luz; neve fina nao bloqueia luz
         const LEAF = new Uint8Array(64); LEAF[6] = LEAF[26] = LEAF[28] = 1;
         // tochas de parede (ids 11-14): deslocamento ate o bloco de apoio
         const WDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
         const isTorch = b => b === TORCH || (b >= 11 && b <= 14);
+        const isSoft = b => isTorch(b) || b === SNOWL;                              // sem colisao e substituivel (agua/blocos tomam o lugar)
+        const snowSupport = b => b !== 0 && b !== SNOWL && !isWater(b) && !isTorch(b); // blocos que seguram neve fina por cima
 
         /* ---------- Worker: geracao de terreno (Perlin, com semente) ---------- */
-        function workerMain() {
-            const CS = 16, CH = 64, SEA = 22;
+        /* ---------- Biomas e clima: UMA fonte de verdade ----------
+           Usada pelo worker (gerar terreno) e pela thread principal (chuva/neve, gelo, neve fina).
+           O bioma de cada coluna e guardado no chunk (ch.bio, 256 bytes) e e ele que decide o clima.
+           cold = bioma frio: a precipitacao e neve, a agua exposta congela e a neve fina cobre tudo por cima. */
+        function mkBiome() {
+            const CS = 16, CH = 64, SEA = 22, ICE = 35, SNOWL = 36;
             let perm = new Uint8Array(512), SD = 0, seedCur = null;
             function init(seed) {
                 seedCur = seed; SD = seed | 0;
@@ -936,6 +1365,17 @@
                 const a = perm[X] + Y, b = perm[X + 1] + Y;
                 return lerp(v, lerp(u, grad(perm[a], x, y), grad(perm[b], x - 1, y)),
                     lerp(u, grad(perm[a + 1], x, y - 1), grad(perm[b + 1], x - 1, y - 1)));
+            }
+            // ruido de Perlin 3D (usado pelas cavernas): mesma tabela de permutacao da semente
+            function grad3(h, x, y, z) { h &= 15; const u = h < 8 ? x : y, v = h < 4 ? y : (h === 12 || h === 14 ? x : z); return ((h & 1) ? -u : u) + ((h & 2) ? -v : v); }
+            function perlin3(x, y, z) {
+                const fx = Math.floor(x), fy = Math.floor(y), fz = Math.floor(z);
+                const X = fx & 255, Y = fy & 255, Z = fz & 255; x -= fx; y -= fy; z -= fz;
+                const u = fade(x), v = fade(y), w = fade(z);
+                const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z, B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;
+                return lerp(w,
+                    lerp(v, lerp(u, grad3(perm[AA], x, y, z), grad3(perm[BA], x - 1, y, z)), lerp(u, grad3(perm[AB], x, y - 1, z), grad3(perm[BB], x - 1, y - 1, z))),
+                    lerp(v, lerp(u, grad3(perm[AA + 1], x, y, z - 1), grad3(perm[BA + 1], x - 1, y, z - 1)), lerp(u, grad3(perm[AB + 1], x, y - 1, z - 1), grad3(perm[BB + 1], x - 1, y - 1, z - 1))));
             }
             function fbm(x, z, oct) {
                 let a = 1, f = 1, sum = 0, norm = 0;
@@ -961,15 +1401,255 @@
                 else if (t > 0.12) gB = w < 0.12 ? 5 : 0;
                 else gB = w > 0.12 ? 2 : (w > -0.02 ? 1 : 0);
             }
+            // indice = id do bioma (0..6). Para mudar o clima de um bioma, e so mudar o cold daqui.
+            const BIOMES = [
+                { name: 'Planície', cold: false },
+                { name: 'Floresta', cold: false },
+                { name: 'Bétulas', cold: false },
+                { name: 'Taiga', cold: true },
+                { name: 'Tundra', cold: true },
+                { name: 'Deserto', cold: false },
+                { name: 'Montanha', cold: true }
+            ];
+            // Cobertura fria de um chunk: congela a agua exposta e poe neve fina por cima do bloco mais alto de cada coluna
+            // (copas, troncos, pedra, areia, construcoes...). Idempotente: pode rodar de novo num chunk ja decorado.
+            function decorate(d, bio) {
+                for (let i = 0; i < 256; i++) {
+                    if (!BIOMES[bio[i]].cold) continue;
+                    let y = CH - 1; while (y > 0 && d[(y << 8) | i] === 0) y--;
+                    const b = d[(y << 8) | i];
+                    if (b >= 16 && b < 24) { d[(y << 8) | i] = ICE; continue; }
+                    if (b === 0 || b === ICE || b === SNOWL || b === 24 || b === 32 || (b >= 10 && b <= 14) || y + 1 >= CH) continue; // solo ja e branco; tocha nao segura neve
+                    d[((y + 1) << 8) | i] = SNOWL;
+                }
+            }
+            return { init, col, hash, decorate, perlin, perlin3, fbm, BIOMES, ICE, SNOWL, get h() { return gH; }, get b() { return gB; }, get seed() { return seedCur; } };
+        }
+
+        function workerMain() {
+            const CS = 16, CH = 64, SEA = 22;
+            const BM = mkBiome(), hash = BM.hash, init = BM.init;
+            let gH = 0, gB = 0;
+            function col(wx, wz) { BM.col(wx, wz); gH = BM.h; gB = BM.b; }
             const DENS = [0.004, 0.022, 0.020, 0.020, 0.003, 0.0035, 0.004];
             const D4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
             const D8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+
+            /* ============================================================
+               CAVERNAS E MINERIOS (tudo deterministico por semente: funcoes puras de x,y,z,
+               entao nao existe emenda entre chunks e nada precisa ser salvo).
+               Tipos de caverna (classe = tamanho):
+                 1 pequena  - bolsoes isolados (ruido 3D de alta frequencia) e geodos de cristal
+                 2 media    - tuneis sinuosos ("espaguete": interseccao de dois campos de ruido), ravinas e dolinas
+                 3 grande   - saloes ("queijo": ruido 3D de baixa frequencia), so em baixa altitude, mais comuns no fundo
+               Expostas ou nao: o teto das cavernas comuns tem 4 blocos de rocha; so em zonas de "entrada" (mascara de
+               ruido 2D) o teto some e as cavernas furam a encosta. Ravinas e dolinas sao sempre expostas.
+               Nada fura perto do mar (a altura minima ao redor precisa passar do nivel do mar) nem perto do spawn.
+               ============================================================ */
+            const DEEP = 44, BEDROCK = 56, MAGMA = 52, CRYST = 53, GRAVEL = 54, CALC = 55, ORE0 = 37, DOFF = 8;
+            const P2 = BM.perlin, P3 = BM.perlin3, F2 = BM.fbm;
+            // ---- parametros (calibrados por teste de geracao) ----
+            const T3 = 0.41;            // limiar das grandes cavernas (menor = mais cavernas)
+            const TR = 0.085;           // raio (no espaco do ruido) dos tuneis
+            const T1 = 0.62;            // limiar dos bolsoes pequenos
+            const ENT0 = 0.05, ENT1 = 0.20; // mascara de entradas: onde as cavernas furam a superficie
+            const RM0 = 0.05, RW = 0.05;    // ravinas: mascara e largura maxima
+            let SDW = 0;
+            function h3(x, y, z, s) {
+                let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(z | 0, 1274126177) + Math.imul(s | 0, 2246822519) + SDW) | 0;
+                h = Math.imul(h ^ (h >>> 15), 2246822519); h = Math.imul(h ^ (h >>> 13), 3266489917); h ^= h >>> 16;
+                return (h >>> 0) / 4294967296;
+            }
+            const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+            // dolinas: um possivel centro por celula de 40x40 (cache por semente)
+            let skSeed = null; const skMap = new Map();
+            function sinkAt(ci, cj) {
+                const key = ci + ',' + cj; if (skMap.has(key)) return skMap.get(key);
+                let s = null;
+                if (h3(ci, cj, 0, 901) < 0.40) {
+                    const cx = ci * 40 + ((h3(ci, cj, 1, 901) * 40) | 0), cz = cj * 40 + ((h3(ci, cj, 2, 901) * 40) | 0);
+                    col(cx, cz); const h = gH, sx = cx - 8, sz = cz - 8;
+                    if (h > SEA + 6 && sx * sx + sz * sz > 900) s = { x: cx, z: cz, h, r: 2.2 + h3(ci, cj, 3, 901) * 2.6, bot: 7 + ((h3(ci, cj, 4, 901) * 9) | 0) };
+                }
+                skMap.set(key, s); return s;
+            }
+            // informacoes por coluna: altura, teto permitido, ravina, dolina
+            function colInfo(wx, wz, o) {
+                col(wx, wz); const h = gH; o.h = h; o.b = gB;
+                let hm = h;
+                col(wx + 6, wz); if (gH < hm) hm = gH; col(wx - 6, wz); if (gH < hm) hm = gH;
+                col(wx, wz + 6); if (gH < hm) hm = gH; col(wx, wz - 6); if (gH < hm) hm = gH;
+                o.safe = hm > SEA; o.top = h - 6; o.srad = 0; o.rw = 0; o.rv = 9; o.rd = 0; o.sd2 = 0; o.sb = 0;
+                if (!o.safe) return o;
+                const sx = wx - 8, sz = wz - 8, spawn = sx * sx + sz * sz < 900;
+                if (h > SEA + 3) {
+                    o.top = h - 4;
+                    if (!spawn) { // zona de entrada: o teto afina ate sumir e a caverna aparece na encosta
+                        const ent = smooth(ENT0, ENT1, F2(wx * 0.012 + 500, wz * 0.012 - 500, 2));
+                        if (ent > 0) o.top = h - Math.max(0, Math.round(4 * (1 - ent * 1.5)));
+                    }
+                }
+                if (h > SEA + 4 && !spawn) {
+                    const m = F2(wx * 0.0035 + 900, wz * 0.0035 - 300, 2);
+                    if (m > RM0) { // ravina: linha onde um ruido 2D (deformado) cruza o zero
+                        const px = wx + P2(wx * 0.02, wz * 0.02 + 50) * 14, pz = wz + P2(wx * 0.02 + 70, wz * 0.02) * 14;
+                        o.rv = Math.abs(P2(px * 0.011 + 33, pz * 0.011 + 77));
+                        o.rw = RW * smooth(RM0, RM0 + 0.12, m);
+                        o.rd = 10 + 14 * (0.5 + 0.5 * P2(wx * 0.015 + 11, wz * 0.015 + 21));
+                    }
+                    const c0 = Math.floor((wx - 8) / 40), c1 = Math.floor((wx + 8) / 40), e0 = Math.floor((wz - 8) / 40), e1 = Math.floor((wz + 8) / 40);
+                    let best = 1e9;
+                    for (let ci = c0; ci <= c1; ci++) for (let cj = e0; cj <= e1; cj++) {
+                        const s = sinkAt(ci, cj); if (!s) continue;
+                        const dx = wx - s.x, dz = wz - s.z, d2 = dx * dx + dz * dz;
+                        if (d2 < best && d2 < s.r * s.r * 7) { best = d2; o.sd2 = d2; o.srad = s.r; o.sb = s.bot; }
+                    }
+                }
+                return o;
+            }
+            // classe da celula: 0 = rocha, 1 = caverna pequena, 2 = media, 3 = grande
+            function cellClass(wx, y, wz, o) {
+                if (y < 3 || y > o.h || !o.safe) return 0;
+                if (o.srad > 0 && o.h > o.sb + 2) { // dolina: funil que vira poco e termina numa camara
+                    if (y >= o.sb) { const t = (o.h - y) / (o.h - o.sb), f = 1.3 - 0.65 * t; if (o.sd2 < f * f * o.srad * o.srad) return 2; }
+                    const R = o.srad * 1.9, dy = y - (o.sb + 2);
+                    if (o.sd2 < R * R && o.sd2 / (R * R) + dy * dy / 12.25 < 1) return 2;
+                }
+                if (o.rw > 0 && y >= o.h - o.rd) { // ravina: fenda em V, mais estreita no fundo
+                    const t = (o.h - y) / o.rd; if (o.rv < o.rw * (1 - 0.8 * t)) return 2;
+                }
+                if (y > o.top) return 0;
+                if (y >= 4 && y <= 31 && y <= o.top - 1) { // saloes: so em baixa altitude, e quanto mais fundo mais faceis
+                    const g = y <= 26 ? 1 : (31 - y) / 5;
+                    const c = P3(wx * 0.0105 + 17, y * 0.024 + 3, wz * 0.0105 - 9) + 0.28 * P3(wx * 0.03, y * 0.06 + 7, wz * 0.03 + 41);
+                    if (c > T3 + (1 - g) * 0.5 - Math.max(0, 26 - y) * 0.0042) return 3;
+                }
+                const a = P3(wx * 0.021, y * 0.027 + 9, wz * 0.021), b = P3(wx * 0.021 + 200, y * 0.027 + 60, wz * 0.021 - 100);
+                const R = TR + 0.02 * (1 - Math.min(1, y / 44)); // tuneis ficam mais largos no fundo
+                if (a * a + b * b < R * R) return 2;
+                if (P3(wx * 0.08 + 5, y * 0.10 - 3, wz * 0.08 + 11) + 0.4 * P3(wx * 0.16, y * 0.2, wz * 0.16 + 3) > T1) return 1;
+                return 0;
+            }
+            // maior classe de caverna entre os 6 vizinhos (grade com 1 bloco de borda: 18x18)
+            function nbMax(cls, lx, y, lz) {
+                const r = (y * 18 + lz + 1) * 18 + lx + 1;
+                let m = cls[r + 1], v = cls[r - 1]; if (v > m) m = v;
+                v = cls[r + 18]; if (v > m) m = v; v = cls[r - 18]; if (v > m) m = v;
+                if (y + 1 < CH) { v = cls[r + 324]; if (v > m) m = v; }
+                if (y > 0) { v = cls[r - 324]; if (v > m) m = v; }
+                return m;
+            }
+            // veios de minerio: [id, ymin, ymax, veios por chunk, tamanho]. Do mais facil (carvao) ao mais dificil (diamante).
+            const OREV = [[0, 5, 50, 14, 10], [1, 4, 38, 6, 8], [2, 3, 32, 6, 6], [3, 3, 19, 1.4, 4], [4, 3, 14, 1.8, 5], [5, 3, 17, 1.0, 3], [6, 3, 11, 0.6, 3]];
+            // minerios na parede das cavernas: [id, ymin, ymax, prob. pequena, media, grande] - os raros so aparecem em cavernas maiores
+            const WALLO = [[6, 3, 11, 0, 0, 0.040], [5, 3, 17, 0, 0, 0.022], [4, 3, 14, 0, 0.020, 0.040], [3, 3, 20, 0, 0.014, 0.032], [2, 3, 32, 0, 0.032, 0.050], [1, 4, 40, 0.020, 0.040, 0.040], [0, 4, 50, 0.050, 0.050, 0.040]];
+            function caveSystem(d, X0, Z0) {
+                SDW = BM.seed | 0; if (skSeed !== BM.seed) { skSeed = BM.seed; skMap.clear(); }
+                const cls = new Uint8Array(18 * 18 * CH);
+                for (let lz = -1; lz <= 16; lz++) for (let lx = -1; lx <= 16; lx++) {
+                    const o = {}; colInfo(X0 + lx, Z0 + lz, o);
+                    if (!o.safe) continue;
+                    for (let y = 3; y <= o.h; y++) { const c = cellClass(X0 + lx, y, Z0 + lz, o); if (c) cls[(y * 18 + lz + 1) * 18 + lx + 1] = c; }
+                }
+                for (let y = 3; y < CH; y++) for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++)
+                    if (cls[(y * 18 + lz + 1) * 18 + lx + 1]) d[(y << 8) | (lz << 4) | lx] = 0;
+                // ---- decoracao interna: cristais nas paredes dos saloes fundos, magma e cascalho no chao ----
+                for (let y = 3; y < CH - 1; y++) for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+                    const i = (y << 8) | (lz << 4) | lx, b = d[i];
+                    if (b !== 3 && b !== DEEP) continue;
+                    const w = nbMax(cls, lx, y, lz); if (!w) continue;
+                    const wx = X0 + lx, wz = Z0 + lz;
+                    if (w === 3 && y <= 14) { // cristal solto na parede: raro e isolado (o grosso dos cristais fica nos geodos)
+                        if (h3(wx, y, wz, 33) < 0.0022 && h3(wx >> 3, y >> 3, wz >> 3, 36) < 0.5) { d[i] = CRYST; continue; }
+                    }
+                    if (cls[((y + 1) * 18 + lz + 1) * 18 + lx + 1] >= 2) { // chao de caverna media/grande
+                        if (y <= 10 && h3(wx >> 1, wz >> 1, y >> 2, 32) < 0.24) d[i] = MAGMA;
+                        else if (h3(wx >> 2, wz >> 2, 0, 31) < 0.2 && h3(wx, y, wz, 35) < 0.85) d[i] = GRAVEL;
+                    }
+                }
+                // ---- estalactites e estalagmites (so em caverna media/grande, com folga de 5+ blocos) ----
+                for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) for (let y = 5; y < CH - 2; y++) {
+                    const i = (y << 8) | (lz << 4) | lx;
+                    if (d[i] !== 0 || cls[(y * 18 + lz + 1) * 18 + lx + 1] < 2) continue;
+                    const wx = X0 + lx, wz = Z0 + lz, up = d[i + 256], dn = d[i - 256];
+                    if (up === 3 || up === DEEP) {
+                        let g = 0; while (g < 8 && y - g >= 3 && d[i - (g << 8)] === 0) g++;
+                        if (g >= 5 && h3(wx, y, wz, 41) < 0.07) { const L = 1 + ((h3(wx, y, wz, 42) * Math.min(3, g - 3)) | 0); for (let k = 0; k < L; k++) d[i - (k << 8)] = up; }
+                    }
+                    if (dn === 3 || dn === DEEP) {
+                        let g = 0; while (g < 8 && y + g < CH && d[i + (g << 8)] === 0) g++;
+                        if (g >= 5 && h3(wx, y, wz, 43) < 0.05) { const L = 1 + ((h3(wx, y, wz, 44) * Math.min(3, g - 3)) | 0); for (let k = 0; k < L; k++) d[i + (k << 8)] = dn; }
+                    }
+                }
+                // ---- geodos: esferas ocas de cristal com casca de calcita, enterradas ----
+                const CL = 22, i0 = Math.floor((X0 - 8) / CL), i1 = Math.floor((X0 + 24) / CL), j0 = Math.floor((Z0 - 8) / CL), j1 = Math.floor((Z0 + 24) / CL);
+                for (let ci = i0; ci <= i1; ci++) for (let cj = j0; cj <= j1; cj++) {
+                    if (h3(ci, cj, 0, 611) > 0.30) continue;
+                    const gx = ci * CL + ((h3(ci, cj, 1, 611) * CL) | 0), gz = cj * CL + ((h3(ci, cj, 2, 611) * CL) | 0);
+                    const r = 3.2 + h3(ci, cj, 3, 611) * 2.2, gy = 7 + ((h3(ci, cj, 4, 611) * 10) | 0);
+                    col(gx, gz); const gh = gH; if (gh <= SEA + 2 || gy + r + 4 > gh) continue;
+                    const R = Math.ceil(r + 2);
+                    for (let dz = -R; dz <= R; dz++) for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+                        const lx = gx + dx - X0, lz = gz + dz - Z0, y = gy + dy;
+                        if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 3 || y >= CH) continue;
+                        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz), i = (y << 8) | (lz << 4) | lx;
+                        if (dist <= r - 1) d[i] = 0;
+                        else if (dist <= r) d[i] = h3(gx + dx, y, gz + dz, 612) < 0.18 ? CALC : CRYST;
+                        else if (dist <= r + 1.4 && d[i] !== 0) d[i] = CALC;
+                    }
+                }
+                // ---- veios de minerio em rocha maciça (aglomerados), por profundidade ----
+                for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+                    const ox = (X0 >> 4) + i, oz = (Z0 >> 4) + j;
+                    for (const O of OREV) {
+                        let n = Math.floor(O[3]); if (h3(ox, oz, O[0], 555) < O[3] - n) n++;
+                        for (let a = 0; a < n; a++) {
+                            let s = (h3(ox, oz, O[0] * 37 + a, 901) * 4294967296) >>> 0;
+                            const rr = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
+                            const px = [ox * 16 + ((rr() * 16) | 0)], py = [O[1] + ((rr() * (O[2] - O[1] + 1)) | 0)], pz = [oz * 16 + ((rr() * 16) | 0)];
+                            const sz = Math.max(1, Math.round(O[4] * (0.6 + 0.8 * rr())));
+                            for (let t = 0; t < sz; t++) {
+                                const k = (rr() * px.length) | 0; let x = px[k], y = py[k], z = pz[k];
+                                const ax = (rr() * 3) | 0, sg = rr() < 0.5 ? -1 : 1;
+                                if (t > 0) { if (ax === 0) x += sg; else if (ax === 1) y += sg; else z += sg; px.push(x); py.push(y); pz.push(z); }
+                                const lx = x - X0, lz = z - Z0;
+                                if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 3 || y >= CH) continue;
+                                const q = (y << 8) | (lz << 4) | lx, b = d[q];
+                                if (b === 3) d[q] = ORE0 + O[0]; else if (b === DEEP) d[q] = ORE0 + DOFF + O[0];
+                            }
+                        }
+                    }
+                }
+                // ---- minerios na parede das cavernas: tipos raros exigem caverna maior e mais fundo ----
+                for (let y = 3; y < CH - 1; y++) for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+                    const i = (y << 8) | (lz << 4) | lx, b = d[i];
+                    if (b !== 3 && b !== DEEP) continue;
+                    const w = nbMax(cls, lx, y, lz); if (!w) continue;
+                    const wx = X0 + lx, wz = Z0 + lz;
+                    for (const W of WALLO) {
+                        if (y < W[1] || y > W[2]) continue;
+                        const p = W[2 + w]; if (!p) continue;
+                        if (h3(wx >> 1, y >> 1, wz >> 1, 60 + W[0]) < p && h3(wx, y, wz, 70 + W[0]) < 0.7) { d[i] = ORE0 + W[0] + (b === DEEP ? DOFF : 0); break; }
+                    }
+                }
+            }
+            // arvore nao nasce em cima de buraco (caverna exposta, ravina ou dolina)
+            const _to = {};
+            function treeBlocked(wx, wz) {
+                for (let dz = 0; dz <= 1; dz++) for (let dx = 0; dx <= 1; dx++) {
+                    colInfo(wx + dx, wz + dz, _to);
+                    if (cellClass(wx + dx, _to.h, wz + dz, _to) || cellClass(wx + dx, _to.h - 1, wz + dz, _to)) return true;
+                }
+                return false;
+            }
             function gen(cx, cz) {
-                const d = new Uint8Array(CS * CS * CH);
+                const d = new Uint8Array(CS * CS * CH), bio = new Uint8Array(256);
                 for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
                     const wx = cx * 16 + x, wz = cz * 16 + z;
                     col(wx, wz);
                     const h = gH, b = gB, beach = h <= SEA + 1;
+                    bio[(z << 4) | x] = b;
+                    const ds = 12 + Math.round(P2(wx * 0.06 + 400, wz * 0.06 - 200) * 4); // limite da ardosia (onda suave entre y 8 e 16)
                     for (let y = 0; y <= h; y++) {
                         let id = 3;
                         if (y > 0) {
@@ -979,11 +1659,14 @@
                             else if (b === 3 || b === 4) id = y === h ? 24 : (y >= h - 3 ? 2 : 3);
                             else id = y === h ? 1 : (y >= h - 3 ? 2 : 3);
                         }
+                        if (id === 3 && y <= ds) id = 44; // ardosia: rocha profunda
+                        if (y <= 2 && (y === 0 || hash(wx * 3 + y, wz * 7 + y * 13) < (y === 1 ? 0.75 : 0.3))) id = 56; // rocha matriz no fundo do mundo
                         d[(y << 8) | (z << 4) | x] = id;
                     }
                     for (let y = h + 1; y <= SEA; y++) d[(y << 8) | (z << 4) | x] = 16 + 7;
                 }
                 const X0 = cx * 16, Z0 = cz * 16;
+                caveSystem(d, X0, Z0); // cavernas, geodos e minerios (antes das arvores, que evitam os buracos)
                 // escreve só dentro deste chunk; arvores vizinhas entram pela borda sem emenda
                 function put(x, y, z, id, hard) {
                     const lx = x - X0, lz = z - Z0; if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 1 || y >= CH) return;
@@ -1074,6 +1757,7 @@
                     if (!ok) continue;
                     col(wx, wz); const h = gH, b = gB;
                     if (r >= DENS[b] || h <= SEA + 1 || (b === 6 && h >= 44)) continue;
+                    if (treeBlocked(wx, wz)) continue;
                     const a = hash(wx + 11, wz + 5), s = hash(wx + 31, wz - 17), c = hash(wx - 7, wz + 23), pk = hash(wx + 3, wz + 9);
                     if (b === 5) { const ch = 1 + (a * 3 | 0); for (let y = 1; y <= ch; y++) put(wx, h + y, wz, 29, 1); }
                     else if (b === 3 || b === 4 || b === 6) spruce(wx, wz, h, a, s);
@@ -1081,20 +1765,28 @@
                     else if (b === 1 && pk < 0.35) birch(wx, wz, h, a, s);
                     else oak(wx, wz, h, a, s, c);
                 }
-                return d;
+                BM.decorate(d, bio); // biomas frios: agua congela e neve fina cobre copas e blocos
+                return { data: d, bio };
             }
             self.onmessage = e => {
-                const { cx, cz, seed } = e.data;
-                if (seed !== seedCur) init(seed);
-                const data = gen(cx, cz);
-                self.postMessage({ cx, cz, data }, [data.buffer]);
+                const d = e.data;
+                if (d.scan) { // varredura leve (altura+bioma por ponto): usada pelo panorama dos menus
+                    init(d.seed);
+                    const out = [];
+                    for (const p of d.scan) { col(p[0], p[1]); out.push(gH, gB); }
+                    self.postMessage({ scanId: d.scanId, out });
+                    return;
+                }
+                if (d.seed !== BM.seed) init(d.seed);
+                const g = gen(d.cx, d.cz);
+                self.postMessage({ cx: d.cx, cz: d.cz, data: g.data, bio: g.bio }, [g.data.buffer, g.bio.buffer]);
             };
         }
-        const workerURL = URL.createObjectURL(new Blob(['(' + workerMain.toString() + ')()'], { type: 'text/javascript' }));
+        const workerURL = URL.createObjectURL(new Blob(['const mkBiome=' + mkBiome.toString() + ';(' + workerMain.toString() + ')()'], { type: 'text/javascript' }));
         function fakeWorker() {
             const w = { busy: false, onmessage: null };
             const selfObj = { postMessage: d => setTimeout(() => w.onmessage && w.onmessage({ data: d }), 0) };
-            new Function('self', '(' + workerMain.toString() + ')()')(selfObj);
+            new Function('self', 'mkBiome', '(' + workerMain.toString() + ')()')(selfObj, mkBiome);
             w.postMessage = m => setTimeout(() => selfObj.onmessage({ data: m }), 0);
             return w;
         }
@@ -1104,7 +1796,7 @@
 
         /* ---------- Texturas pintadas so com codigo ---------- */
         function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-        const atlas = document.createElement('canvas'); const NT = 32; atlas.width = NT * 16; atlas.height = 16;
+        const atlas = document.createElement('canvas'); const NT = 51; atlas.width = NT * 16; atlas.height = 16;
         const actx2 = atlas.getContext('2d');
         function tile(i, fn) {
             const r = rnd(i * 977 + 13);
@@ -1129,7 +1821,16 @@
         tile(10, (x, y, r) => { const n = nz(r, 14); const dd = Math.hypot(x - 7.5, y - 7.5); return dd < 2.2 ? [40, 40, 40] : (dd < 6 ? [185 + n, 165 + n, 118 + n] : [200 + n, 42 + n, 32 + n]); });
         tile(11, (x, y, r) => { const e = x === 0 || y === 0 || x === 15 || y === 15; const g = (x === 3 && y === 3) || (x === 4 && y === 4); return (e || g) ? [205, 235, 245, 255] : [0, 0, 0, 0]; });
         tile(12, (x, y, r) => { const n = nz(r, 22); return [40 + n, 100 + n, 205 + n, 220]; });
-        tile(13, (x, y, r) => { if (x < 7 || x > 8 || y < 6) return [0, 0, 0, 0]; if (y < 8) return y === 6 ? [255, 238, 130] : [255, 150, 40]; const n = nz(r, 14); return [112 + n, 80 + n, 42 + n]; });
+        tile(13, (x, y, r) => {
+            const n = nz(r, 14);
+            if (x === 7 || x === 8) { // cabo: colunas 7-8, linhas 6-15 (e o trecho usado pelo modelo 3D)
+                if (y >= 8) return x === 7 ? [124 + n, 90 + n, 48 + n] : [98 + n, 68 + n, 36 + n];
+                if (y === 7) return r() < 0.5 ? [208, 96, 22] : [130, 54, 18]; // brasa
+                if (y === 6) return [56, 34, 22]; // ponta carbonizada
+            }
+            const FL = { 24: [236, 72, 22], 39: [255, 122, 30], 40: [255, 122, 30], 55: [255, 172, 48], 56: [255, 172, 48], 70: [232, 90, 26], 71: [255, 214, 92], 72: [255, 214, 92], 73: [232, 90, 26], 86: [226, 80, 22], 87: [255, 244, 170], 88: [255, 244, 170], 89: [226, 80, 22] };
+            return FL[y * 16 + x] || [0, 0, 0, 0]; // chama (so no icone)
+        });
         // balde: 14 = vazio, 15 = cheio de agua
         const bucketPx = (x, y, full) => {
             const cx = 7.5, hw = 4.6 - (y - 5) * 0.27, T = [0, 0, 0, 0];
@@ -1166,66 +1867,215 @@
         tile(26, (x, y, r) => { const n = nz(r, 12); const b = y % 8 < 1 ? -22 : 0; return [218 + n + b, 201 + n + b, 148 + n + b]; });
         tile(27, (x, y, r) => { const n = nz(r, 12); const mo = (x + ((y >> 3) & 1 ? 4 : 0)) % 8 === 0 || y % 8 === 0; return mo ? [90, 90, 92] : [128 + n, 128 + n, 130 + n]; });
         tile(28, (x, y, r) => { const n = nz(r, 10); return (x % 8 === 0 || y % 8 === 0) ? [190, 130, 50] : [255, 226 + n, 150 + n]; });
+        tile(29, (x, y, r) => { // gelo: azul claro com rachaduras brancas e veios azuis
+            const n = nz(r, 14), d = (x + y) % 7, d2 = (x * 2 - y + 32) % 9;
+            if (d === 0 && r() < 0.8) return [206 + n, 230 + n, 250];
+            if (d2 === 0 && r() < 0.5) return [118 + n, 168 + n, 226];
+            return [152 + n, 200 + n, 246 + n * 0.4];
+        });
+        tile(30, (x, y, r) => { const n = nz(r, 12); return (y >= 12 || (y === 11 && r() < 0.35)) ? [238 + n, 243 + n, 248 + n] : [0, 0, 0, 0]; }); // icone da neve fina
+        /* ---------- Minerios, ardosia e blocos de caverna ----------
+           31-37 minerios na pedra, 38 ardosia (rocha profunda), 39-45 minerios na ardosia, 46 magma, 47 cristal, 48 cascalho, 49 calcita, 50 rocha matriz.
+           Cada minerio tem o MESMO desenho de manchas na pedra e na ardosia: so muda o fundo. */
+        const stoneC = (x, y, r) => { const n = nz(r, 34); const k = r() < 0.06 ? -30 : 0; return [125 + n + k, 125 + n + k, 125 + n + k]; };
+        const deepC = (x, y, r) => { const n = nz(r, 20), s = (y % 4 === 0) ? -9 : ((x + y * 2) % 7 === 0 ? 6 : 0); return [62 + n + s, 62 + n + s, 72 + n + s]; };
+        const ORES = [ // [cor, brilho]: carvao, cobre, ferro, ouro, redstone, lapis, diamante
+            [[34, 34, 38], [86, 86, 94]], [[184, 104, 66], [232, 152, 104]], [[216, 170, 138], [244, 210, 182]], [[246, 208, 40], [255, 242, 130]],
+            [[190, 22, 22], [255, 84, 72]], [[34, 62, 190], [96, 138, 244]], [[64, 208, 212], [186, 255, 250]]];
+        function orePat(k) { // manchas de 2x2 ou 3x3 pixels (canto claro em cima, sombra embaixo)
+            const r = rnd(k * 5171 + 91), m = new Map(), nb = k === 0 ? 6 : 5;
+            for (let b = 0; b < nb; b++) {
+                const cx = 1 + ((r() * 12) | 0), cy = 1 + ((r() * 12) | 0), s = (k === 0 || r() < 0.3) ? 3 : 2;
+                for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+                    if (s === 3 && (dx + dy === 0 || dx + dy === 4) && r() < 0.6) continue;
+                    const px = cx + dx, py = cy + dy; if (px > 15 || py > 15) continue;
+                    m.set(px + ',' + py, dx === 0 && dy === 0 ? 2 : (dx === s - 1 && dy === s - 1 ? 0 : 1));
+                }
+            }
+            return m;
+        }
+        const oreTile = (k, base) => { const pat = orePat(k), O = ORES[k]; return (x, y, r) => { const v = pat.get(x + ',' + y); if (v === undefined) return base(x, y, r); const n = nz(r, 10), c = v === 2 ? O[1] : O[0], f = v === 0 ? 0.72 : 1; return [c[0] * f + n, c[1] * f + n, c[2] * f + n]; }; };
+        tile(38, deepC);
+        for (let k = 0; k < 7; k++) { tile(31 + k, oreTile(k, stoneC)); tile(39 + k, oreTile(k, deepC)); }
+        tile(46, (x, y, r) => { // magma: rocha escura com rachaduras incandescentes
+            const n = nz(r, 18), cr = ((x * 3 + y * 5) % 11 < 2) || ((x + y * 2) % 9 === 0 && r() < 0.8);
+            return cr ? [255, 150 + (r() < 0.4 ? 70 : 0) + n, 36] : [78 + n, 26 + n * 0.5, 16 + n * 0.3];
+        });
+        tile(47, (x, y, r) => { // cristal: facetas roxas com brilhos
+            const n = nz(r, 8), q = (((x + y) >> 2) * 3 + ((x - y + 16) >> 2) * 5) % 4, sh = [-26, 0, 20, -10][q];
+            let c = [112 + sh + n, 66 + sh + n, 196 + sh + n];                       // facetas em losango, 4 tons de violeta
+            if (((x + y) & 3) === 0 || ((x - y + 16) & 3) === 0) c = [c[0] - 30, c[1] - 24, c[2] - 38]; // arestas escuras entre as facetas
+            else if (q === 2 && ((x + y) & 3) === 1) c = [196, 152, 255];            // brilho na face clara
+            if ((x === 5 && y === 4) || (x === 11 && y === 10) || (x === 3 && y === 12)) c = [240, 224, 255]; // pontos de luz
+            return c;
+        });
+        tile(48, (x, y, r) => { // cascalho: seixos de 4x4 em tons de cinza
+            const q = ((x >> 2) * 7 + (y >> 2) * 13) % 5, n = nz(r, 30), sh = q === 0 ? -40 : (q === 1 ? 22 : (q === 2 ? -14 : 0)), e = (x % 4 === 0 || y % 4 === 0) ? -26 : 0;
+            return [132 + n + sh + e, 126 + n + sh + e * 0.9, 122 + n + sh + e * 0.9];
+        });
+        tile(49, (x, y, r) => { const n = nz(r, 14), v = (x * 5 + y * 7) % 9 === 0 ? -18 : 0; return [232 + n + v, 230 + n + v, 222 + n + v]; });
+        tile(50, (x, y, r) => { const n = nz(r, 40), k = r() < 0.35 ? -34 : 0; return [58 + n + k, 58 + n + k, 60 + n + k]; });
         const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
-        Object.assign(TILES, { 24: [16, 2, 17], 25: [19, 19, 18], 26: [20, 20, 20], 27: [22, 22, 21], 28: [23, 23, 23], 29: [25, 25, 24], 31: [26, 26, 26], 32: [16, 16, 16], 33: [27, 27, 27], 34: [28, 28, 28] });
+        for (let k = 0; k < 7; k++) { TILES[37 + k] = [31 + k, 31 + k, 31 + k]; TILES[45 + k] = [39 + k, 39 + k, 39 + k]; }
+        Object.assign(TILES, { 44: [38, 38, 38], 52: [46, 46, 46], 53: [47, 47, 47], 54: [48, 48, 48], 55: [49, 49, 49], 56: [50, 50, 50] });
+        Object.assign(TILES, { 24: [16, 2, 17], 25: [19, 19, 18], 26: [20, 20, 20], 27: [22, 22, 21], 28: [23, 23, 23], 29: [25, 25, 24], 31: [26, 26, 26], 32: [16, 16, 16], 33: [27, 27, 27], 34: [28, 28, 28], 35: [29, 29, 29], 36: [16, 16, 16] });
         const TILES_W = [12, 12, 12];
         const atlasURL = atlas.toDataURL();
-        function tileURL(i) { const c = document.createElement('canvas'); c.width = c.height = 16; c.getContext('2d').drawImage(atlas, i * 16, 0, 16, 16, 0, 0, 16, 16); return c.toDataURL(); }
-        $('menu').style.setProperty('--dirt', 'url(' + tileURL(2) + ')');
-        $('menu').style.setProperty('--grass', 'url(' + tileURL(0) + ')');
+        { // fundo do menu enquanto o mundo carrega: textura de terra do jogo em mosaico, escurecida (estilo Minecraft)
+            const c = document.createElement('canvas'); c.width = c.height = 16;
+            c.getContext('2d').drawImage(atlas, 2 * 16, 0, 16, 16, 0, 0, 16, 16); // tile 2 = terra
+            const bf = $('bgFade');
+            bf.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url(' + c.toDataURL() + ')';
+            bf.style.backgroundSize = 'auto, 96px 96px'; bf.style.imageRendering = 'pixelated';
+        }
 
         /* ---------- HUD / hotbar + inventario criativo ---------- */
         // Catalogo de itens do criativo: [id, tile, nome]. A barra (HOT) tem 10 slots editaveis.
         const CAT = [[1, 0, 'Grama'], [2, 2, 'Terra'], [3, 3, 'Pedra'], [33, 27, 'Tijolos de pedra'], [4, 4, 'Areia'], [31, 26, 'Arenito'],
-        [24, 17, 'Terra com neve'], [32, 16, 'Neve'], [5, 5, 'Tronco de carvalho'], [6, 7, 'Folhas de carvalho'], [25, 18, 'Tronco de bétula'],
+        [24, 17, 'Terra com neve'], [32, 16, 'Neve'], [SNOWL, 30, 'Neve fina'], [ICE, 29, 'Gelo'], [5, 5, 'Tronco de carvalho'], [6, 7, 'Folhas de carvalho'], [25, 18, 'Tronco de bétula'],
         [26, 20, 'Folhas de bétula'], [27, 21, 'Tronco de abeto'], [28, 23, 'Folhas de abeto'], [7, 8, 'Tábuas'], [9, 11, 'Vidro'],
         [29, 24, 'Cacto'], [34, 28, 'Lâmpada'], [8, 9, 'TNT'], [TORCH, 13, 'Tocha'], [BUCKET, 14, 'Balde']];
+        { // blocos das cavernas, logo depois dos tijolos de pedra
+            const on = ['carvão', 'cobre', 'ferro', 'ouro', 'redstone', 'lápis-lazúli', 'diamante'], ex = [[44, 38, 'Ardósia']];
+            on.forEach((n, k) => ex.push([37 + k, 31 + k, 'Minério de ' + n]));
+            on.forEach((n, k) => ex.push([45 + k, 39 + k, 'Minério de ' + n + ' (ardósia)']));
+            ex.push([54, 48, 'Cascalho'], [55, 49, 'Calcita'], [52, 46, 'Bloco de magma'], [53, 47, 'Cristal']);
+            CAT.splice(4, 0, ...ex);
+        }
         const DEFHOT = [1, 2, 3, 4, 5, 7, 8, 9, BUCKET, TORCH];
         const catOf = id => CAT.find(c => c[0] === id);
         const HOT = DEFHOT.map(id => { const c = catOf(id); return [c[0], c[1]]; });
         let sel = 0, bucketFull = false;
-        const slotEls = [], hotbar = $('hotbar'), invEl = $('inv'), invGrid = $('invGrid'), invHot = $('invHot'), invTip = $('invTip');
+        const slotEls = [], hotbar = $('hotbar'), invEl = $('inv'), invGrid = $('invGrid'), invHot = $('invHot'), invTip = $('invTip'), invGhost = $('invGhost'), invSearch = $('invSearch');
+        /* ---------- Icones 3D (cubo isometrico) estilo Minecraft ----------
+           Cada bloco vira um cubo desenhado pixel a pixel a partir das texturas do atlas (topo claro, lado esquerdo medio,
+           lado direito escuro). Neve fina vira uma laje baixa. Tocha e balde (itens, nao blocos) ficam planos, como no Minecraft. */
+        const ICON_S = 36, iconCache = new Map();
+        let atlasPx = null;
+        function iconOf(id, tile) {
+            const key = id + ':' + tile; let u = iconCache.get(key); if (u) return u;
+            if (!atlasPx) atlasPx = actx2.getImageData(0, 0, NT * 16, 16).data;
+            const S = ICON_S, cv = document.createElement('canvas'); cv.width = cv.height = S;
+            const cx = cv.getContext('2d'), tl = TILES[id];
+            if (!tl || id === TORCH) { // item plano: textura 16x16 ampliada 2x, centralizada
+                const im = cx.createImageData(S, S), o0 = (S - 32) >> 1;
+                for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+                    const a = ((y >> 1) * NT * 16 + tile * 16 + (x >> 1)) * 4, o = ((y + o0) * S + x + o0) * 4;
+                    im.data[o] = atlasPx[a]; im.data[o + 1] = atlasPx[a + 1]; im.data[o + 2] = atlasPx[a + 2]; im.data[o + 3] = atlasPx[a + 3];
+                }
+                cx.putImageData(im, 0, 0);
+            } else {
+                const im = cx.createImageData(S, S), H = id === SNOWL ? 0.125 : 1, d = 1 - H, W = 0.866, K = 0.95;
+                const smp = (tt, s, v, sh, o) => { // s,v em [0,1): pixel da textura tt; devolve false se transparente
+                    const a = ((Math.min(15, v * 16 | 0)) * NT * 16 + tt * 16 + Math.min(15, s * 16 | 0)) * 4;
+                    if (atlasPx[a + 3] < 128) return false;
+                    im.data[o] = atlasPx[a] * sh; im.data[o + 1] = atlasPx[a + 1] * sh; im.data[o + 2] = atlasPx[a + 2] * sh; im.data[o + 3] = 255; return true;
+                };
+                for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+                    const x = ((px + 0.5) / S * 2 - 1) / K, y = ((py + 0.5) / S * 2 - 1) / K, o = (py * S + px) * 4;
+                    let dx = x + W, dy = y + 0.5 - d, s = (dx / W + dy / 0.5) / 2, v = (dx / W - dy / 0.5) / 2; // topo (rombo)
+                    if (v >= 0 && v < 1 && s >= 0 && s < 1 && smp(tl[0], v, s, 1.0, o)) continue;
+                    s = dx / W; v = (y + 0.5 - d) - 0.5 * s;                        // lado esquerdo
+                    if (s >= 0 && s < 1 && v >= 0 && v < H && smp(tl[2], s, v / H, 0.8, o)) continue;
+                    s = x / W; v = (y - d) + 0.5 * s;                                // lado direito
+                    if (s >= 0 && s < 1 && v >= 0 && v < H && smp(tl[2], s, v / H, 0.62, o)) continue;
+                }
+                cx.putImageData(im, 0, 0);
+            }
+            u = cv.toDataURL(); iconCache.set(key, u); return u;
+        }
+        function setIcon(el, id, tile) { el.style.backgroundImage = 'url(' + iconOf(id, tile) + ')'; }
         function mkSlot(num) {
             const d = document.createElement('div'); d.className = 'slot';
-            d.style.backgroundImage = 'url(' + atlasURL + ')';
-            d.style.backgroundSize = (NT * 100) + '% 100%';
+            d.style.backgroundSize = '100% 100%'; d.style.backgroundRepeat = 'no-repeat'; d.style.backgroundPosition = 'center';
             if (num) d.innerHTML = '<span>' + num + '</span>';
             return d;
         }
+        invGhost.style.backgroundSize = '100% 100%';
         for (let i = 0; i < 10; i++) { const d = mkSlot(i + 1); hotbar.appendChild(d); slotEls.push(d); }
         const tilePos = t => (t / (NT - 1) * 100) + '% 0';
-        const invHotEls = HOT.map((_, i) => { const d = mkSlot(i + 1); d.onclick = () => { sel = i; refreshHotbar(); }; invHot.appendChild(d); return d; });
+        const invHotEls = HOT.map((_, i) => { const d = mkSlot(i + 1); invHot.appendChild(d); return d; });
         const catEls = CAT.map((c, i) => {
             const d = mkSlot(); d.title = c[2];
-            d.onpointerenter = () => { invTip.textContent = c[2]; };
-            d.onpointerleave = () => { invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')'; };
-            d.onclick = () => pickItem(i);
+            d.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !drag) invTip.textContent = c[2]; });
             invGrid.appendChild(d); return d;
         });
-        function pickItem(i) { // coloca o item no slot selecionado; se ja estiver em outro slot, troca os dois
-            const c = CAT[i], j = HOT.findIndex(h => h[0] === c[0]);
-            if (j >= 0 && j !== sel) { const t = HOT[sel]; HOT[sel] = HOT[j]; HOT[j] = t; }
-            else if (j < 0) HOT[sel] = [c[0], c[1]];
-            refreshHotbar(); invTip.textContent = c[2] + '  (slot ' + (sel + 1) + ')';
-            if (cur) requestSave();
+        invSearch.addEventListener('input', () => {
+            const q = invSearch.value.trim().toLowerCase();
+            for (let i = 0; i < CAT.length; i++) catEls[i].style.display = (!q || CAT[i][2].toLowerCase().includes(q)) ? '' : 'none';
+        });
+        /* Arrastar itens (estilo Minecraft): do catalogo para a barra, ou entre slots da barra */
+        let drag = null; // { tile, cat, from, sx, sy, moved }
+        function dragBegin(e, tile, cat, from) {
+            e.preventDefault();
+            drag = { tile, cat, from, sx: e.clientX, sy: e.clientY, moved: false, id: e.pointerId };
+            try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { }
         }
+        function dragMove(e) {
+            if (!drag || e.pointerId !== drag.id) return;
+            if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) return;
+            if (!drag.moved) { drag.moved = true; setIcon(invGhost, drag.cat >= 0 ? CAT[drag.cat][0] : HOT[drag.from][0], drag.tile); invGhost.style.display = 'block'; }
+            invGhost.style.left = (e.clientX - 18) + 'px'; invGhost.style.top = (e.clientY - 18) + 'px';
+            invHotEls.forEach(el => el.classList.remove('drag-over'));
+            const over = document.elementFromPoint(e.clientX, e.clientY);
+            const hs = over && over.closest ? over.closest('#invHot .slot') : null;
+            if (hs) hs.classList.add('drag-over');
+        }
+        function dragEnd(e) {
+            if (!drag || e.pointerId !== drag.id) return;
+            const d = drag; drag = null;
+            invGhost.style.display = 'none';
+            invHotEls.forEach(el => el.classList.remove('drag-over'));
+            if (!d.moved) { // clique simples
+                if (d.from >= 0) { sel = d.from; refreshHotbar(); invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')'; }
+                else invTip.textContent = CAT[d.cat][2];
+                return;
+            }
+            const over = document.elementFromPoint(e.clientX, e.clientY);
+            const hs = over && over.closest ? over.closest('#invHot .slot') : null;
+            if (hs) {
+                const ti = invHotEls.indexOf(hs);
+                if (ti >= 0) {
+                    if (d.from >= 0) { // troca entre slots da barra
+                        if (ti !== d.from) { const t = HOT[ti]; HOT[ti] = HOT[d.from]; HOT[d.from] = t; }
+                        sel = ti;
+                    } else { // item do catalogo -> barra (alvo ti)
+                        const c = CAT[d.cat], j = HOT.findIndex(h => h[0] === c[0]);
+                        if (j >= 0 && j !== ti) { const t = HOT[ti]; HOT[ti] = HOT[j]; HOT[j] = t; }
+                        else if (j < 0) HOT[ti] = [c[0], c[1]];
+                        sel = ti;
+                    }
+                    refreshHotbar(); invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')';
+                    if (cur) requestSave();
+                }
+            }
+        }
+        for (let i = 0; i < CAT.length; i++) {
+            catEls[i].addEventListener('pointerdown', e => dragBegin(e, CAT[i][1], i, -1));
+        }
+        for (let i = 0; i < 10; i++) {
+            invHotEls[i].addEventListener('pointerdown', e => dragBegin(e, HOT[i][1], -1, i));
+        }
+        addEventListener('pointermove', dragMove);
+        addEventListener('pointerup', dragEnd);
+        addEventListener('pointercancel', dragEnd);
         function applyHot(ids) { // restaura a barra salva no mundo (ou a padrao)
             for (let i = 0; i < 10; i++) { const c = catOf(Array.isArray(ids) ? ids[i] : DEFHOT[i]) || catOf(DEFHOT[i]); HOT[i] = [c[0], c[1]]; }
         }
         function refreshHotbar() {
             for (let i = 0; i < 10; i++) {
-                const p = tilePos(HOT[i][1]), on = i === sel;
-                slotEls[i].style.backgroundPosition = p; slotEls[i].classList.toggle('sel', on);
-                invHotEls[i].style.backgroundPosition = p; invHotEls[i].classList.toggle('sel', on);
+                const on = i === sel;
+                setIcon(slotEls[i], HOT[i][0], HOT[i][1]); slotEls[i].classList.toggle('sel', on);
+                setIcon(invHotEls[i], HOT[i][0], HOT[i][1]); invHotEls[i].classList.toggle('sel', on);
             }
-            for (let i = 0; i < CAT.length; i++) catEls[i].style.backgroundPosition = tilePos(CAT[i][1]);
+            for (let i = 0; i < CAT.length; i++) setIcon(catEls[i], CAT[i][0], CAT[i][1]);
         }
         function setBucket(f) { bucketFull = !!f; const t = f ? 15 : 14; for (const h of HOT) if (h[0] === BUCKET) h[1] = t; catOf(BUCKET)[1] = t; refreshHotbar(); }
         refreshHotbar();
 
         /* ---------- WebGL ---------- */
         const canvas = $('c');
-        const gl = canvas.getContext('webgl2', { antialias: false });
+        const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, stencil: false, powerPreference: 'high-performance' });
         if (!gl) { $('status').textContent = 'Seu navegador nao suporta WebGL2.'; throw new Error('no webgl2'); }
         function mkProg(vs, fs) {
             const p = gl.createProgram();
@@ -1245,6 +2095,10 @@ uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
 out vec2 vUv; out vec3 vLt; out vec3 vW; out float vD; out vec3 vFog;
 void main(){
   vec3 w=p+off;
+  if(lt.z>1.5){ // chama da tocha: a ponta balanca mais que a base
+    float hg=uv.y*uv.y;
+    w.x+=0.02*hg*sin(tm*9.0+w.z*5.0+w.y*3.0); w.z+=0.02*hg*sin(tm*7.3+w.x*5.0+1.3);
+  }
   if(lt.y>3.5){ // folhas (marcadas no atributo de luz): balanco leve; depende so da posicao, entao blocos vizinhos nunca se separam
     vec3 q=w; float g=0.65+0.35*sin(tm*0.37+q.x*0.05);
     w.x+=g*0.07*sin(tm*1.9+q.z*0.8+q.y*0.5);
@@ -1261,15 +2115,44 @@ void main(){
             `#version 300 es
 precision highp float;
 uniform sampler2D tex; uniform vec3 sky; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform float alpha; uniform float flash; uniform float tm;
+uniform vec4 hl; uniform float hf; uniform vec3 cam; uniform float wet;
 in vec2 vUv; in vec3 vLt; in vec3 vW; in float vD; in vec3 vFog; out vec4 o;
+float hs(vec2 p){ vec3 q=fract(vec3(p.xyx)*0.1031); q+=dot(q,q.yzx+33.33); return fract((q.x+q.y)*q.z); }
 void main(){
+  if(vLt.z>1.5){ // chama da tocha: pixels animados (10 quadros/s), emissiva, com fagulhas
+    vec2 g=floor(vUv*vec2(4.0,7.0)); float t=floor(tm*10.0), sd=vLt.x;
+    float y=(g.y+0.5)/7.0, x=(g.x+0.5)/4.0-0.5;
+    float top=0.55+0.4*hs(vec2(g.x+sd*17.0,t+sd*91.0));
+    float hw=0.5*(1.0-0.65*y)+(hs(vec2(g.y+sd*5.0,t+3.0))-0.5)*0.14;
+    vec3 fc;
+    if(y<=top && abs(x)<=hw){
+      float k=y/top;
+      fc=mix(vec3(1.0,0.97,0.7),vec3(1.0,0.58,0.12),smoothstep(0.05,0.55,k));
+      fc=mix(fc,vec3(0.92,0.27,0.05),smoothstep(0.65,1.0,k));
+      fc=mix(fc,vec3(0.95,0.4,0.08),step(hw*0.7,abs(x))*0.55);
+    } else if(y>top && y<top+0.3 && abs(x)<0.3 && hs(vec2(g.x*3.1+sd*7.0,floor(tm*6.0+g.y*1.7)))>0.94){
+      fc=vec3(1.0,0.6,0.15); // fagulha
+    } else discard;
+    fc*=fl;
+    fc=mix(fc,vFog,clamp((vD-fogN)/(fogF-fogN),0.0,1.0));
+    o=vec4(fc,1.0); return;
+  }
   vec4 c=texture(tex,vUv);
   if(c.a<0.5) discard;
   float a=vLt.y; a-=4.0*step(3.5,a); float cn=step(1.5,a); a-=2.0*cn; // decodifica: +4 folha, +2 sob copa
   float sB=pow(0.8,15.0-a*15.0)*light;
   float bB=pow(0.8,15.0-vLt.z*15.0)*fl;
+  if(hl.w>0.0){ // luz da tocha na mao: mesma curva da luz de bloco (-1 nivel por bloco de distancia), so nas faces voltadas para ela
+    vec3 dp=hl.xyz-vW; float dd=length(dp), lv=hl.w-dd;
+    vec3 dX=dFdx(vW), dY=dFdy(vW);
+    if(lv>0.0){
+      vec3 nn=normalize(cross(dX,dY)); if(dot(nn,cam-vW)<0.0) nn=-nn;
+      bB=max(bB,pow(0.8,15.0-lv)*hf*(0.45+0.55*max(dot(nn,dp/max(dd,0.001)),0.0)));
+    }
+  }
   vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
   vec3 col=c.rgb*vLt.x*lc;
+  col*=1.0-0.22*wet; col=mix(vec3(dot(col,vec3(0.333))),col,1.0+0.3*wet); // molhado: mais escuro e saturado
   col=mix(col,vec3(1.0),flash);
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
   col=mix(col,vFog,f); // vFog: cor do ceu naquela direcao (mesma formula do domo, entao a emenda some)
@@ -1379,11 +2262,11 @@ vec3 skyCol(vec3 d, vec3 o, bool lite){
         float cr=(h11(cell+7.0)>0.80?0.5:1.0)*(0.92+0.08*h11(cell+31.0));
         float zc=sqrt(max(1.0-0.5*dot(cc,cc),0.0));
         float lit=smoothstep(-0.12,0.12,dot(vec3(cc,zc),vec3(sin(ph),0.0,cos(ph))));
-        vec3 mc=mix(vec3(0.045,0.06,0.11),vec3(0.80,0.85,0.95)*cr,lit);
-        mdisc=hm*moonI*(1.0-smoothstep(0.97,1.0,m));
+        vec3 mc=vec3(0.80,0.85,0.95)*cr; // parte nao iluminada some de verdade (so o ceu aparece)
+        mdisc=hm*moonI*(1.0-smoothstep(0.97,1.0,m))*lit;
         col=mix(col,mc,mdisc);
       }
-      col+=vec3(0.30,0.40,0.70)*((exp(-max(m*MS-MS,0.0)*12.0)*0.22+pow(mdot,40.0)*0.2)*moonI*(0.15+0.85*litF)*(1.0-mdisc));
+      col+=vec3(0.30,0.40,0.70)*((exp(-max(m*MS-MS,0.0)*12.0)*0.22+pow(mdot,40.0)*0.2)*moonI*(0.04+0.96*litF)*(1.0-mdisc));
     }
   }
   vec4 cl=clouds(d,o,lite);
@@ -1410,7 +2293,7 @@ void main(){
             `#version 300 es
 precision highp float;
 ${SKYGLSL}
-uniform sampler2D tex; uniform float light; uniform float fl; uniform float fogN; uniform float fogF;
+uniform sampler2D tex; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform vec4 hl; uniform float hf;
 in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; in vec3 vFog; out vec4 o;
 void main(){
   vec2 u1=vUv*0.23+vec2(tm*0.011,tm*0.007)-vFa.xy*tm*0.16;
@@ -1431,6 +2314,7 @@ void main(){
   float mspec=pow(max(-dot(R,sun),0.0),160.0)*moonI*1.2;
   float sB=pow(0.8,15.0-vLt.y*15.0)*light;
   float bB=pow(0.8,15.0-vLt.z*15.0)*fl;
+  if(hl.w>0.0){ float lv=hl.w-distance(hl.xyz,vW); if(lv>0.0) bB=max(bB,pow(0.8,15.0-lv)*hf*0.7); }
   vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
   vec3 base=mix(vec3(0.15,0.43,0.62),vec3(0.04,0.17,0.38),vFa.z)*(0.82+0.36*h);
   vec3 col=base*vLt.x*lc;
@@ -1442,7 +2326,7 @@ void main(){
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
   o=vec4(mix(col,vFog,f),a);
 }`.replace('BUMP', '1.6'));
-        const WU = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'tm', 'sky', 'sun', 'sunI', 'light', 'fl', 'fogN', 'fogF', ...SKN]) WU[n] = gl.getUniformLocation(wprog, n);
+        const WU = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'tm', 'sky', 'sun', 'sunI', 'light', 'fl', 'fogN', 'fogF', 'hl', 'hf', ...SKN]) WU[n] = gl.getUniformLocation(wprog, n);
         // textura de ruido 64x64 que se repete sem emenda (R e G = duas camadas de altura)
         const waterTex = (() => {
             const N = 64, hash = (i, j, sd) => { let h = Math.imul(i * 374761393 + j * 668265263 + sd * 1274126177, 1103515245); h ^= h >>> 13; h = Math.imul(h, 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
@@ -1526,7 +2410,7 @@ void main(){
             gl.uniform3fv(L.cTop, SK.cTop); gl.uniform3fv(L.cSide, SK.cSide); gl.uniform3fv(L.cBot, SK.cBot); gl.uniform2fv(L.cOff, SK.cOff);
             gl.uniformMatrix3fv(L.starM, false, SK.starM); gl.uniform1i(L.ctex, 2); gl.uniform1i(L.ntex, 3); gl.uniform1f(L.skyQ, SK.q);
         }
-        const U = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'sky', 'light', 'fl', 'fogN', 'fogF', 'alpha', 'flash', 'tm', 'sun', 'glow', 'mglow']) U[n] = gl.getUniformLocation(prog, n);
+        const U = {}; for (const n of ['mvp', 'cam', 'off', 'tex', 'sky', 'light', 'fl', 'fogN', 'fogF', 'alpha', 'flash', 'tm', 'sun', 'glow', 'mglow', 'hl', 'hf', 'wet']) U[n] = gl.getUniformLocation(prog, n);
         const LU = { mvp: gl.getUniformLocation(lprog, 'mvp'), off: gl.getUniformLocation(lprog, 'off'), sc: gl.getUniformLocation(lprog, 'sc') };
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -1571,7 +2455,8 @@ void main(){
         const active = new Set();
         const history = [];
         let renderDist = 6;
-        let cur = null, state = 'menu', epoch = 0; // state: menu | loading | playing | paused
+        let cur = null, state = 'menu', epoch = 0; // state: menu | pano | loading | playing | paused
+        let pano = false, panoA = 0, panoSpot = null; // panorama dos menus: um pedaco de mundo real girando devagar ao fundo
 
         function getBlock(x, y, z, def = 0) {
             if (y < 0) return 3;
@@ -1580,6 +2465,15 @@ void main(){
             if (!ch) return def;
             return ch.data[idx(x & 15, y, z & 15)];
         }
+        // bioma por coluna (guardado no chunk). Chunks vindos do disco nao trazem: recalcula pela semente, que e deterministica.
+        function chunkBio(cx, cz) {
+            if (BIO.seed !== cur.seed) BIO.init(cur.seed);
+            const a = new Uint8Array(256);
+            for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) { BIO.col(cx * 16 + x, cz * 16 + z); a[(z << 4) | x] = BIO.b; }
+            return a;
+        }
+        function biomeAt(x, z) { const c = chunks.get(ckey(x >> 4, z >> 4)); return c && c.bio ? c.bio[((z & 15) << 4) | (x & 15)] : -1; }
+        function coldAt(x, z) { const b = biomeAt(x, z); return b >= 0 && BIOMES[b].cold; }
         function dirtyAt(cx, cz) { const c = chunks.get(ckey(cx, cz)); if (c) c.dirty = true; }
         function wake(x, y, z) {
             active.add(x + ',' + y + ',' + z);
@@ -1592,6 +2486,10 @@ void main(){
             const cx = x >> 4, cz = z >> 4;
             const ch = chunks.get(ckey(cx, cz)); if (!ch) return false;
             const lx = x & 15, lz = z & 15, i = idx(lx, y, lz), old = ch.data[i];
+            if (rec && isWater(id) && ch.bio && BIOMES[ch.bio[(lz << 4) | lx]].cold) { // bioma frio: agua exposta ao ceu congela
+                const up = y + 1 >= CH ? 0 : getBlock(x, y + 1, z, 0);
+                if (up === 0 || up === SNOWL) id = ICE;
+            }
             if (old === id) return false;
             ch.data[i] = id; ch.modified = true; ch.sd = true; ch.dirty = true;
             if (ch.lit && (OP[old] !== OP[id] || EM[old] !== EM[id])) relight(x, y, z, old, id);
@@ -1599,6 +2497,7 @@ void main(){
             if (lx === 0) dirtyAt(cx - 1, cz); if (lx === 15) dirtyAt(cx + 1, cz);
             if (lz === 0) dirtyAt(cx, cz - 1); if (lz === 15) dirtyAt(cx, cz + 1);
             wake(x, y, z);
+            if (y + 1 < CH && ch.data[idx(lx, y + 1, lz)] === SNOWL && !snowSupport(id)) setBlock(x, y + 1, z, 0, rec); // neve fina sem apoio some
             return true;
         }
 
@@ -1621,23 +2520,33 @@ void main(){
                 arr.push(ox + v[0], oy + (v[1] ? hTop : 0), oz + v[2], uv[q][0], uv[q][1], F.s, sk, bk);
             }
         }
-        // tocha: prisma fino de 2x10 pixels, sempre com brilho maximo de luz de bloco
-        function pushTorch(arr, ox, oy, oz, sk, b) {
-            const wd = b === TORCH ? null : WDIR[b - 11]; // tocha de parede: base encostada, topo inclinado para fora
-            const yo = wd ? 0.2 : 0;
+        // tocha: cabo de 2x9 pixels (brilho maximo) + chama em cruz (bk = 2: o shader desenha a chama animada, emissiva).
+        // torchGeom gera a geometria em espaco local; emit(lx, ly, lz, u, v, s, bk) posiciona (no mundo ou na mao).
+        const TORCH_H = 0.5625;
+        function torchGeom(emit, seed) {
             const u0 = (13 + 7 / 16) / NT, u1 = (13 + 9 / 16) / NT;
             for (let f = 0; f < 6; f++) {
                 if (f === 1) continue;
                 const F = FACES[f], vt = 6 / 16, vb = f === 0 ? 8 / 16 : 1;
                 const uv = [[u0, vb], [u0, vt], [u1, vt], [u1, vb]];
-                for (const q of ORDER) {
-                    const v = F.v[q];
-                    const hy = v[1] * 0.625, sh = wd ? 0.4375 - 0.5 * hy : 0;
-                    arr.push(ox + 0.5 + (wd ? wd[0] * sh : 0) + (v[0] - 0.5) * 0.125, oy + yo + hy, oz + 0.5 + (wd ? wd[1] * sh : 0) + (v[2] - 0.5) * 0.125, uv[q][0], uv[q][1], F.s, sk, 1);
-                }
+                for (const q of ORDER) { const v = F.v[q]; emit((v[0] - 0.5) * 0.125, v[1] * TORCH_H, (v[2] - 0.5) * 0.125, uv[q][0], uv[q][1], F.s, 1); }
+            }
+            const fw = 0.115, y0 = TORCH_H - 0.05, y1 = TORCH_H + 0.27, Q = [[0, 0], [1, 0], [1, 1], [0, 1]];
+            for (let pl = 0; pl < 2; pl++) for (const i of ORDER) {
+                const a = (Q[i][0] * 2 - 1) * fw, y = y0 + Q[i][1] * (y1 - y0);
+                emit(pl === 0 ? a : 0, y, pl === 0 ? 0 : a, Q[i][0], Q[i][1], seed, 2); // seed (0..1) varia o piscar de cada tocha
             }
         }
-        const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b);
+        function pushTorch(arr, ox, oy, oz, sk, b) {
+            const wd = b === TORCH ? null : WDIR[b - 11]; // tocha de parede: base encostada, topo inclinado para fora
+            const yo = wd ? 0.2 : 0, seed = (((ox * 0.137 + oz * 0.311 + oy * 0.521) % 1) + 1) % 1;
+            torchGeom((lx, ly, lz, u, v, sh, bk) => {
+                const k = wd ? 0.4375 - 0.5 * ly : 0;
+                arr.push(ox + 0.5 + (wd ? wd[0] * k : 0) + lx, oy + yo + ly, oz + 0.5 + (wd ? wd[1] * k : 0) + lz, u, v, sh, sk, bk);
+            }, seed);
+        }
+        const SNOW_H = 0.125, SNOW_BOX = [0, 0, 0, 1, SNOW_H, 1]; // neve fina: 1/8 de bloco
+        const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b) || b === SNOWL;
         function buildMesh(ch) {
             const o = [], w = [], d = ch.data, L = ch.light, X0 = ch.cx * 16, Z0 = ch.cz * 16;
             const lt = (x, y, z) => {
@@ -1704,7 +2613,8 @@ void main(){
                 for (let f = 0; f < 6; f++) {
                     const F = FACES[f], n = nb(x + F.n[0], y + F.n[1], z + F.n[2]);
                     let draw;
-                    if (LEAF[b] === 1 || b === 9) draw = n !== b && (transp(n) || isWater(n));
+                    if (b === SNOWL) draw = f !== 1 && n !== b && (transp(n) || isWater(n)); // neve fina: sem face de baixo (coplanar com o bloco de apoio)
+                    else if (LEAF[b] === 1 || b === 9) draw = n !== b && (transp(n) || isWater(n));
                     else draw = transp(n) || isWater(n);
                     if (!draw) continue;
                     const lv = lt(x + F.n[0], y + F.n[1], z + F.n[2]);
@@ -1712,7 +2622,7 @@ void main(){
                         if (dn < 24) drops.push(X0 + x, y, Z0 + z, b); else { const j = (Math.random() * (dn + 1)) | 0; if (j < 24) { drops[j * 4] = X0 + x; drops[j * 4 + 1] = y; drops[j * 4 + 2] = Z0 + z; drops[j * 4 + 3] = b; } }
                         dn++;
                     }
-                    pushFace(o, F, X0 + x, y, Z0 + z, tl[F.k], 1, (lv >> 4) / 15 + fg, (lv & 15) / 15);
+                    pushFace(o, F, X0 + x, y, Z0 + z, tl[F.k], b === SNOWL ? SNOW_H : 1, (lv >> 4) / 15 + fg, (lv & 15) / 15);
                 }
             }
             freeMesh(ch.mo); freeMesh(ch.mw);
@@ -1871,18 +2781,19 @@ void main(){
             w.onmessage = e => {
                 w.busy = false; if (ep !== epoch) return;
                 pending.delete(ckey(e.data.cx, e.data.cz));
-                addChunk(e.data.cx, e.data.cz, e.data.data, false);
+                addChunk(e.data.cx, e.data.cz, e.data.data, false, e.data.bio);
             };
             w.postMessage({ cx, cz, seed: cur.seed });
         }
-        function addChunk(cx, cz, data, modified) {
-            chunks.set(ckey(cx, cz), { cx, cz, data, dirty: true, modified, sd: false, mo: null, mw: null, light: new Uint8Array(CS * CS * CH), lit: false });
+        function addChunk(cx, cz, data, modified, bio) {
+            chunks.set(ckey(cx, cz), { cx, cz, data, bio: bio || chunkBio(cx, cz), dirty: true, modified, sd: false, mo: null, mw: null, light: new Uint8Array(CS * CS * CH), lit: false });
             _lcx = 1e9;
             dirtyAt(cx - 1, cz); dirtyAt(cx + 1, cz); dirtyAt(cx, cz - 1); dirtyAt(cx, cz + 1);
         }
+        const _want = [];
         function streamChunks() {
-            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4, R = renderDist;
-            const want = [];
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4, R = pano ? (isTouch ? 4 : 5) : renderDist; // no menu usa raio menor: panorama leve
+            const want = _want; want.length = 0;
             for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
                 const d = dx * dx + dz * dz; if (d > R * R + 1) continue;
                 want.push([d, pcx + dx, pcz + dz]);
@@ -1907,7 +2818,7 @@ void main(){
         let spawned = false, spawnAt = [8, 8];
         const keys = {};
         const joy = { x: 0, y: 0, mag: 0 };
-        const solidAt = (x, y, z) => { const b = getBlock(x, y, z, 3); return b !== 0 && !isWater(b) && !isTorch(b); };
+        const solidAt = (x, y, z) => { const b = getBlock(x, y, z, 3); return b !== 0 && !isWater(b) && !isSoft(b); };
         function hits(px, py, pz) {
             const r = 0.3;
             for (let x = Math.floor(px - r); x <= Math.floor(px + r); x++)
@@ -2018,8 +2929,8 @@ void main(){
                 const b = getBlock(x, y, z, 0);
                 if (src && b === WSRC) return { x, y, z, px, py, pz, b };
                 if (b !== 0 && !isWater(b)) {
-                    if (!isTorch(b)) return { x, y, z, px, py, pz, b };
-                    const B = torchBox(b); // tocha: so conta se o raio realmente tocar nela
+                    if (!isSoft(b)) return { x, y, z, px, py, pz, b };
+                    const B = b === SNOWL ? SNOW_BOX : torchBox(b); // tocha e neve fina: so contam se o raio realmente tocar na caixa
                     if (rayBox(o, d, x, y, z, B, maxD) >= 0) return { x, y, z, px, py, pz, b, box: B };
                 }
                 px = x; py = y; pz = z;
@@ -2052,7 +2963,7 @@ void main(){
                 if (d > r * (0.75 + 0.25 * Math.random())) continue;
                 const x = bx + dx, y = by + dy, z = bz + dz;
                 const b = getBlock(x, y, z, 0);
-                if (b === 0 || y <= 0) continue;
+                if (b === 0 || y <= 0 || (b === 56 && y <= 2)) continue;
                 setBlock(x, y, z, 0);
                 if (b === 8) spawnTnt(x + 0.5, y, z + 0.5, 0.25 + Math.random() * 0.8);
             }
@@ -2096,7 +3007,7 @@ void main(){
                 if (n === WSRC) e = 7;
                 else {
                     const bl = getBlock(nx, y - 1, nz, 3);
-                    if (bl === 0 || isTorch(bl) || isWater(bl)) continue; // vai cair (ou escorre por cima de agua): nao espalha de lado
+                    if (bl === 0 || isSoft(bl) || isWater(bl)) continue; // vai cair (ou escorre por cima de agua): nao espalha de lado
                     e = isWater(getBlock(nx, y + 1, nz, 3)) ? 7 : n - 16;
                 }
                 if (e - 1 > best) best = e - 1;
@@ -2109,7 +3020,7 @@ void main(){
             const ch = [];
             for (const k of list) {
                 const p = k.split(','), x = +p[0], y = +p[1], z = +p[2], b = getBlock(x, y, z, 3);
-                if (b === WSRC || !(b === 0 || isTorch(b) || isWater(b))) continue;
+                if (b === WSRC || !(b === 0 || isSoft(b) || isWater(b))) continue;
                 const want = waterWant(x, y, z), cur = isWater(b) ? b : 0;
                 if (want !== cur && !(want === 0 && cur === 0)) ch.push(x, y, z, want);
             }
@@ -2131,9 +3042,9 @@ void main(){
                     const sb = wd ? getBlock(x + wd[0], y, z + wd[1], 3) : getBlock(x, y - 1, z, 3);
                     if (OP[sb] < 15) setBlock(x, y, z, 0); else wq.add(k);
                 }
-                else if (b === 4) {
+                else if (b === 4 || b === 54) { // areia e cascalho caem
                     const bl = getBlock(x, y - 1, z, 3);
-                    if (bl === 0 || isWater(bl)) { setBlock(x, y, z, 0); setBlock(x, y - 1, z, 4); }
+                    if (bl === 0 || isWater(bl) || bl === SNOWL) { setBlock(x, y, z, 0); setBlock(x, y - 1, z, b); }
                 } else if (b === 0 || isWater(b)) wq.add(k);
             }
         }
@@ -2195,14 +3106,14 @@ void main(){
             clearTimeout(indT); indT = setTimeout(() => el.style.opacity = 0, 1600);
         }
         function saveWorld() {
-            if (!cur || !spawned) return saving;
+            if (!cur || cur.__pano || !spawned) return saving;
             const w = cur, ops = [];
             for (const [k, ch] of chunks) if (ch.sd) { ops.push(['chunks', w.id + '/' + k, ch.data.slice()]); dbKeys.add(k); ch.sd = false; }
             for (const k of savedDirty) { ops.push(['chunks', w.id + '/' + k, saved.get(k).slice()]); dbKeys.add(k); }
             savedDirty.clear();
             Object.assign(w, {
                 player: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, fly: P.fly },
-                time, sel, hot: HOT.map(h => h[0]), bucket: bucketFull, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
+                time, sel, hot: HOT.map(h => h[0]), bucket: bucketFull, raining, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
             });
             ops.push(['worlds', w.id, w]);
             indicate('Salvando...');
@@ -2219,10 +3130,14 @@ void main(){
             });
             return saving;
         }
-        function requestSave() { wantThumb = true; pendingSave = true; }
-        setInterval(() => { if (state === 'playing') requestSave(); }, 20000);
+        function requestSave(withThumb = false) { if (withThumb) wantThumb = true; pendingSave = true; }
+        setInterval(() => { if (state === 'playing') requestSave(false); }, 20000);
         addEventListener('pagehide', () => saveWorld());
-        document.addEventListener('visibilitychange', () => { if (document.hidden) { if (state === 'playing' && isTouch) pause(); else saveWorld(); } });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) return;
+            if (state === 'playing' && isTouch) pause();
+            saveWorld(); // no mobile o rAF para quando a aba fica oculta; salva direto
+        });
         const tcv = document.createElement('canvas'); tcv.width = 160; tcv.height = 90;
         function grabThumb() {
             try {
@@ -2238,34 +3153,114 @@ void main(){
             for (const c of chunks.values()) { freeMesh(c.mo); freeMesh(c.mw); }
             chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear(); setBucket(false);
             tnts.length = 0; bN = 0; history.length = 0; spawned = false; thumb = null; flashAmt = 0; shake = 0;
+            raining = false; rainAmt = 0; wxTimer = 60 + Math.random() * 140;
             P.vx = P.vy = P.vz = 0; P.fly = false; pendingSave = wantThumb = false;
         }
         async function openWorld(m) {
-            epoch++; resetWorld(); cur = m; state = 'loading';
-            $('lTitle').textContent = m.name; $('enter').disabled = true; $('status').textContent = 'Lendo salvamento...';
+            epoch++; pano = false; resetWorld(); cur = m; state = 'loading';
+            $('bgFade').classList.remove('on', 'fade'); // saindo do panorama: limpa o fundo de terra
+            $('lTitle').textContent = m.name; $('enter').disabled = true; $('status').textContent = 'Lendo salvamento...'; $('lSpin').style.display = '';
             show('load');
             const rows = await kv.range('chunks', m.id + '/');
             if (cur !== m) return;
             for (const [k, v] of rows) { const ck = k.slice(m.id.length + 1); saved.set(ck, v); dbKeys.add(ck); }
+            if (!m.snowV) { // mundo criado antes da neve fina/gelo: decora os chunks ja editados (so uma vez; os demais nascem prontos)
+                for (const [ck, v] of saved) { const q = ck.split(',').map(Number); BIO.decorate(v, chunkBio(q[0], q[1])); savedDirty.add(ck); }
+                m.snowV = 1;
+            }
             const pl = m.player;
             if (pl) { P.x = pl.x; P.y = pl.y; P.z = pl.z; P.yaw = pl.yaw; P.pitch = pl.pitch; spawnAt = [Math.floor(pl.x), Math.floor(pl.z)]; }
             else { P.x = 8.5; P.z = 8.5; P.yaw = 0; P.pitch = -0.2; spawnAt = [8, 8]; }
-            time = m.time ?? 0.2; applyHot(m.hot); sel = (m.sel || 0) % 10; setBucket(!!m.bucket); refreshHotbar(); streamT = 0;
+            time = m.time ?? 0.2; raining = !!m.raining; rainAmt = raining ? 0.6 : 0; rainInt = rainIntT = 0.6; wxIdx = 1; wxTimer = 60 + Math.random() * 140; applyHot(m.hot); sel = (m.sel || 0) % 10; setBucket(!!m.bucket); refreshHotbar(); streamT = 0;
+        }
+        /* ---------- Panorama: um pedaco de mundo real girando devagar atras das telas (estilo Bedrock) ---------- */
+        function startPanorama() {
+            pano = true; panoA = Math.random() * 6.283; epoch++; resetWorld();
+            $('bgFade').classList.remove('fade'); $('bgFade').classList.add('on'); // fundo de terra ate o mundo carregar
+            cur = { __pano: true, id: '__pano', name: '', seedText: '', seed: (Math.random() * 4294967296) >>> 0, created: 0, played: 0, playTime: 0, player: null, time: 0.15 + Math.random() * 0.1, sel: 0, chunkCount: 0, thumb: null };
+            state = 'pano'; spawned = false; spawnAt = [8, 8]; panoSpot = null;
+            // escolhe um ponto de vista variado (biomas/relevo/agua) com uma varredura leve no worker
+            choosePanoramaSpot(epoch, cur.seed, (x, z) => { panoSpot = [x, z]; spawnAt = [x, z]; });
+            P.x = P.z = 8.5; P.y = 46; P.yaw = panoA; P.pitch = -0.07; P.vx = P.vy = P.vz = 0; P.fly = false; P.fk = 0;
+            time = cur.time; applyHot(DEFHOT); sel = 0; setBucket(false); refreshHotbar(); streamT = 0;
+        }
+        /* Escolhe o ponto de vista do panorama: um worker temporario faz uma varredura leve (somente ruido de
+           bioma/altura, sem gerar chunks) em duas fases — grade larga e depois fina em volta do melhor candidato.
+           A tela fica com o lugar que mistura biomas, tem relevo e agua por perto. Custa pouquissimo (ms). */
+        let scanW = null;
+        function choosePanoramaSpot(ep, seed, cb) {
+            const N = 13, C = (N - 1) >> 1;
+            const randSpot = () => [24 + ((Math.random() * 80) | 0), 24 + ((Math.random() * 80) | 0)];
+            const finish = (x, z) => {
+                if (settled) return;
+                settled = true;
+                try { w.terminate(); } catch (err) { }
+                if (scanW === w) scanW = null;
+                if (ep === epoch) cb(x, z);
+            };
+            const giveup = () => { if (!settled) finish(...randSpot()); };
+            let settled = false, w = null;
+            try { w = new Worker(workerURL); } catch (e) { }
+            if (!w) { const s = randSpot(); cb(s[0], s[1]); return; }
+            if (scanW) { try { scanW.terminate(); } catch (e) { } }
+            scanW = w;
+            setTimeout(giveup, 3000); // rede de seguranca se o worker nao responder
+            w.onerror = giveup;
+            const arr = out => {
+                const g = [];
+                for (let i = 0; i < N; i++) { g[i] = []; for (let j = 0; j < N; j++) g[i][j] = { h: out[(i * N + j) * 2], b: out[(i * N + j) * 2 + 1] }; }
+                return g;
+            };
+            const bestOf = (g, W) => { // melhor celula pela vizinhanca: diversidade de bioma, relevo e agua
+                let best = null;
+                for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+                    const bs = new Set(); let hMin = 99, hMax = -99, water = false;
+                    for (let a = -W; a <= W; a++) {
+                        const I = i + a; if (I < 0 || I >= N) continue;
+                        for (let b2 = -W; b2 <= W; b2++) {
+                            const J = j + b2; if (J < 0 || J >= N) continue;
+                            const q = g[I][J]; bs.add(q.b);
+                            if (q.h < hMin) hMin = q.h; if (q.h > hMax) hMax = q.h;
+                            if (q.h <= SEA + 1) water = true;
+                        }
+                    }
+                    let sc = bs.size * 4 + (hMax - hMin) / 8 + (water ? 2 : 0);
+                    if (bs.size > 1 && bs.has(6)) sc += 1.5; // montanha de outro bioma no horizonte
+                    if (!best || sc > best.s) best = { s: sc, i, j };
+                }
+                return best;
+            };
+            let p1 = null;
+            w.onmessage = e => {
+                const d = e.data, g = arr(d.out), c = bestOf(g, d.W);
+                if (d.scanId === 1) { // fase 2: grade fina de 64m em volta do melhor ponto da fase 1
+                    p1 = [(c.i - C) * 256, (c.j - C) * 256];
+                    const f = [];
+                    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) f.push([p1[0] + (i - C) * 64, p1[1] + (j - C) * 64]);
+                    w.postMessage({ seed, scan: f, scanId: 2, W: 2 });
+                } else {
+                    finish(p1[0] + (c.i - C) * 64, p1[1] + (c.j - C) * 64);
+                }
+            };
+            const req = [];
+            for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) req.push([(i - C) * 256, (j - C) * 256]);
+            w.postMessage({ seed, scan: req, scanId: 1, W: 2 });
         }
         function pause() {
             if (state !== 'playing') return;
+            if (chatOpen) closeChat();
             state = 'paused'; locked = false; held[0] = held[2] = false; rewinding = false; touchReset();
             for (const k in keys) keys[k] = false;
             sprintLatch = false; $('bSneak').classList.remove('on');
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
-            requestSave(); show('pause');
+            requestSave(true); show('pause');
         }
         async function quitToTitle() {
             $('quit').disabled = true;
+            grabThumb();
             await saveWorld();
             $('quit').disabled = false;
-            epoch++; cur = null; state = 'menu'; resetWorld();
-            gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            startPanorama();
             showWorlds();
         }
         function enter() { if (isTouch) startTouch(); else canvas.requestPointerLock(); }
@@ -2275,11 +3270,43 @@ void main(){
         let curScr = 'title', back = 'title', editing = null;
         const SPLASH = ['Agora com salvamento!', 'Mundos infinitos!', 'Cuidado com a TNT!', 'Feito só com código!', 'Segure R para voltar no tempo!', 'Barragens! Água!', 'Cada mundo tem sua semente!'];
         $('splash').textContent = SPLASH[Math.floor(Math.random() * SPLASH.length)];
+        $('logo').onerror = function () { const t = document.createElement('div'); t.className = 'logoTxt'; t.textContent = 'CUBO'; this.replaceWith(t); };
+        (function () { // remove o preenchimento transparente da imagem do logo para nao sobrar espaco entre ela e os botoes
+            const img = $('logo'); if (!img || img._trimmed) return;
+            img.addEventListener('load', function trim() {
+                if (img._trimmed) return;
+                try {
+                    const w = img.naturalWidth, h = img.naturalHeight;
+                    const c = document.createElement('canvas'); c.width = w; c.height = h;
+                    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+                    const d = g.getImageData(0, 0, w, h).data;
+                    let x0 = w, y0 = h, x1 = 0, y1 = 0;
+                    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                        if (d[(y * w + x) * 4 + 3] > 8) {
+                            if (x < x0) x0 = x; if (x > x1) x1 = x;
+                            if (y < y0) y0 = y; if (y > y1) y1 = y;
+                        }
+                    }
+                    if (x1 < x0) return; // imagem toda transparente: nao mexe
+                    const pad = 2; // pequena margem de respiro
+                    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+                    x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+                    if ((x0 + (w - 1 - x1) + y0 + (h - 1 - y1)) < 8) return; // quase sem borda: nada a cortar
+                    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+                    const out = document.createElement('canvas'); out.width = cw; out.height = ch;
+                    out.getContext('2d').drawImage(img, x0, y0, cw, ch, 0, 0, cw, ch);
+                    img._trimmed = true;
+                    img.src = out.toDataURL('image/png');
+                } catch (e) { /* falha de seguranca (ex.: file:// em alguns navegadores): mantem a imagem original */ }
+            });
+            if (img.complete && img.naturalWidth) img.dispatchEvent(new Event('load'));
+        })();
         function show(name) {
             if (name === 'settings') { back = curScr; cancelCapture(); }
             curScr = name;
             document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === 's-' + name));
             menu.classList.toggle('ingame', state === 'paused');
+            document.body.classList.remove('hud'); // menus nunca mostram o HUD
             menu.style.display = 'flex';
         }
         const fmtDur = s => { s = Math.floor(s || 0); if (s < 60) return '< 1 min'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'min' : m + ' min'; };
@@ -2288,7 +3315,8 @@ void main(){
         const seedLabel = m => m.seedText ? m.seedText : String(m.seed);
         function metaLine(m) { return 'Semente ' + seedLabel(m) + ' · ' + fmtDur(m.playTime) + ' jogados · ' + (m.chunkCount ? fmtSize(m.chunkCount) + ' salvos' : 'sem edições'); }
         async function showWorlds() {
-            state = 'menu'; show('worlds');
+            if (!pano) startPanorama();
+            show('worlds');
             const list = (await kv.range('worlds', '')).map(r => r[1]).sort((a, b) => b.played - a.played);
             const wl = $('wl'); wl.textContent = '';
             if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nenhum mundo ainda. Crie o primeiro!'; wl.appendChild(e); }
@@ -2343,7 +3371,7 @@ void main(){
         };
         confirm2($('eReset'), async () => {
             const rows = await kv.range('chunks', editing.id + '/');
-            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2 });
+            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2, raining: false });
             await kv.batch([...rows.map(([k]) => ['chunks', k, undefined]), ['worlds', editing.id, editing]]); showWorlds();
         });
         confirm2($('eDel'), async () => {
@@ -2352,7 +3380,7 @@ void main(){
         });
         $('enter').onclick = enter;
         $('resume').onclick = enter;
-        $('lCancel').onclick = () => { epoch++; cur = null; state = 'menu'; resetWorld(); showWorlds(); };
+        $('lCancel').onclick = () => { startPanorama(); showWorlds(); };
         $('quit').onclick = quitToTitle;
 
         /* ---------- Entrada ---------- */
@@ -2360,6 +3388,107 @@ void main(){
         const aim = { on: false, x: 0, y: 0 }; // toque: mira no ponto da tela onde o dedo esta
         const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
         if (isTouch) { document.body.classList.add('touch'); renderDist = 4; }
+        /* ---------- Chat de cheats (aperte T) ---------- */
+        const chatEl = $('chat'), chatInput = $('chatInput'), chatHint = $('chatHint'), rainEl = $('rain'), cmdMsgEl = $('cmdMsg');
+        let chatOpen = false, raining = false, rainAmt = 0, rainInt = 0.6, rainIntT = 0.6, wxAuto = true, wxTimer = 120, wxShift = 30, wxIdx = 1, wxLast = -1;
+        let cmdMsgT = 0;
+        const CHAT_CMDS = '/dia · /noite · /manha · /tarde · /chuva|/neve [fraca|media|forte] · /tempo claro|auto|manual · /bioma · /voar · /tnt · /hora';
+        const precipWord = () => coldAt(Math.floor(P.x), Math.floor(P.z)) ? 'Neve' : 'Chuva'; // o bioma sob o jogador decide
+        function showCmdMsg(txt) {
+            cmdMsgEl.textContent = txt;
+            cmdMsgEl.classList.add('on');
+            clearTimeout(cmdMsgT);
+            cmdMsgT = setTimeout(() => cmdMsgEl.classList.remove('on'), 1800);
+        }
+        function setChatHint(txt, isError) {
+            chatHint.textContent = txt;
+            chatHint.classList.toggle('err', !!isError);
+        }
+        function clearChatKeys() {
+            held[0] = held[2] = false;
+            for (const k in keys) keys[k] = false;
+            sprintLatch = false;
+        }
+        function openChat() {
+            if (state !== 'playing' || rewinding) return; // no menu o T continua valendo para o texto
+            chatOpen = true;
+            clearChatKeys();
+            joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
+            chatEl.classList.add('on');
+            setChatHint('Digite /ajuda e aperte Enter');
+            chatInput.value = '/';
+            chatInput.focus();
+            setTimeout(() => { try { chatInput.setSelectionRange(1, 1); } catch (e) { } }, 0);
+        }
+        function closeChat() {
+            if (!chatOpen) return;
+            chatOpen = false;
+            chatEl.classList.remove('on');
+            chatInput.blur();
+        }
+        function execCommand(raw) {
+            const parts = raw.trim().split(/\s+/), name = (parts[0] || '').toLowerCase(), arg = (parts[1] || '').toLowerCase();
+            switch (name) {
+                case 'ajuda': case 'help': return { keep: true, msg: CHAT_CMDS };
+                case 'dia': case 'sol': time = 0.25; return { msg: 'Dia!' };
+                case 'noite': case 'lua': time = 0.75; return { msg: 'Noite!' };
+                case 'manha': case 'amanhecer': time = 0.05; return { msg: 'Manhã!' };
+                case 'tarde': case 'crepusculo': time = 0.45; return { msg: 'Tarde!' };
+                case 'chuva': case 'neve': {
+                    const lv = WX_NAMES[arg], pw = precipWord();
+                    if (lv) { wxSet(lv); return { msg: pw + ' ' + wxName(lv) }; }
+                    if (raining) { wxClear(); return { msg: pw + ' desligada' }; }
+                    wxSet(0.6); return { msg: pw + ' média' };
+                }
+                case 'bioma': {
+                    const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
+                    if (bi < 0) return { keep: true, msg: 'Bioma ainda carregando', err: true };
+                    return { keep: true, msg: 'Bioma: ' + BIOMES[bi].name + (BIOMES[bi].cold ? ' (frio: neve, gelo e neve fina)' : ' (chuva)') };
+                }
+                case 'limpar': wxClear(); return { msg: 'Tempo claro' };
+                case 'tempo': {
+                    if (!arg) return { keep: true, msg: 'Tempo: ' + (raining ? precipWord().toLowerCase() : 'claro') };
+                    if (arg === 'claro' || arg === 'limpo' || arg === 'sol' || arg === 'limpar') { wxClear(); return { msg: 'Tempo claro' }; }
+                    if (arg === 'chuva' || arg === 'chuvoso') { wxSet(0.6); return { msg: 'Chuva média' }; }
+                    if (arg === 'tempestade') { wxSet(1); return { msg: 'Chuva forte' }; }
+                    if (arg === 'auto') { wxAuto = true; return { msg: 'Clima automático ligado' }; }
+                    if (arg === 'manual') { wxAuto = false; return { msg: 'Clima automático desligado' }; }
+                    if (arg === 'dia') { time = 0.25; return { msg: 'Dia!' }; }
+                    if (arg === 'noite') { time = 0.75; return { msg: 'Noite!' }; }
+                    return { keep: true, msg: 'Use /tempo claro ou /tempo chuva', err: true };
+                }
+                case 'voar': case 'fly': toggleFly(); return { msg: P.fly ? 'Voando' : 'Andando' };
+                case 'tnt': {
+                    const hit = locked ? raycast(eyePos(), aimDir(), 6) : null;
+                    if (hit) spawnTnt(hit.px + 0.5, hit.py + 0.5, hit.pz + 0.5, 3);
+                    else spawnTnt(P.x + 0.5, P.y + 1, P.z + 0.5, 3);
+                    return { msg: 'TNT!' };
+                }
+                case 'hora': {
+                    const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
+                    return { msg: 'Hora: ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') };
+                }
+                default: return null;
+            }
+        }
+        function submitChat() {
+            const raw = chatInput.value.trim();
+            if (!raw) { closeChat(); return; }
+            if (!raw.startsWith('/')) { setChatHint('Comandos começam com /', true); return; }
+            const res = execCommand(raw.slice(1));
+            if (!res) { setChatHint('Comando desconhecido. Digite /ajuda', true); return; }
+            if (res.keep) { setChatHint(res.msg, res.err); return; }
+            closeChat();
+            showCmdMsg(res.msg);
+        }
+        chatInput.addEventListener('keydown', e => {
+            e.stopPropagation();
+            if (e.key === 'Escape') { e.preventDefault(); closeChat(); }
+            else if (e.key === 'Enter') { e.preventDefault(); submitChat(); }
+            else if (e.key === 'Tab') e.preventDefault();
+        });
+        chatInput.addEventListener('blur', closeChat);
+
         /* ---------- Teclas configuráveis (computador) ----------
            O jogo continua lendo os codigos originais (KeyW, Space, ControlLeft...).
            Aqui so traduzimos a tecla fisica apertada para a tecla "logica" da acao. */
@@ -2457,22 +3586,27 @@ void main(){
         document.addEventListener('pointerlockchange', () => {
             locked = document.pointerLockElement === canvas;
             if (locked) lockKeys(); else unlockKeys();
-            if (locked) { state = 'playing'; menu.style.display = 'none'; }
+            if (locked) { invWait = false; state = 'playing'; document.body.classList.add('hud'); menu.style.display = 'none'; }
             else if (state === 'playing') pause();
         });
         document.addEventListener('mousemove', e => {
+            if (chatOpen) return;
             if (!locked) return;
             P.yaw -= e.movementX * 0.0025;
             P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - e.movementY * 0.0025));
         });
         const NOSCROLL = ['Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight'];
         addEventListener('keydown', e => {
-            if (state === 'inv') { // inventario aberto: fechar com Esc ou com a tecla do inventario; 1-9/0 escolhem o slot
-                if (e.code === 'Escape' || lc(e.code) === DEF.inventory) { if (!e.repeat) closeInv(); return; }
+            if (invWait && state === 'paused' && e.code === 'Escape') { e.preventDefault(); invWait = false; state = 'playing'; pause(); return; } // 2o Esc: abre o menu de pausa
+            if (state === 'inv') { // inventario aberto: digitando na busca? deixa o campo receber as teclas
+                if (e.target === invSearch) { if (e.code === 'Escape') { e.preventDefault(); closeInv(true); } return; }
+                if (e.code === 'Escape' || lc(e.code) === DEF.inventory) { if (!e.repeat) closeInv(e.code === 'Escape'); return; }
                 if (e.code.startsWith('Digit')) { let n = +e.code.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
                 return;
             }
+            if (chatOpen) return; // digitando no chat: o jogo ignora as teclas
             if (state !== 'playing') return;
+            if (e.code === 'KeyT' && !e.repeat) { e.preventDefault(); openChat(); return; }
             const c = lc(e.code); // tecla logica (respeita as teclas configuradas)
             if (NOSCROLL.includes(e.code) || (c && NOSCROLL.includes(c))) e.preventDefault();
             if (c === null) return;
@@ -2486,7 +3620,7 @@ void main(){
             if (c === 'BracketRight') { renderDist = Math.min(12, renderDist + 1); updDist(); }
             if (c === 'KeyW' && !e.repeat) { const n = performance.now(); if (n - lastW < 300) sprintLatch = true; lastW = n; }
         });
-        addEventListener('keyup', e => { const c = lc(e.code); if (c === null) return; keys[c] = false; if (c === 'KeyW') sprintLatch = false; if (c === 'KeyR') { rewinding = false; rewHold = 0; } });
+        addEventListener('keyup', e => { if (chatOpen) return; const c = lc(e.code); if (c === null) return; keys[c] = false; if (c === 'KeyW') sprintLatch = false; if (c === 'KeyR') { rewinding = false; rewHold = 0; } });
         /* ---------- Teclado/mouse so para o jogo ----------
            Enquanto joga (ou com o inventario aberto) os atalhos do navegador sao bloqueados (Ctrl+E, Ctrl+F, Ctrl+S, F5, Alt, Tab,
            botoes laterais do mouse...). Fora do jogo (menus, digitar nome do mundo) tudo volta ao normal. F11 e F12 continuam livres.
@@ -2494,7 +3628,7 @@ void main(){
            e em tela cheia (F11) o Keyboard Lock (Chrome/Edge) captura essas teclas tambem. */
         const gameOwnsInput = () => state === 'playing' || state === 'inv';
         const KEEP_BROWSER = new Set(['F11', 'F12']);
-        const swallowKey = e => { if (gameOwnsInput() && !KEEP_BROWSER.has(e.code)) e.preventDefault(); };
+        const swallowKey = e => { if (e.target === invSearch || e.target === chatInput || e.target === chatEl) return; if (gameOwnsInput() && !KEEP_BROWSER.has(e.code)) e.preventDefault(); };
         addEventListener('keydown', swallowKey, true);
         addEventListener('keyup', swallowKey, true);
         addEventListener('keypress', swallowKey, true);
@@ -2517,21 +3651,34 @@ void main(){
             sprintLatch = false; $('bSneak').classList.remove('on');
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
             if (isTouch) locked = false; else document.exitPointerLock();
+            document.body.classList.remove('hud'); // o inventario cobre a tela e ja tem hotbar propria
+            invSearch.value = ''; invSearch.dispatchEvent(new Event('input')); // limpa a busca
             invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')';
             invEl.classList.add('on');
+            if (!isTouch) invSearch.focus();
         }
-        function closeInv() {
+        // Esc fecha so o inventario: o navegador nao deixa recapturar o mouse a partir do Esc (nao e um gesto do usuario),
+        // entao o jogo espera um clique na tela (ou outro Esc para pausar) em vez de abrir o menu de pausa.
+        let invWait = false;
+        canvas.addEventListener('mousedown', () => { if (invWait && state === 'paused') { invWait = false; try { canvas.requestPointerLock(); } catch (e) { state = 'playing'; pause(); } } });
+        function closeInv(viaEsc) {
             if (state !== 'inv') return;
             invEl.classList.remove('on');
-            if (isTouch) { state = 'playing'; locked = true; return; }
+            if (isTouch) { state = 'playing'; locked = true; document.body.classList.add('hud'); return; }
             state = 'paused'; // se o mouse for recapturado, pointerlockchange volta para 'playing'
-            const fail = () => { if (state === 'paused') show('pause'); };
+            if (viaEsc) {
+                // Esc so fecha o inventario. O pedido de captura do mouse espera o Esc terminar (senao o navegador
+                // trata esse mesmo Esc como "sair do mouse" e o jogo cairia na tela de pausa). Se nao der, espera um clique.
+                invWait = true; document.body.classList.add('hud'); showCmdMsg('Clique para voltar ao jogo');
+                setTimeout(() => { if (invWait && state === 'paused') { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch (e) { } } }, 180);
+                return;
+            }
+            const fail = () => { if (state === 'paused' && !invWait) show('pause'); };
             try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(fail); } catch (e) { fail(); }
         }
-        $('invClose').onclick = closeInv;
-        addEventListener('wheel', e => { if (!locked) return; sel = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; refreshHotbar(); });
+        addEventListener('wheel', e => { if (chatOpen) return; if (!locked) return; sel = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; refreshHotbar(); });
         addEventListener('contextmenu', e => e.preventDefault());
-        canvas.addEventListener('mousedown', e => { if (!locked) return; held[e.button] = true; holdT = 0; act(e.button); });
+        canvas.addEventListener('mousedown', e => { if (chatOpen) return; if (!locked) return; held[e.button] = true; holdT = 0; act(e.button); });
         addEventListener('mouseup', e => { held[e.button] = false; });
         function aimDir() { // direcao do raio: no toque, passa pelo ponto tocado; senao, centro da tela
             const f = lookDir(); if (!aim.on) return f;
@@ -2551,27 +3698,29 @@ void main(){
             } else { // cheio: solta uma fonte na celula livre diante do bloco mirado
                 const h = raycast(eyePos(), aimDir(), 6); if (!h || h.py <= 0) return;
                 const c = getBlock(h.px, h.py, h.pz, 3);
-                if ((c === 0 || isTorch(c) || (isWater(c) && c !== WSRC)) && setBlock(h.px, h.py, h.pz, WSRC)) setBucket(false);
+                if ((c === 0 || isSoft(c) || (isWater(c) && c !== WSRC)) && setBlock(h.px, h.py, h.pz, WSRC)) setBucket(false);
             }
         }
         function act(btn, rep) {
             if (btn === 2 && HOT[sel][0] === BUCKET) { if (!rep) useBucket(); return; } // balde: um clique por uso
             const hit = raycast(eyePos(), aimDir(), 6); if (!hit) return;
             if (btn === 0) {
-                if (hit.y <= 0) return;
+                if (hit.y <= 0 || (hit.b === 56 && hit.y <= 2)) return; // fundo do mundo (rocha matriz) nao quebra
                 setBlock(hit.x, hit.y, hit.z, 0);
                 if (hit.b === 8) spawnTnt(hit.x + 0.5, hit.y, hit.z + 0.5, 3);
             } else if (btn === 2) {
-                const id = HOT[sel][0], x = hit.px, y = hit.py, z = hit.pz;
+                const id = HOT[sel][0]; let x = hit.px, y = hit.py, z = hit.pz;
+                if (hit.b === SNOWL && id !== SNOWL && id !== TORCH) { x = hit.x; y = hit.y; z = hit.z; } // bloco toma o lugar da neve fina
                 const c = getBlock(x, y, z, 3);
-                if (c !== 0 && !isWater(c)) return;
+                if (c !== 0 && !isWater(c) && c !== SNOWL) return;
+                if (id === SNOWL && !snowSupport(getBlock(x, y - 1, z, 3))) return; // neve fina precisa de um bloco embaixo
                 let pid = id;
                 if (id === TORCH) { // chao: tocha em pe; parede: tocha inclinada. Apoio precisa ser bloco opaco.
                     const nx = hit.px - hit.x, ny = hit.py - hit.y, nz = hit.pz - hit.z;
                     if (isWater(c) || OP[hit.b] < 15 || ny < 0) return;
                     if (ny === 0) pid = 11 + WDIR.findIndex(d => d[0] === -nx && d[1] === -nz);
                 }
-                if (!isWater(id) && id !== TORCH) {
+                if (!isWater(id) && id !== TORCH && id !== SNOWL) {
                     const r = 0.3;
                     if (x + 1 > P.x - r && x < P.x + r && z + 1 > P.z - r && z < P.z + r && y + 1 > P.y && y < P.y + 1.8) return;
                 }
@@ -2581,7 +3730,7 @@ void main(){
 
         /* ---------- Controles de toque ---------- */
         function startTouch() {
-            locked = true; state = 'playing'; menu.style.display = 'none';
+            locked = true; state = 'playing'; document.body.classList.add('hud'); menu.style.display = 'none';
             try { const el = document.documentElement; const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => { }); } catch (e) { }
             try { const r = screen.orientation.lock('landscape'); if (r && r.catch) r.catch(() => { }); } catch (e) { }
         }
@@ -2661,31 +3810,49 @@ void main(){
         const info = $('info'), flashEl = $('flash'), waterEl = $('water'), rewEl = $('rew');
         let time = 0.2, last = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0, lowT = 0;
         const DAY = 240;
-        function resize() { const d = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2); canvas.width = innerWidth * d; canvas.height = innerHeight * d; gl.viewport(0, 0, canvas.width, canvas.height); }
+        let rs = 1, rsLow = 0, rsHi = 0, fpsPk = 0; // escala de resolucao dinamica
+        function resize() { const d = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2) * rs; canvas.width = innerWidth * d; canvas.height = innerHeight * d; gl.viewport(0, 0, canvas.width, canvas.height); }
         addEventListener('resize', resize); resize();
 
         function update(dt) {
+            if (pano) { // camera do panorama: gira devagar no ponto de vista escolhido pela varredura
+                if (!panoSpot) return; // aguarda a varredura do worker (bem rapida, ms)
+                panoA += dt * 0.07;
+                P.yaw = panoA;
+                P.pitch = -0.07 + 0.03 * Math.sin(panoA * 0.43);
+                P.x = panoSpot[0] + 0.5; P.z = panoSpot[1] + 0.5;
+                P.y += (Math.max(SEA + 1, surfaceY(Math.floor(P.x), Math.floor(P.z))) + 6 + 0.35 * Math.sin(panoA * 0.7) - P.y) * Math.min(1, dt * 1.6);
+            }
+            weatherTick(dt);
+            const targetRain = raining ? rainInt : 0;
+            rainAmt += (targetRain - rainAmt) * Math.min(1, dt * 0.6);
+            if (Math.abs(rainAmt - targetRain) < 0.002) rainAmt = targetRain;
+            rainUpdate(dt);
             streamT -= dt;
             if (streamT <= 0) { streamT = 0.25; streamChunks(); }
             const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
             // luz dos chunks recem-chegados: mais proximos primeiro, com orcamento de tempo
-            const unlit = []; for (const ch of chunks.values()) if (!ch.lit) unlit.push(ch);
+            const unlit = _unlit; unlit.length = 0; for (const ch of chunks.values()) if (!ch.lit) unlit.push(ch);
             if (unlit.length) {
                 unlit.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
                 const tl = performance.now();
                 for (const ch of unlit) { initLight(ch); if (performance.now() - tl > 5) break; }
             }
             const t0 = performance.now(); let n = 0;
-            const dirty = []; for (const ch of chunks.values()) if (ch.dirty && canMesh(ch)) dirty.push(ch);
+            const dirty = _dirty; dirty.length = 0; for (const ch of chunks.values()) if (ch.dirty && canMesh(ch)) dirty.push(ch);
             dirty.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
             for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > 6 && n >= 1) break; }
             if (!spawned) {
                 const c = chunks.get(ckey(spawnAt[0] >> 4, spawnAt[1] >> 4));
                 statusEl.textContent = 'Gerando o mundo... (' + chunks.size + ' chunks)';
                 if (c && !c.dirty && chunks.size > 12) {
-                    if (cur.player) { P.fly = !!cur.player.fly; if (hits(P.x, P.y, P.z)) P.y = surfaceY(Math.floor(P.x), Math.floor(P.z)) + 0.1; }
-                    else { P.y = surfaceY(8, 8) + 0.1; P.x = 8.5; P.z = 8.5; }
+                    if (!pano) {
+                        if (cur.player) { P.fly = !!cur.player.fly; if (hits(P.x, P.y, P.z)) P.y = surfaceY(Math.floor(P.x), Math.floor(P.z)) + 0.1; }
+                        else { P.y = surfaceY(8, 8) + 0.1; P.x = 8.5; P.z = 8.5; }
+                        $('lSpin').style.display = 'none';
+                    }
                     spawned = true; statusEl.textContent = 'Pronto!'; $('enter').disabled = false;
+                    if (pano) { const bf = $('bgFade'); bf.classList.remove('on'); bf.classList.add('fade'); }
                 }
                 return;
             }
@@ -2698,14 +3865,14 @@ void main(){
                 }
                 active.clear(); wq.clear(); tnts.length = 0;
             } else {
-                time += dt / DAY;
+                time += dt / (pano ? DAY * 6 : DAY); // no panorama o dia corre bem mais devagar
                 acc += dt; let g = 0;
                 while (acc >= 0.05 && g++ < 3) { acc -= 0.05; tick(); }
                 if (acc > 0.2) acc = 0;
                 updateTnt(dt);
             }
-            updatePlayer(dt);
-            if (state === 'playing') { updateLeaves(dt); updateBeams(dt); }
+            if (!pano) updatePlayer(dt);
+            if (state === 'playing' || state === 'pano') { updateLeaves(dt); updateBeams(dt); }
             if (state === 'playing') cur.playTime = (cur.playTime || 0) + dt;
             if (locked) {
                 holdT += dt;
@@ -2713,6 +3880,264 @@ void main(){
             }
         }
 
+
+
+        /* ---------- Chuva: gotas (riscos com inclinacao do vento) e respingos/aneis, tudo na GPU ----------
+           2 chamadas instanciadas, sem VBO e sem trabalho por gota na CPU. Um mapa de alturas 32x32 (R32F) faz a chuva
+           parar em telhados e copas, respingar no chao e fazer aneis na agua. Blocos ficam molhados, o som acompanha. */
+        const _unlit = [], _dirty = [], _vis = [], HM = 32, RN_N = isTouch ? 2200 : 3600, RN_S = isTouch ? 220 : 360;
+        let _fO = -1, _rO = -1, _wO = -1, _pm2 = 0, _pfc = 0, rainWet = 0, rnTime = 0, rnCur = 0, rnInit = 4, rnShelter = 0, rnAcc = 0, rnAud = null, rnPh = 0, rnWx = 0.1, rnWz = 0.04, rnSnowK = 0; const rnDr = [0, 0];
+        const rnH = new Float32Array(HM * HM), _FP = new Float32Array(16);
+        const rnTex = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, rnTex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, HM, HM, 0, gl.RED, gl.FLOAT, rnH);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.activeTexture(gl.TEXTURE0);
+
+        function setFrustum(m) { // 4 planos laterais a partir da MVP (coluna-major)
+            for (let i = 0; i < 4; i++) {
+                const k = i >> 1, sg = (i & 1) ? -1 : 1, o = i * 4;
+                _FP[o] = m[3] + sg * m[k]; _FP[o + 1] = m[7] + sg * m[4 + k]; _FP[o + 2] = m[11] + sg * m[8 + k]; _FP[o + 3] = m[15] + sg * m[12 + k];
+            }
+        }
+        function inFrustum(x0, z0) {
+            for (let i = 0; i < 16; i += 4) {
+                const a = _FP[i], b = _FP[i + 1], c = _FP[i + 2];
+                if (a * (a > 0 ? x0 + 16 : x0) + b * (b > 0 ? CH : 0) + c * (c > 0 ? z0 + 16 : z0) + _FP[i + 3] < 0) return false;
+            }
+            return true;
+        }
+        function rnCol(x, z) { // altura da superficie que a chuva atinge nessa coluna (copa, telhado, chao, gelo ou agua)
+            const cold = coldAt(x, z) ? 1000 : 0; // quem decide chuva ou neve e o BIOMA da coluna (+1000 = neve), nao o bloco do chao
+            for (let y = CH - 1; y >= 0; y--) {
+                const b = getBlock(x, y, z, -1);
+                if (b < 0) return 0;
+                if (b !== 0 && (OP[b] > 0 || isWater(b))) return y + (isWater(b) ? 0.88 : 1) + cold;
+            }
+            return 0;
+        }
+        /* ---------- Clima aleatorio e controlado: garoa / chuva media / tempestade ----------
+           Nao e um ciclo fixo: duracoes sorteadas, a intensidade sobe e desce em degraus vizinhos (sem saltos),
+           tempestade e rara, curta e nunca vem duas vezes seguidas. Tempo seco sempre longo. */
+        const WX_LV = [0.28, 0.6, 1.0], WX_NAMES = { fraca: 0.28, leve: 0.28, garoa: 0.28, media: 0.6, moderada: 0.6, forte: 1, tempestade: 1 };
+        const wxName = v => v < 0.4 ? 'fraca' : v < 0.8 ? 'média' : 'forte', wxR = (a, b) => a + Math.random() * (b - a);
+        function wxSet(v) { raining = true; wxIdx = v < 0.4 ? 0 : v < 0.8 ? 1 : 2; rainIntT = v; wxTimer = wxR(90, 220); wxShift = wxR(30, 70); }
+        function wxClear() { raining = false; wxTimer = wxR(180, 420); }
+        function weatherTick(dt) {
+            rainInt += (rainIntT - rainInt) * Math.min(1, dt * 0.15);
+            if (!wxAuto || state !== 'playing') return;
+            wxTimer -= dt;
+            if (raining) {
+                wxShift -= dt;
+                if (wxShift <= 0 && wxTimer > 25) { // varia dentro da mesma chuva: degrau para cima/baixo ou fica
+                    wxShift = wxR(25, 70); const r = Math.random();
+                    if (wxIdx === 2) { if (r < 0.6) wxIdx = 1; }
+                    else if (wxIdx === 1) { if (r < 0.3) wxIdx = 2; else if (r < 0.65) wxIdx = 0; }
+                    else if (r < 0.4) wxIdx = 1;
+                    rainIntT = WX_LV[wxIdx];
+                }
+                if (wxTimer <= 0) { wxLast = wxIdx; raining = false; wxTimer = wxR(180, 540); }
+            } else if (wxTimer <= 0) {
+                let r = Math.random(), i = r < 0.55 ? 0 : r < 0.88 ? 1 : 2;
+                if (i === wxLast && i > 0 && Math.random() < 0.6) i = i - 1; // evita repetir a mesma tempestade/chuva forte
+                if (wxLast === 2 && i === 2) i = 1;
+                wxIdx = i; raining = true; rainIntT = WX_LV[i]; rainInt = Math.min(rainInt, 0.15);
+                wxTimer = i === 2 ? wxR(45, 120) : i === 1 ? wxR(70, 200) : wxR(90, 260); wxShift = wxR(30, 70);
+            }
+        }
+        function rainUpdate(dt) {
+            rainWet += (rainAmt - rainWet) * Math.min(1, dt * (rainAmt > rainWet ? 0.35 : 0.04)); // molha devagar, seca mais devagar ainda
+            if (rainAmt <= 0.003) { rnInit = 4; return; }
+            rnTime += dt;
+            const sc = 0.8 + 0.4 * rainAmt; rnPh += dt * sc; // fase da queda e deriva do vento acumuladas
+            rnWx = (0.05 + 0.09 * rainAmt) * (1 + 0.5 * Math.sin(rnTime * 0.23)); rnWz = (0.02 + 0.04 * rainAmt) * (1 + 0.6 * Math.sin(rnTime * 0.17 + 1));
+            rnDr[0] += rnWx * sc * dt; rnDr[1] += rnWz * sc * dt;
+            const px = Math.floor(P.x) - 16, pz = Math.floor(P.z) - 16, n = rnInit > 0 ? 256 : 64;
+            if (rnInit > 0) rnInit--;
+            for (let k = 0; k < n; k++) { const c = rnCur; rnCur = (rnCur + 1) & 1023; const x = px + (c & 31), z = pz + (c >> 5); rnH[(x & 31) + ((z & 31) << 5)] = rnCol(x, z); }
+            const fx = Math.floor(P.x), fz = Math.floor(P.z), hv = rnH[(fx & 31) + ((fz & 31) << 5)];
+            const sh = (hv >= 500 ? hv - 1000 : hv) > P.y + 1.7 ? 1 : 0;
+            let sk = 0; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) sk += rnH[((fx + i * 8) & 31) + (((fz + j * 8) & 31) << 5)] >= 500 ? 1 : 0;
+            if (rnInit > 0) rnSnowK = sk / 9; else rnSnowK += (sk / 9 - rnSnowK) * Math.min(1, dt * 0.7); // transicao suave entre biomas
+            rnShelter += (sh - rnShelter) * Math.min(1, dt * 3);
+        }
+        const RN_VS = `#version 300 es
+uniform mat4 mvp; uniform vec3 cam; uniform float t; uniform vec2 wind; uniform vec2 drift; uniform highp sampler2D hm;
+out vec2 vQ; out float vA; out float vD;
+float h1(float n){ return fract(sin(n*12.9898)*43758.5453); }
+const vec2 C[6]=vec2[6](vec2(-1,0),vec2(1,0),vec2(1,1),vec2(-1,0),vec2(1,1),vec2(-1,1));
+void main(){
+  float id=float(gl_InstanceID);
+  float a=h1(id+0.1), b=h1(id*1.7+3.3), c=h1(id*2.3+7.1), d=h1(id*0.37+11.9);
+  const float S=30.0, HY=26.0;
+  float spd=11.0+5.0*d; vec2 w=wind*spd;
+  vec2 p=cam.xz+mod(vec2(a,b)*S+drift*spd-cam.xz,S)-S*0.5;
+  float y=cam.y+mod(c*HY-spd*t-cam.y,HY)-HY*0.42;
+  float len=floor(spd*0.075*8.0)/8.0;
+  float gh=texelFetch(hm,ivec2(int(floor(p.x))&31,int(floor(p.y))&31),0).r;
+  float sn=step(500.0,gh); gh-=sn*1000.0;
+  vec3 P=vec3(p.x,y,p.y), vel=normalize(vec3(w.x,-spd,w.y));
+  float D=length(P-cam), u=(y-cam.y)/HY, r=length(p-cam.xz)/(S*0.5);
+  if(sn>0.5||y+len*0.3<gh){ gl_Position=vec4(2.0,2.0,2.0,1.0); return; } // abaixo de telhado/copa/chao: nao existe
+  vec2 cc=C[gl_VertexID];
+  vec3 pos=P-vel*len*cc.y;
+  vec3 side=normalize(cross(vel,P-cam));
+  pos+=side*cc.x*max(0.024,0.0013*D);
+  vA=(0.30+0.35*a)*(1.0-smoothstep(0.7,1.0,r))*smoothstep(-0.42,-0.32,u)*(1.0-smoothstep(0.48,0.58,u))*smoothstep(0.7,2.2,D);
+  vQ=cc; vD=D; gl_Position=mvp*vec4(pos,1.0);
+}`;
+        const RN_FS = `#version 300 es
+precision mediump float;
+uniform vec3 sky; uniform float light; uniform float fogN; uniform float fogF; uniform float amt;
+in vec2 vQ; in float vA; in float vD; out vec4 o;
+const float B4[16]=float[16](0.0,8.0,2.0,10.0,12.0,4.0,14.0,6.0,3.0,11.0,1.0,9.0,15.0,7.0,13.0,5.0);
+float bay(){ ivec2 q=ivec2(gl_FragCoord.xy)&3; return (B4[q.x+q.y*4]+0.5)/16.0; }
+void main(){
+  float seg=floor(vQ.y*8.0);                       // pixels ao longo do risco
+  float lv=seg<2.0?1.0:(seg<5.0?0.7:0.45);          // cabeca clara, cauda escura (3 tons, sem degrade)
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  if(vA*lv*(1.0-f)<bay()*0.62) discard;             // transparencia por dithering ordenado: so pixels cheios
+  vec3 col=mix(vec3(0.34,0.44,0.64),vec3(0.5,0.6,0.8),step(seg,1.0))*max(light,0.38);
+  col=mix(col,sky,0.3);                              // se mistura ao ceu: nada de branco estourado
+  col=floor(col*12.0+0.5)/12.0;
+  o=vec4(col,0.4+0.2*amt);                           // translucida; mais densa so nas chuvas fortes
+}`;
+        const RS_VS = `#version 300 es
+uniform mat4 mvp; uniform vec3 cam; uniform float t; uniform highp sampler2D hm;
+out vec2 vQ; out float vA; out float vD; out float vW; out float vP;
+float h1(float n){ return fract(sin(n*12.9898)*43758.5453); }
+const vec2 C[6]=vec2[6](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
+void main(){
+  float id=float(gl_InstanceID);
+  float c=h1(id*2.9+2.2);
+  const float S=20.0;
+  float T=0.5+0.45*c, k=t/T+c*3.0, cyc=floor(k), ph=fract(k);
+  vec2 r=vec2(h1(id*1.37+cyc*7.13),h1(id*2.11+cyc*3.77+9.0));
+  vec2 p=cam.xz+mod(r*S-cam.xz,S)-S*0.5;
+  float gh=texelFetch(hm,ivec2(int(floor(p.x))&31,int(floor(p.y))&31),0).r;
+  float sn=step(500.0,gh); gh-=sn*1000.0;
+  p=floor(p*16.0)/16.0;
+  float wat=step(0.5,fract(gh));
+  float D=length(vec3(p.x,gh,p.y)-cam);
+  if(gh<1.0||sn>0.5){ gl_Position=vec4(2.0,2.0,2.0,1.0); return; }
+  vec2 cc=C[gl_VertexID];
+  const float R=0.5;
+  vec3 pos=vec3(p.x,gh+0.01+0.0015*D,p.y)+vec3(cc.x,0.0,cc.y)*R;
+  vA=pow(1.0-ph,1.5)*mix(0.45,0.7,wat)*(1.0-smoothstep(0.6,1.0,length(p-cam.xz)/(S*0.5)))*smoothstep(0.6,2.0,D);
+  vQ=cc; vD=D; vW=wat; vP=ph; gl_Position=mvp*vec4(pos,1.0);
+}`;
+        const RS_FS = `#version 300 es
+precision mediump float;
+uniform vec3 sky; uniform float light; uniform float fogN; uniform float fogF;
+in vec2 vQ; in float vA; in float vD; in float vW; in float vP; out vec4 o;
+const float B4[16]=float[16](0.0,8.0,2.0,10.0,12.0,4.0,14.0,6.0,3.0,11.0,1.0,9.0,15.0,7.0,13.0,5.0);
+float bay(){ ivec2 q=ivec2(gl_FragCoord.xy)&3; return (B4[q.x+q.y*4]+0.5)/16.0; }
+void main(){
+  vec2 c=floor(vQ*8.0)+0.5;                         // celulas de 1/16 de bloco
+  vec2 a=abs(c); float on=0.0;
+  if(vW>0.5){                                        // agua: aneis quadrados (cantos cortados) que crescem de pixel em pixel
+    float rr=floor(1.0+vP*6.0)+0.5, r2=rr-3.0;
+    float m=max(a.x,a.y), cut=min(a.x,a.y);
+    on=step(abs(m-rr),0.1)*step(cut,rr-1.0);
+    if(r2>0.9) on=max(on,step(abs(m-r2),0.1)*step(cut,r2-1.0));
+  } else {                                           // chao: 4 pixels que saltam para os lados
+    float rr=floor(1.0+vP*2.5)+0.5;
+    on=step(abs(a.x-rr),0.1)*step(abs(a.y-rr),0.1)*step(vP,0.75);
+  }
+  if(on<0.5) discard;
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  if(vA*(1.0-f)<bay()*0.7) discard;
+  vec3 col=mix(vec3(0.46,0.58,0.8)*max(light,0.4),sky,0.25); col=floor(col*12.0+0.5)/12.0;
+  o=vec4(col,0.55);
+}`;
+        const RN_SN = isTouch ? 900 : 1800;
+        const SN_VS = `#version 300 es
+uniform mat4 mvp; uniform vec3 cam; uniform float t; uniform float ts; uniform vec2 drift; uniform highp sampler2D hm;
+out vec2 vQ; out float vA; out float vD;
+float h1(float n){ return fract(sin(n*12.9898)*43758.5453); }
+const vec2 C[6]=vec2[6](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
+void main(){
+  float id=float(gl_InstanceID);
+  float a=h1(id+0.4), b=h1(id*1.9+2.7), c=h1(id*2.7+5.3), d=h1(id*0.41+8.1), e=h1(id*3.1+1.7);
+  const float S=26.0, HY=20.0;
+  float spd=1.1+1.0*d;                                   // flocos caem devagar
+  vec2 sway=vec2(sin(ts*(0.7+0.5*e)+a*40.0),cos(ts*(0.55+0.5*d)+b*40.0))*0.45; // balancam de leve
+  vec2 p=cam.xz+mod(vec2(a,b)*S+drift*(3.0+4.0*d)-cam.xz,S)-S*0.5+sway;
+  float y=cam.y+mod(c*HY-spd*t-cam.y,HY)-HY*0.45;
+  vec3 P=vec3(floor(p.x*16.0)/16.0,floor(y*16.0)/16.0,floor(p.y*16.0)/16.0); // movimento em passos de pixel
+  float gh=texelFetch(hm,ivec2(int(floor(P.x))&31,int(floor(P.z))&31),0).r;
+  float sn=step(500.0,gh); gh-=sn*1000.0;
+  if(sn<0.5||y<gh){ gl_Position=vec4(2.0,2.0,2.0,1.0); return; } // so cai em coluna de neve e para em telhado/copa/chao
+  vec3 V=P-cam; float D=length(V);
+  vec3 R=normalize(cross(vec3(0.0,1.0,0.0),V)), U=cross(V/D,R);
+  float sz=max(0.0625*(1.0+step(0.82,e)),0.0016*D);      // 1 pixel de bloco (alguns flocos de 2)
+  vec2 cc=C[gl_VertexID];
+  vec3 pos=P+(R*cc.x+U*cc.y)*sz*0.5;
+  float r=length(p-cam.xz)/(S*0.5), u=(y-cam.y)/HY;
+  vA=(1.0-smoothstep(0.7,1.0,r))*smoothstep(-0.45,-0.35,u)*(1.0-smoothstep(0.45,0.55,u))*smoothstep(0.6,1.8,D);
+  vQ=cc; vD=D; gl_Position=mvp*vec4(pos,1.0);
+}`;
+        const SN_FS = `#version 300 es
+precision mediump float;
+uniform vec3 sky; uniform float light; uniform float fogN; uniform float fogF;
+in vec2 vQ; in float vA; in float vD; out vec4 o;
+const float B4[16]=float[16](0.0,8.0,2.0,10.0,12.0,4.0,14.0,6.0,3.0,11.0,1.0,9.0,15.0,7.0,13.0,5.0);
+float bay(){ ivec2 q=ivec2(gl_FragCoord.xy)&3; return (B4[q.x+q.y*4]+0.5)/16.0; }
+void main(){
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  if(vA*(1.0-f)<bay()*0.6) discard;
+  vec3 col=mix(vec3(0.94,0.97,1.0)*max(light,0.55),sky,0.12); col=floor(col*12.0+0.5)/12.0;
+  o=vec4(col,0.82);
+}`;
+        const snProg = mkProg(SN_VS, SN_FS), SNU = {};
+        for (const n of ['mvp', 'cam', 't', 'ts', 'drift', 'hm', 'sky', 'light', 'fogN', 'fogF']) SNU[n] = gl.getUniformLocation(snProg, n);
+        const rnProg = mkProg(RN_VS, RN_FS), rsProg = mkProg(RS_VS, RS_FS), RNU = {}, RSU = {};
+        for (const n of ['mvp', 'cam', 't', 'wind', 'hm', 'sky', 'light', 'fogN', 'fogF', 'drift', 'amt']) { RNU[n] = gl.getUniformLocation(rnProg, n); RSU[n] = gl.getUniformLocation(rsProg, n); }
+        function drawRain(eye, mvp, sky, light, fogN, fogF) {
+            const amt = rainAmt; if (amt <= 0.003) return;
+            gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, rnTex);
+            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, HM, HM, gl.RED, gl.FLOAT, rnH);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+            gl.bindVertexArray(null);
+            for (let pass = 0; pass < 3; pass++) {
+                if (pass < 2 ? rnSnowK >= 0.98 : rnSnowK <= 0.02) continue; // sem neve por perto nao desenha flocos; so neve: nao desenha chuva
+                const L = pass === 0 ? RNU : pass === 1 ? RSU : SNU;
+                gl.useProgram(pass === 0 ? rnProg : pass === 1 ? rsProg : snProg);
+                gl.uniformMatrix4fv(L.mvp, false, mvp); gl.uniform3f(L.cam, eye[0], eye[1], eye[2]); gl.uniform1f(L.t, pass === 1 ? rnTime : rnPh);
+                gl.uniform1i(L.hm, 4); gl.uniform3f(L.sky, sky[0], sky[1], sky[2]); gl.uniform1f(L.light, light);
+                gl.uniform1f(L.fogN, fogN); gl.uniform1f(L.fogF, fogF);
+                if (pass === 0) { gl.uniform2f(L.wind, rnWx, rnWz); gl.uniform2f(L.drift, rnDr[0], rnDr[1]); gl.uniform1f(L.amt, amt); }
+                if (pass === 2) { gl.uniform2f(L.drift, rnDr[0] * 0.5, rnDr[1] * 0.5); gl.uniform1f(L.ts, rnTime); }
+                gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, Math.ceil((pass === 0 ? RN_N : pass === 1 ? RN_S : RN_SN) * amt));
+            }
+            gl.depthMask(true); gl.disable(gl.BLEND);
+        }
+        function rainSound(dt) { // ruido rosa em loop, filtrado: abafa quando o jogador esta sob telhado/copa
+            rnAcc += dt; if (rnAcc < 0.1) return; rnAcc = 0;
+            try {
+                const on = (state === 'playing' ? 1 : 0) * rainAmt;
+                if (!rnAud) {
+                    if (on <= 0.01) return;
+                    audio = audio || new AudioContext();
+                    const sr = audio.sampleRate, len = sr * 3, buf = audio.createBuffer(1, len, sr), d = buf.getChannelData(0), fd = (sr * 0.05) | 0;
+                    let b0 = 0, b1 = 0, b2 = 0;
+                    for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16; }
+                    for (let i = 0; i < fd; i++) { d[i] *= i / fd; d[len - 1 - i] *= i / fd; }
+                    const src = audio.createBufferSource(); src.buffer = buf; src.loop = true;
+                    const hp = audio.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350;
+                    const lp = audio.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+                    const g = audio.createGain(); g.gain.value = 0;
+                    src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(audio.destination); src.start();
+                    rnAud = { g, lp };
+                }
+                if (audio.state === 'suspended') audio.resume().catch(() => { });
+                const tn = audio.currentTime;
+                rnAud.g.gain.setTargetAtTime(on * 0.28 * (1 - 0.6 * rnShelter) * (1 - 0.7 * rnSnowK), tn, 0.25);
+                rnAud.lp.frequency.setTargetAtTime(7500 - 5200 * rnShelter, tn, 0.3);
+            } catch (e) { }
+        }
 
         /* ---------- Folhas caindo: ate 56 particulas, uma unica chamada de desenho, sem blend, sem alocacao por quadro ---------- */
         const NLP = 56, lpA = new Float32Array(NLP * 8); // x y z tamanho rot r g b
@@ -2804,7 +4229,7 @@ void main(){
         }
         function updateBeams(dt) {
             const sa = time * Math.PI * 2, sh = Math.sin(sa), sx = Math.cos(sa) * 0.8, sl = Math.hypot(sx, sh, 0.35);
-            bI = Math.max(0, Math.min(1, (sh - 0.12) * 2.5));
+            bI = Math.max(0, Math.min(1, (sh - 0.12) * 2.5)) * (1 - rainAmt); // tempestade apaga os raios de sol
             bDx = -sx / sl; bDy = -sh / sl; bDz = -0.35 / sl;
             if (bI <= 0.02) { bN = 0; return; }
             for (let i = bN - 1; i >= 0; i--) {
@@ -2848,6 +4273,41 @@ void main(){
         gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
         gl.bindVertexArray(null);
 
+
+        /* ---------- Tocha na mao (1a pessoa): mesma geometria do mundo, balanco ao andar e inercia ao girar a camera ---------- */
+        const heldArr = new Float32Array(48 * 8);
+        const heldVao = gl.createVertexArray(); gl.bindVertexArray(heldVao);
+        const heldVbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, heldVbo); gl.bufferData(gl.ARRAY_BUFFER, heldArr.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+        gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
+        gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
+        gl.bindVertexArray(null);
+        const HD = { ph: 0, amp: 0, yaw: 0, pit: 0, lx: 0, ly: 0, t: performance.now(), n: 0, lp: [0, 0, 0] };
+        function updateHeld(o, F, pt) {
+            const dt = Math.min(0.05, (pt - HD.t) / 1000); HD.t = pt;
+            const sp = Math.hypot(P.vx, P.vz), tgt = (P.ground || P.fly) ? Math.min(1, sp / 4.3) : 0;
+            HD.amp += (tgt - HD.amp) * Math.min(1, dt * 8); HD.ph += dt * sp * 2.1;
+            let dy = P.yaw - HD.yaw; const dp = P.pitch - HD.pit; HD.yaw = P.yaw; HD.pit = P.pitch; if (Math.abs(dy) > 1) dy = 0;
+            const k = Math.exp(-dt * 9);
+            HD.lx = Math.max(-0.1, Math.min(0.1, HD.lx * k + dy * 0.9)); HD.ly = Math.max(-0.1, Math.min(0.1, HD.ly * k - dp * 0.9));
+            let rx = -F[2], rz = F[0]; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl; // direita
+            const ux = -rz * F[1], uy = rz * F[0] - rx * F[2], uz = rx * F[1]; // cima
+            const ph = HD.ph, bob = HD.amp;
+            const bx = 0.40 + 0.014 * Math.sin(ph) * bob + HD.lx, by = -0.56 - 0.016 * Math.abs(Math.sin(ph)) * bob + 0.006 * Math.sin(pt / 900) + HD.ly, bz = 0.80;
+            const th = 0.30 + 0.03 * Math.sin(ph * 0.5) * bob, ro = -0.20, ct = Math.cos(th), st = Math.sin(th), cr = Math.cos(ro), sr = Math.sin(ro), S = 0.68;
+            const tr = (lx, ly, lz, out) => { // local da tocha -> mundo (inclina para frente, gira um pouco para dentro)
+                const X = lx * S, Y = ly * S, Z = lz * S, y1 = Y * ct - Z * st, z1 = Y * st + Z * ct, x2 = X * cr - y1 * sr, y2 = X * sr + y1 * cr;
+                const hx = bx + x2, hy = by + y2, hz = bz + z1;
+                out[0] = o[0] + rx * hx + ux * hy + F[0] * hz; out[1] = o[1] + uy * hy + F[1] * hz; out[2] = o[2] + rz * hx + uz * hy + F[2] * hz;
+            };
+            const tmp = [0, 0, 0]; let i = 0, n = 0;
+            torchGeom((lx, ly, lz, u, v, s, bk) => {
+                tr(lx, ly, lz, tmp);
+                heldArr[i++] = tmp[0]; heldArr[i++] = tmp[1]; heldArr[i++] = tmp[2]; heldArr[i++] = u; heldArr[i++] = v; heldArr[i++] = s; heldArr[i++] = 1; heldArr[i++] = bk; n++;
+            }, 0.37);
+            HD.n = n; tr(0, TORCH_H + 0.1, 0, HD.lp);
+        }
+
         function render() {
             const asp = canvas.width / canvas.height;
             const eye = eyePos();
@@ -2863,8 +4323,35 @@ void main(){
             sky = sky.map((v, i) => v + ([1.0, 0.56, 0.36][i] - v) * Math.min(0.7, dusk * 1.4));
             let light = 0.15 + 0.85 * day; // brilho do ceu (dia/noite); a luz de bloco nao depende dele
             const headW = isWater(getBlock(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2]), 0));
-            let fogN = renderDist * 16 * 0.55, fogF = renderDist * 16 * 0.95;
+            const rd = pano ? (isTouch ? 4 : 5) : renderDist; // nevoa acompanha o raio do panorama leve
+            let fogN = rd * 16 * 0.55, fogF = rd * 16 * 0.95;
             if (headW) { sky = [0.08 * light + 0.04, 0.22 * light + 0.05, 0.5 * light + 0.05]; fogN = 1; fogF = 24; }
+            if (rainAmt > 0 && !headW) {
+                const stormDim = 1 - 0.42 * rainAmt;
+                sky = [sky[0] * stormDim, sky[1] * stormDim, Math.min(1, sky[2] * (1 - 0.32 * rainAmt))];
+                fogN *= 1 - 0.45 * rainAmt;
+                fogF *= 1 - 0.45 * rainAmt;
+                light *= 1 - 0.35 * rainAmt;
+                const sf = rnSnowK * rainAmt; // nevando: nevoa mais fechada e ceu claro acinzentado (sem escurecer como na tempestade)
+                if (sf > 0.01) {
+                    fogN *= 1 - 0.45 * sf; fogF *= 1 - 0.4 * sf;
+                    const kk = 0.3 + 0.7 * day; sky = sky.map((v, i) => v + ([0.72, 0.76, 0.82][i] * kk - v) * 0.5 * sf);
+                    light += 0.2 * sf * (1 - light);
+                }
+            }
+            if (pano) { // no menu a nevoa abre conforme o mundo termina de carregar: nenhum pedaco aparece de repente
+                const ecx = Math.floor(eye[0]) >> 4, ecz = Math.floor(eye[2]) >> 4;
+                let m2 = _pm2;
+                if ((_pfc++ & 7) === 0) {
+                    m2 = 0; for (const ch of chunks.values()) if (ch.lit) {
+                        const d2 = (ch.cx - ecx) ** 2 + (ch.cz - ecz) ** 2;
+                        if (d2 > m2) m2 = d2;
+                    } _pm2 = m2;
+                }
+                const ready = 16 * Math.sqrt(m2) + 12; // raio efetivamente pronto (+ meia faixa de margem)
+                fogF = Math.min(fogF, ready);
+                fogN = Math.min(fogN, fogF * 0.55);
+            }
 
             /* ---- Ceu: sol, lua, brilho do horizonte, estrelas e nuvens deste quadro ---- */
             const SA = time * Math.PI * 2, sxn = Math.cos(SA) * 0.8, syn = Math.sin(SA), sln = Math.hypot(sxn, syn, 0.35);
@@ -2872,22 +4359,33 @@ void main(){
             const dk = Math.min(1, dusk * 2), cb = sstep(0, 0.6, day), warmK = sstep(0, 0.4, sdy);
             const moonI = headW ? 0 : 1 - sstep(0.25, 0.85, day), starI = headW ? 0 : 1 - sstep(0.05, 0.5, day);
             SK.sky.set(sky); SK.cam.set(eye); SK.sun.set([sdx, sdy, sdz]);
-            SK.sunI = headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)); SK.starI = starI; SK.moonI = moonI;
+            SK.sunI = (headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5))) * (1 - rainAmt); SK.starI = starI * (1 - rainAmt); SK.moonI = moonI * (1 - rainAmt);
             SK.moonPh = ((Math.floor(time) % 8) + 8) % 8; SK.tm = performance.now() / 1000;
             const zr = 0.01 + 0.17 * day, zg = 0.02 + 0.42 * day, zb = 0.06 + 0.80 * day;
             SK.zen[0] = zr + (0.26 - zr) * dk * 0.6; SK.zen[1] = zg + (0.20 - zg) * dk * 0.6; SK.zen[2] = zb + (0.50 - zb) * dk * 0.6;
             const dg = headW ? 0 : 0.09 * day * (1 - dk), dd = headW ? 0 : dk;
             SK.glow[0] = dg + 0.85 * dd; SK.glow[1] = dg * 0.92 + 0.42 * dd; SK.glow[2] = dg * 0.7 + 0.12 * dd;
             SK.mglow[0] = 0.03 * moonI; SK.mglow[1] = 0.045 * moonI; SK.mglow[2] = 0.09 * moonI;
+            if (rainAmt > 0) {
+                const stormGlow = 1 - 0.6 * rainAmt;
+                SK.glow[0] *= stormGlow; SK.glow[1] *= stormGlow; SK.glow[2] *= stormGlow;
+                SK.mglow[0] *= stormGlow; SK.mglow[1] *= stormGlow; SK.mglow[2] *= stormGlow;
+            }
             SK.sunC[0] = 1.0; SK.sunC[1] = 0.97 - 0.47 * (1 - warmK); SK.sunC[2] = 0.82 - 0.62 * (1 - warmK);
             const wk = dk * 0.75 * cb, tr = 0.12 + 0.88 * cb, tg = 0.13 + 0.87 * cb, tb = 0.22 + 0.78 * cb;
             const tR = (tr + (1.0 - tr) * wk) * 0.98, tG = (tg + (0.6 - tg) * wk) * 0.98, tB = (tb + (0.45 - tb) * wk) * 0.98;
             SK.cTop[0] = tR; SK.cTop[1] = tG; SK.cTop[2] = tB;
             SK.cSide[0] = tR * 0.84; SK.cSide[1] = tG * 0.87; SK.cSide[2] = tB * 0.94;
             SK.cBot[0] = tR * 0.64 + sky[0] * 0.12; SK.cBot[1] = tG * 0.68 + sky[1] * 0.12; SK.cBot[2] = tB * 0.80 + sky[2] * 0.12;
+            if (rainAmt > 0) {
+                const cloudDim = 1 - 0.28 * rainAmt;
+                SK.cTop[0] *= cloudDim; SK.cTop[1] *= cloudDim; SK.cTop[2] *= cloudDim;
+                SK.cSide[0] *= cloudDim; SK.cSide[1] *= cloudDim; SK.cSide[2] *= cloudDim;
+                SK.cBot[0] *= cloudDim; SK.cBot[1] *= cloudDim; SK.cBot[2] *= cloudDim;
+            }
             const wt = performance.now() / 1000;
             SK.cOff[0] = (wt * 1.4) % (CLOUD_CELL * CLOUD_N); SK.cOff[1] = (wt * 0.6) % (CLOUD_CELL * CLOUD_N);
-            SK.cThr = 0.56 + 0.05 * Math.sin(time * 6.2832 * 0.31 + 1.3) + 0.025 * Math.sin(time * 6.2832 * 0.83);
+            SK.cThr = 0.56 + 0.05 * Math.sin(time * 6.2832 * 0.31 + 1.3) + 0.025 * Math.sin(time * 6.2832 * 0.83) - rainAmt * 0.35; // chuva = nuvens densas
             { // estrelas giram junto com o ceu: rotacao de -SA em torno de um eixo levemente inclinado
                 let kx = 0.12, ky = 0.20, kz = 1.0; const kl = Math.hypot(kx, ky, kz); kx /= kl; ky /= kl; kz /= kl;
                 const c = Math.cos(-SA), sn = Math.sin(-SA), t = 1 - c, M = SK.starM;
@@ -2904,14 +4402,19 @@ void main(){
             gl.uniform3f(U.sky, sky[0], sky[1], sky[2]);
             gl.uniform1f(U.light, light); gl.uniform1f(U.fogN, fogN); gl.uniform1f(U.fogF, fogF);
             gl.uniform3f(U.sun, sdx, sdy, sdz); gl.uniform3fv(U.glow, SK.glow); gl.uniform3fv(U.mglow, SK.mglow);
-            const pt = performance.now(); gl.uniform1f(U.tm, pt / 1000); gl.uniform1f(U.fl, 1 + 0.05 * Math.sin(pt / 85) * Math.sin(pt / 230)); // tremulo leve das tochas
-            gl.uniform1f(U.alpha, 1); gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
+            const pt = performance.now(); gl.uniform1f(U.tm, pt / 1000); gl.uniform1f(U.fl, 1 + 0.06 * Math.sin(pt / 85) * Math.sin(pt / 230) + 0.025 * Math.sin(pt / 37)); // tremulo das tochas
+            gl.uniform1f(U.alpha, 1); gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0); gl.uniform1f(U.wet, rainWet * (1 - 0.85 * rnSnowK));
+            const showHand = !!cur && spawned && HOT[sel][0] === TORCH; // tocha selecionada: aparece na mao e ja ilumina (luz dinamica, 1 uniform)
+            const hlf = 1 + 0.07 * Math.sin(pt / 70) * Math.sin(pt / 190) + 0.03 * Math.sin(pt / 23);
+            if (showHand) { updateHeld(e2, dir, pt); gl.uniform4f(U.hl, HD.lp[0], HD.lp[1], HD.lp[2], 13); gl.uniform1f(U.hf, hlf); } else gl.uniform4f(U.hl, 0, 0, 0, 0);
             gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texture); gl.uniform1i(U.tex, 0);
             gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, cloudTex); gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, nebTex); gl.activeTexture(gl.TEXTURE0);
-            const vis = [];
+            const vis = _vis; vis.length = 0; setFrustum(mvp);
             for (const ch of chunks.values()) {
+                if (pano && !ch.lit) continue; // no menu, pedaco sem luz ainda nao entra na cena (evita "pipoco" escuro)
                 const dx = ch.cx * 16 + 8 - eye[0], dy = 32 - eye[1], dz = ch.cz * 16 + 8 - eye[2];
                 if (dx * dir[0] + dy * dir[1] + dz * dir[2] < -34) continue;
+                if (!inFrustum(ch.cx * 16, ch.cz * 16)) continue; // so desenha o que esta no campo de visao
                 vis.push(ch);
             }
             for (const ch of vis) if (ch.mo) { gl.bindVertexArray(ch.mo.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.mo.count); }
@@ -2961,25 +4464,32 @@ void main(){
             gl.uniform3f(WU.sky, sky[0], sky[1], sky[2]); gl.uniform1f(WU.light, light); gl.uniform1f(WU.fl, 1);
             gl.uniform1f(WU.fogN, fogN); gl.uniform1f(WU.fogF, fogF); gl.uniform1f(WU.tm, pt / 1000);
             setSkyU(WU);
+            if (showHand) { gl.uniform4f(WU.hl, HD.lp[0], HD.lp[1], HD.lp[2], 13); gl.uniform1f(WU.hf, hlf); } else gl.uniform4f(WU.hl, 0, 0, 0, 0);
             const sa = time * Math.PI * 2, sl = Math.hypot(Math.cos(sa) * 0.8, Math.sin(sa), 0.35);
             gl.uniform3f(WU.sun, Math.cos(sa) * 0.8 / sl, Math.sin(sa) / sl, 0.35 / sl);
-            gl.uniform1f(WU.sunI, headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)));
+            gl.uniform1f(WU.sunI, headW ? 0 : Math.max(0, Math.min(1, sunH * 2.5)) * (1 - rainAmt));
             gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, waterTex); gl.uniform1i(WU.tex, 1); gl.activeTexture(gl.TEXTURE0);
             for (const ch of vis) if (ch.mw) { gl.bindVertexArray(ch.mw.vao); gl.drawArrays(gl.TRIANGLES, 0, ch.mw.count); }
+            if (!headW) drawRain(e2, mvp, sky, light, fogN, fogF);
             gl.depthMask(true); gl.disable(gl.BLEND);
             gl.bindVertexArray(null);
-            waterEl.style.opacity = headW ? 1 : 0;
+            if (showHand) { // mao por ultimo, com a profundidade limpa (nunca atravessa paredes)
+                gl.clear(gl.DEPTH_BUFFER_BIT); gl.useProgram(prog);
+                gl.bindVertexArray(heldVao); gl.bindBuffer(gl.ARRAY_BUFFER, heldVbo); gl.bufferSubData(gl.ARRAY_BUFFER, 0, heldArr, 0, HD.n * 8);
+                gl.drawArrays(gl.TRIANGLES, 0, HD.n); gl.bindVertexArray(null);
+            }
+            { const v = headW ? 1 : 0; if (v !== _wO) waterEl.style.opacity = _wO = v; }
         }
 
         function frame(now) {
             const dt = Math.min(0.05, (now - last) / 1000); last = now;
             if (cur) {
-                if (state === 'playing' || state === 'loading') update(dt);
+                if (state === 'playing' || state === 'loading' || (state === 'pano' && cur)) update(dt);
                 flashAmt = Math.max(0, flashAmt - dt * 1.4); shake = Math.max(0, shake - dt * 1.2);
-                flashEl.style.opacity = flashAmt;
-                rewEl.style.opacity = rewinding ? 1 : 0;
+                if (flashAmt !== _fO) flashEl.style.opacity = _fO = flashAmt;
+                { const v = rewinding ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
                 if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
-                render();
+                render(); rainSound(dt);
                 if (spawned) {
                     if (wantThumb) { wantThumb = false; grabThumb(); }
                     if (pendingSave) { pendingSave = false; saveWorld(); }
@@ -2987,17 +4497,26 @@ void main(){
                 frames++; fpsT += dt;
                 if (fpsT >= 0.5) {
                     fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
-                if (state === 'playing' && SK.q > 0.5) { lowT = fps < 30 ? lowT + 0.5 : 0; if (lowT >= 8) SK.q = 0; } // governador: FPS baixo sustentado -> desliga via lactea, paredes das nuvens e reflexos de nuvem/estrela na agua
+                    if (state === 'playing') { // resolucao dinamica: baixa a escala se o FPS cai de forma sustentada, sobe devagar quando sobra folga
+                        fpsPk = Math.max(fpsPk * 0.998, fps);
+                        if (fps < 42 && fpsPk >= 55) { rsLow += 0.5; rsHi = 0; if (rsLow >= 2 && rs > 0.5) { rs = Math.max(0.5, rs - 0.1); rsLow = 0; resize(); } }
+                        else if (fps >= 57) { rsLow = 0; rsHi += 0.5; if (rsHi >= 15 && rs < 1) { rs = Math.min(1, rs + 0.1); rsHi = 0; resize(); } }
+                        else { rsLow = 0; rsHi = 0; }
+                    }
+                    if (state === 'playing' && SK.q > 0.5) { lowT = fps < 30 ? lowT + 0.5 : 0; if (lowT >= 8) SK.q = 0; } // governador: FPS baixo sustentado -> desliga via lactea, paredes das nuvens e reflexos de nuvem/estrela na agua
                     document.body.classList.toggle('flying', P.fly);
-                    const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
-                    info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
-                        'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
-                        'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '   TNT ativas ' + tnts.length +
-                        (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
+                    if (state === 'playing') {
+                        const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
+                        info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
+                            'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
+                            'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '   TNT ativas ' + tnts.length +
+                            (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
+                    } else info.textContent = '';
                 }
             }
             requestAnimationFrame(frame);
         }
+        startPanorama();
         requestAnimationFrame(frame);
         kv.init().then(() => {
             if (!kv.db) $('dbNote').textContent = 'Armazenamento indisponível: os mundos não serão mantidos ao fechar a página.';
