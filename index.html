@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Cubo</title>
+    <!-- favicon embutido (SVG inline = data URI): bloco de terra com capim; evita o 404 do /favicon.ico -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%237a4f2d'/%3E%3Crect width='16' height='5' fill='%236b8f3c'/%3E%3Crect y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='5' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3Crect x='9' y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='14' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3C/svg%3E">
     <style>
         html,
         body {
@@ -107,6 +109,17 @@
             text-shadow: 0 0 2px #000
         }
 
+        /* Tamanho de um slot do inventario (--sw = lado do slot em px): 44px no computador; no celular escala com
+           a tela para ficar bem maior sem estourar: limitado pela altura (6 fileiras de slot cabem) e pela
+           largura (9 colunas + molduras), por isso nada rola na horizontal nem no portrait. */
+        :root {
+            --sw: 44px
+        }
+
+        body.touch {
+            --sw: clamp(38px, min(calc((100vh - 120px) / 6), calc((100vw - 50px) / 9)), 54px)
+        }
+
         #inv {
             position: fixed;
             inset: 0;
@@ -127,7 +140,7 @@
         }
 
         #invBox {
-            width: min(362px, 100%);
+            width: min(calc(var(--sw) * 9 + 24px), 100%);
             max-height: 100%;
             overflow: auto;
             box-sizing: border-box;
@@ -147,7 +160,7 @@
 
         #invHead h2 {
             margin: 0;
-            font-size: 13px;
+            font-size: calc(var(--sw) * .33);
             font-weight: 700;
             color: #404040;
             text-shadow: none;
@@ -162,8 +175,8 @@
             color: #fff;
             border: 2px solid;
             border-color: #373737 #fff #fff #373737;
-            padding: 5px 7px;
-            font: 12px/1.2 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
+            padding: 6px 8px;
+            font: 14px/1.2 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
             outline: none
         }
 
@@ -176,21 +189,21 @@
         }
 
         #invTip {
-            min-height: 16px;
+            min-height: 18px;
             margin: 0 0 4px;
-            font-size: 11px;
+            font-size: 13px;
             color: #404040
         }
 
         #invGrid {
             display: grid;
-            grid-template-columns: repeat(9, 36px);
+            grid-template-columns: repeat(9, var(--sw));
             gap: 0;
             padding: 0;
             background: none;
             border: none;
             margin-bottom: 8px;
-            min-height: 72px;
+            min-height: calc(var(--sw) * 2);
             align-content: start
         }
 
@@ -211,8 +224,8 @@
         }
 
         #inv .slot {
-            width: 36px;
-            height: 36px;
+            width: var(--sw);
+            height: var(--sw);
             box-sizing: border-box;
             border: 2px solid;
             border-color: #373737 #fff #fff #373737;
@@ -231,7 +244,7 @@
             position: absolute;
             left: 2px;
             top: 0;
-            font-size: 9px;
+            font-size: calc(var(--sw) * .25);
             color: #fff;
             text-shadow: 1px 1px 0 #3f3f3f;
             pointer-events: none
@@ -262,8 +275,8 @@
 
         #invGhost {
             position: fixed;
-            width: 36px;
-            height: 36px;
+            width: var(--sw);
+            height: var(--sw);
             pointer-events: none;
             z-index: 20;
             image-rendering: pixelated;
@@ -274,7 +287,7 @@
 
         #invHint {
             margin: 6px 0 0;
-            font-size: 10px;
+            font-size: 11px;
             line-height: 1.4;
             color: #555
         }
@@ -587,19 +600,81 @@
             box-shadow: 0 0 0 3px rgba(105, 200, 92, .28)
         }
 
-        .spin {
-            width: 30px;
-            height: 30px;
-            margin: 4px auto 2px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, .18);
-            border-top-color: #7ed36f;
-            animation: spin .8s linear infinite
+        /* ===== Tela de carregamento estilo Minecraft: painel de terra com bevel, blocos montando em loop e barra ===== */
+        #mcLoadBox {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: min(380px, 94%);
+            margin: auto;
+            box-sizing: border-box;
+            padding: 18px 20px 16px;
+            background-color: #3f3f3f;
+            background-size: auto, 48px 48px;
+            border: 3px solid #000;
+            box-shadow: inset 3px 3px 0 rgba(255, 255, 255, .16), inset -3px -3px 0 rgba(0, 0, 0, .5), 0 24px 64px rgba(0, 0, 0, .6);
+            color: #fff;
+            image-rendering: pixelated;
+            text-align: center
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(1turn)
+        #mcLoadBox h2 {
+            margin: 0 0 2px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, .55);
+            overflow-wrap: anywhere
+        }
+
+        #mcBuild {
+            width: min(264px, 88%);
+            height: auto;
+            image-rendering: pixelated;
+            margin: 4px 0 0
+        }
+
+        #mcBar {
+            width: min(300px, 100%);
+            height: 18px;
+            box-sizing: border-box;
+            padding: 3px;
+            background: #141414;
+            border: 2px solid #000;
+            margin: 2px 0 6px;
+            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .8)
+        }
+
+        #mcBarFill {
+            height: 100%;
+            width: 0;
+            background: repeating-linear-gradient(90deg, #63c74d 0 10px, #58af44 10px 14px)
+        }
+
+        #mcLoadBox #status {
+            min-height: 20px;
+            margin: 0 0 6px;
+            font-size: 13px;
+            color: rgba(235, 241, 248, .95);
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, .6)
+        }
+
+        /* botao que aparece so se o navegador negar a captura do mouse na entrada automatica */
+        #enter.pulse {
+            animation: enterPulse 1.15s ease-in-out infinite
+        }
+
+        @keyframes enterPulse {
+
+            0%,
+            100% {
+                transform: none
+            }
+
+            50% {
+                transform: scale(1.05);
+                filter: brightness(1.18)
             }
         }
 
@@ -754,13 +829,6 @@
             display: none
         }
 
-        #keyCfg h3 {
-            margin: 8px 0 2px;
-            font-size: 15px;
-            font-weight: 600;
-            text-align: left
-        }
-
         .ptabs {
             display: flex;
             gap: 6px
@@ -812,6 +880,124 @@
         #keyMsg {
             min-height: 18px;
             text-align: left
+        }
+
+        /* ---------- Tela de configurações: cards por seção, sliders e interruptores estilo MC ---------- */
+        .scr.wide {
+            width: min(600px, 100%)
+        }
+
+        .cfg {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 12px 14px;
+            text-align: left;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .12)
+        }
+
+        .cfg h3 {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: #ffd24a
+        }
+
+        .cwr {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .cwr .lb {
+            flex: 1;
+            font-size: 13px;
+            text-shadow: 1px 1px 0 #1c1c1c
+        }
+
+        .cwr b {
+            min-width: 52px;
+            text-align: right;
+            font-size: 13px
+        }
+
+        .btn.tg {
+            width: 128px;
+            min-width: 128px;
+            padding: 8px 6px;
+            font-size: 12px
+        }
+
+        .rng {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            box-sizing: border-box;
+            height: 40px;
+            background-color: #1d1d1d;
+            border: 2px solid #191919;
+            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .5), inset -2px -2px 0 rgba(255, 255, 255, .10);
+            outline: none;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        .rng::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 36px;
+            border-radius: 0;
+            border: 2px solid #191919;
+            background-color: #9a9a9a;
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, .06) 46%, rgba(0, 0, 0, .24));
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .38), inset -2px -2px 0 rgba(0, 0, 0, .40)
+        }
+
+        .rng:focus-visible::-webkit-slider-thumb {
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .38), inset -2px -2px 0 rgba(0, 0, 0, .40), 0 0 0 2px #dfffd2
+        }
+
+        .rng::-moz-range-thumb {
+            width: 24px;
+            height: 34px;
+            border-radius: 0;
+            border: 2px solid #191919;
+            background: #9a9a9a;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .38), inset -2px -2px 0 rgba(0, 0, 0, .40)
+        }
+
+        .rng::-moz-range-track {
+            background: transparent
+        }
+
+        details.help {
+            text-align: left;
+            border: 1px dashed rgba(255, 255, 255, .20);
+            padding: 9px 12px
+        }
+
+        details.help summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            list-style: none
+        }
+
+        details.help summary::-webkit-details-marker {
+            display: none
+        }
+
+        details.help summary::before {
+            content: '\25B8\00a0 ';
+            color: #ffd24a
+        }
+
+        details.help[open] summary::before {
+            content: '\25BE\00a0 '
         }
 
         body:not(.touch) #play {
@@ -972,6 +1158,26 @@
             font-size: 16px
         }
 
+        /* celular: inventario mais compacto nas margens, para sobrar espaco para os slots grandes;
+           a dica fala de teclas (Esc, 1-9, 0), que nao existem no toque, entao some */
+        body.touch #invBox {
+            padding: 8px 8px 6px
+        }
+
+        body.touch #invSearch {
+            padding: 4px 7px
+        }
+
+        body.touch #invTip {
+            min-height: 15px;
+            margin: 0 0 3px;
+            font-size: 12px
+        }
+
+        body.touch #invHint {
+            display: none
+        }
+
         @media (max-height:480px) {
             #logo {
                 height: 52px
@@ -1061,6 +1267,35 @@
         #chatInput:focus {
             border-color: rgba(255, 255, 255, .8);
             background: rgba(0, 0, 0, .8);
+        }
+
+        /* sugestoes de autocomplete: chips tocaveis logo abaixo do campo */
+        #chatSug {
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 5px;
+            max-width: min(420px, 80vw);
+        }
+
+        #chatSug.on {
+            display: flex;
+        }
+
+        #chatSug span {
+            font: 12px/1 monospace;
+            white-space: nowrap;
+            color: #cfd6e6;
+            background: rgba(0, 0, 0, .68);
+            border: 1px solid rgba(255, 255, 255, .3);
+            border-radius: 4px;
+            padding: 4px 7px;
+        }
+
+        #chatSug span.sel {
+            color: #fff;
+            background: rgba(70, 110, 170, .75);
+            border-color: rgba(255, 255, 255, .65);
         }
 
         #chatHint {
@@ -1214,7 +1449,7 @@
             <div id="splash"></div>
             <button class="btn g" data-go="worlds">Jogar</button>
             <button class="btn" data-go="settings">Configurações</button>
-            <p class="foot" id="dbNote">Seus mundos ficam salvos neste navegador.</p>
+            <p class="foot" id="dbNote">Desenvolvido por @erikhenriquesm · v0811.2356</p>
         </div>
 
         <div class="scr" id="s-worlds">
@@ -1246,12 +1481,15 @@
             <button class="btn" data-go="worlds">Voltar</button>
         </div>
 
-        <div class="scr" id="s-load">
-            <h2 id="lTitle">Mundo</h2>
-            <div class="spin" id="lSpin"></div>
-            <p id="status">Gerando o mundo...</p>
-            <button class="btn g" id="enter" disabled>Entrar no mundo</button>
-            <button class="btn" id="lCancel">Cancelar</button>
+        <div class="scr noPanel" id="s-load">
+            <div id="mcLoadBox">
+                <h2 id="lTitle">Mundo</h2>
+                <canvas id="mcBuild" width="264" height="196"></canvas>
+                <div id="mcBar"><div id="mcBarFill"></div></div>
+                <p id="status">Lendo salvamento...</p>
+                <button class="btn g" id="enter" disabled style="display:none">Entrar no mundo</button>
+                <button class="btn" id="lCancel">Cancelar</button>
+            </div>
         </div>
 
         <div class="scr" id="s-pause">
@@ -1262,50 +1500,70 @@
             <button class="btn" id="quit">Salvar e sair</button>
         </div>
 
-        <div class="scr" id="s-settings">
+        <div class="scr wide" id="s-settings">
             <h2>Configurações</h2>
-            <p>Distância de visão: <button class="btn" id="dMinus"
-                    style="display:inline-block;width:40px;padding:6px">−</button> <b id="dVal">4</b> <button
-                    class="btn" id="dPlus" style="display:inline-block;width:40px;padding:6px">+</button></p>
-            <div id="keyCfg">
+            <div class="cfg">
+                <h3>Vídeo</h3>
+                <div class="cwr"><span class="lb">Distância de visão (chunks)</span><b id="dVal">6</b></div>
+                <input class="rng" id="dRng" type="range" min="2" max="12" step="1" value="6"
+                    aria-label="Distância de visão">
+                <div class="cwr"><span class="lb">Campo de visão (FOV)</span><b id="fVal">70</b></div>
+                <input class="rng" id="fRng" type="range" min="40" max="110" step="1" value="70"
+                    aria-label="Campo de visão">
+                <div class="cwr"><span class="lb">Neblina (esconde o carregamento dos blocos)</span><button
+                        class="btn tg" id="tFog" type="button">Ligada</button></div>
+                <div class="cwr"><span class="lb">FPS e XYZ (HUD de depuração)</span><button class="btn tg" id="tDebug"
+                        type="button">Ligado</button></div>
+            </div>
+            <div class="cfg" id="keyCfg">
                 <h3>Controles</h3>
+                <div class="cwr"><span class="lb">Sensibilidade do mouse</span><b id="sVal">100%</b></div>
+                <input class="rng" id="sRng" type="range" min="10" max="300" step="5" value="100"
+                    aria-label="Sensibilidade do mouse">
+                <div class="cwr"><span class="lb">Inverter eixo Y do mouse</span><button class="btn tg" id="tInv"
+                        type="button">Desligado</button></div>
                 <div class="ptabs">
                     <button class="btn sel" id="pcTab" type="button">Computador</button>
                     <button class="btn" type="button" disabled title="Em breve">Celular (em breve)</button>
                 </div>
-                <p>Clique numa ação e aperte a nova tecla. Se a tecla já estiver em uso, as duas ações trocam de tecla.
-                    <b>Esc</b> cancela.
-                </p>
+                <p style="text-align:left">Clique numa ação e aperte a nova tecla. Se a tecla já estiver em uso, as duas
+                    ações trocam de tecla. <b>Esc</b> cancela.</p>
                 <div id="keyRows"></div>
                 <p id="keyMsg"></p>
                 <button class="btn" id="keyReset" type="button">Restaurar teclas padrão</button>
             </div>
-            <div class="ctl">
-                <p class="kb"><b data-k="move">WASD</b> andar · <b data-k="jump">Espaço</b> pular/nadar · <b
-                        data-k="sprint">Ctrl</b> correr (ou toque duplo em <b data-k="forward">W</b>) ·
-                    <b data-k="sneak">Shift</b> agachar · <b data-k="jump">Espaço</b> duas vezes (ou <b
-                        data-k="fly">F</b>) voar · no voo: <b data-k="jump">Espaço</b> sobe,
-                    <b data-k="sneak">Shift</b> desce, <b data-k="sprint">Ctrl</b> acelera, tocar o chão encerra
-                </p>
-                <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>balde
-                        (9)</b>: direito pega a água de uma fonte e solta de novo</p>
-                <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>[ ]</b> visão · <b
-                        data-k="inventory">I</b> inventário
-                    (itens do criativo) · <b>Esc</b> pausa</p>
-                <p class="kb">Segure <b data-k="rewind">R</b> para voltar no tempo (desfaz explosões, água e
-                    construções)</p>
-                <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco: colocar ·
-                    <b>Segure</b> o dedo num bloco: quebrar · <b>2x no botão de pular</b>: voar · botões: pular, agachar
-                    (liga/desliga), comandos, voltar no tempo, inventário (ao lado da barra) e pausa
-                </p>
-                <p>Dica: faça uma barragem com água, depois quebre um bloco dela.</p>
-            </div>
+            <details class="help">
+                <summary>Como jogar — atalhos, toques e comandos</summary>
+                <div>
+                    <p class="kb"><b data-k="move">WASD</b> andar · <b data-k="jump">Espaço</b> pular/nadar · <b
+                            data-k="sprint">Ctrl</b> correr (ou toque duplo em <b data-k="forward">W</b>) ·
+                        <b data-k="sneak">Shift</b> agachar · <b data-k="jump">Espaço</b> duas vezes (ou <b
+                            data-k="fly">F</b>) voar · no voo: <b data-k="jump">Espaço</b> sobe,
+                        <b data-k="sneak">Shift</b> desce, <b data-k="sprint">Ctrl</b> acelera, tocar o chão encerra
+                    </p>
+                    <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>balde
+                            (9)</b>: direito pega a água de uma fonte e solta de novo</p>
+                    <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>C</b> zoom (segurar) na mira · <b>[ ]</b>
+                        visão · <b data-k="inventory">I</b> inventário
+                        (itens do criativo) · <b>Esc</b> pausa</p>
+                    <p class="kb">No chat: <b>Tab</b> completa o comando (ou toque numa sugestão) · <b>/ajuda</b> lista
+                        os comandos</p>
+                    <p class="kb">Segure <b data-k="rewind">R</b> para voltar no tempo (desfaz explosões, água e
+                        construções)</p>
+                    <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco: colocar ·
+                        <b>Segure</b> o dedo num bloco: quebrar · <b>2x no botão de pular</b>: voar · botões: pular, agachar
+                        (liga/desliga), comandos, voltar no tempo, inventário (ao lado da barra) e pausa
+                    </p>
+                    <p>Dica: faça uma barragem com água, depois quebre um bloco dela.</p>
+                </div>
+            </details>
             <button class="btn" data-go="back">Voltar</button>
         </div>
     </div>
     <div id="chat">
         <input id="chatInput" type="text" autocomplete="off" spellcheck="false" maxlength="96" placeholder="Comando..."
             aria-label="Comando" autocapitalize="off" autocorrect="off" enterkeyhint="send">
+        <div id="chatSug"></div>
         <div id="chatHint">/ajuda</div>
     </div>
     <script>
@@ -1927,6 +2185,8 @@
             const bf = $('bgFade');
             bf.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)), url(' + c.toDataURL() + ')';
             bf.style.backgroundSize = 'auto, 96px 96px'; bf.style.imageRendering = 'pixelated';
+            const lb = $('mcLoadBox'); // painel da tela de carregamento: mesma terra, sombreada mais forte
+            lb.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)), url(' + c.toDataURL() + ')';
         }
 
         /* ---------- HUD / hotbar + inventario criativo ---------- */
@@ -1950,7 +2210,8 @@
         /* ---------- Icones 3D (cubo isometrico) estilo Minecraft ----------
            Cada bloco vira um cubo desenhado pixel a pixel a partir das texturas do atlas (topo claro, lado esquerdo medio,
            lado direito escuro). Neve fina vira uma laje baixa. Tocha e balde (itens, nao blocos) ficam planos, como no Minecraft. */
-        const ICON_S = 36, iconCache = new Map();
+        const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window; // mesmo teste da Entrada, mas definido cedo: o tamanho dos icones segue o dos slots
+        const ICON_S = isTouch ? 48 : 44, iconCache = new Map();
         let atlasPx = null;
         function iconOf(id, tile) {
             const key = id + ':' + tile; let u = iconCache.get(key); if (u) return u;
@@ -2014,8 +2275,8 @@
         function dragMove(e) {
             if (!drag || e.pointerId !== drag.id) return;
             if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) return;
-            if (!drag.moved) { drag.moved = true; setIcon(invGhost, drag.cat >= 0 ? CAT[drag.cat][0] : HOT[drag.from][0], drag.tile); invGhost.style.display = 'block'; }
-            invGhost.style.left = (e.clientX - 18) + 'px'; invGhost.style.top = (e.clientY - 18) + 'px';
+            if (!drag.moved) { drag.moved = true; setIcon(invGhost, drag.cat >= 0 ? CAT[drag.cat][0] : HOT[drag.from][0], drag.tile); invGhost.style.display = 'block'; drag.half = invGhost.offsetWidth / 2; }
+            invGhost.style.left = (e.clientX - drag.half) + 'px'; invGhost.style.top = (e.clientY - drag.half) + 'px';
             invHotEls.forEach(el => el.classList.remove('drag-over'));
             const over = document.elementFromPoint(e.clientX, e.clientY);
             const hs = over && over.closest ? over.closest('#invHot .slot') : null;
@@ -2072,6 +2333,50 @@
         }
         function setBucket(f) { bucketFull = !!f; const t = f ? 15 : 14; for (const h of HOT) if (h[0] === BUCKET) h[1] = t; catOf(BUCKET)[1] = t; refreshHotbar(); }
         refreshHotbar();
+
+        /* ---------- Animacao da tela de carregamento: blocos montando uma piramide, em loop ----------
+           Usa os mesmos icones isometricos do inventario (iconOf) como sprites; e desenhada pelo frame
+           principal enquanto a tela de carregamento esta na frente (state === 'loading'). Cada ciclo monta
+           a piramide de novo com paleta sorteada: blocos caem, quicam no lugar, ficam e desaparecem. */
+        const mcCv = $('mcBuild'), mcCx = mcCv.getContext('2d');
+        const mcPool = [[1, 0], [4, 4], [54, 48], [3, 3], [5, 5], [7, 8], [6, 7], [28, 23], [34, 28], [43, 37]];
+        const mcSprites = mcPool.map(([id, tile]) => { const im = new Image(); im.src = iconOf(id, tile); return im; });
+        const mcL = [[0, 1, 2], [3, 4, 5], [6, 7, 8, 9]]; // paleta por camada: base (grama/areia/cascalho), paredes (pedra/tronco/atabuas), coroa (folhas/lampada/diamante)
+        const mcShape = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [0, 0, 2]]; // piramide 4 + 3 + 1
+        const MC_CYCLE = 3.1, MC_STEP = .16, MC_DROP = .2, MC_BNC = .3, MC_FALL = 30;
+        let mcT = 0, mcPlan = null;
+        function mcNewPlan() {
+            const pick = a => a[(Math.random() * a.length) | 0];
+            const b = pick(mcL[0]), w = pick(mcL[1]), t = pick(mcL[2]);
+            const P = mcShape.map(([gx, gz, gy], i) => ({ gx, gz, gy, spr: gy >= 2 ? t : gy === 1 ? w : b, ti: i * MC_STEP }));
+            P.sort((p, q) => (p.gy - q.gy) || ((p.gx + p.gz) - (q.gx + q.gz))); // de baixo pra cima, de tras pra frente
+            return P;
+        }
+        function mcAnim(dt) {
+            mcT += dt;
+            if (!mcPlan) mcPlan = mcNewPlan();
+            else if (mcT >= MC_CYCLE) { mcT -= MC_CYCLE; mcPlan = mcNewPlan(); } // reinicia com paleta nova
+            const S = 40, cx = mcCv.width >> 1, cy0 = mcCv.height - 26;
+            const fade = mcT > MC_CYCLE - .45 ? Math.max(0, 1 - (mcT - (MC_CYCLE - .45)) / .45) : 1;
+            mcCx.clearRect(0, 0, mcCv.width, mcCv.height);
+            mcCx.fillStyle = 'rgba(0,0,0,.3)';
+            mcCx.beginPath(); mcCx.ellipse(cx, cy0 + 10, 76, 15, 0, 0, 6.2832); mcCx.fill(); // sombra no chao
+            for (const p of mcPlan) {
+                const im = mcSprites[p.spr], s = mcT - p.ti;
+                if (!im.complete || !im.naturalWidth || s < 0) continue;
+                let yOff = 0, a = fade * .95;
+                if (s < MC_DROP) { // queda: acelera descer e vai aparecendo
+                    const q = s / MC_DROP;
+                    yOff = -(1 - q * q) * MC_FALL; a *= Math.min(1, q / .4);
+                } else if (s < MC_DROP + MC_BNC) { // quicada no pousio
+                    const q2 = (s - MC_DROP) / MC_BNC;
+                    yOff = -9 * Math.sin(Math.PI * q2) * (1 - q2 * .4);
+                }
+                mcCx.globalAlpha = a;
+                mcCx.drawImage(im, cx + (p.gx - p.gz) * 20 - 20, cy0 + (p.gx + p.gz) * 10 - p.gy * 20 - 40 - yOff, S, S);
+            }
+            mcCx.globalAlpha = 1;
+        }
 
         /* ---------- WebGL ---------- */
         const canvas = $('c');
@@ -2455,6 +2760,10 @@ void main(){
         const active = new Set();
         const history = [];
         let renderDist = 6;
+        /* Configuracoes do jogador (salvas junto com as teclas): FOV, sensibilidade do mouse, eixo Y
+           invertido, neblina e HUD de depuracao (FPS/XYZ). Zoom de mira (tecla C no computador):
+           zoomW indica se o jogador esta segurando; zoomT anima a aproximacao do quadro. */
+        let FOVDEG = 70, SENS = 1, INVERT_Y = false, FOG_ON = true, DEBUG_HUD = true, zoomT = 1, zoomW = 0;
         let cur = null, state = 'menu', epoch = 0; // state: menu | pano | loading | playing | paused
         let pano = false, panoA = 0, panoSpot = null; // panorama dos menus: um pedaco de mundo real girando devagar ao fundo
 
@@ -2811,11 +3120,11 @@ void main(){
 
         /* ---------- Jogador e fisica ---------- */
         const P = { x: 8.5, y: 70, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: -0.2, ground: false, fly: false, sneak: false, sprint: false, eh: 1.62, fk: 0 };
-        let sprintLatch = false, lastW = 0, lastSpace = 0;
+        let sprintLatch = false, lastW = 0, lastSpace = 0, spdMul = 1; // spdMul: cheat /veloz (1 = normal)
         const GAMEMODE = 'creative'; // no futuro modo sobrevivencia: voo desligado
         function toggleFly(keepVy) { if (GAMEMODE !== 'creative') return; P.fly = !P.fly; if (!keepVy) P.vy = 0; }
         function spaceTap() { const n = performance.now(); if (n - lastSpace < 300) { toggleFly(true); lastSpace = 0; } else lastSpace = n; } // toque duplo em Espaco: liga/desliga o voo
-        let spawned = false, spawnAt = [8, 8];
+        let spawned = false, spawnAt = [8, 8], readyAt = 0, autoEnterDone = true, loadBar = 0, loadWant = 0;
         const keys = {};
         const joy = { x: 0, y: 0, mag: 0 };
         const solidAt = (x, y, z) => { const b = getBlock(x, y, z, 3); return b !== 0 && !isWater(b) && !isSoft(b); };
@@ -2854,6 +3163,7 @@ void main(){
             const flySprint = P.fly && (ctrl || sprintLatch) && iz > 0.1; // voo rapido: Ctrl (ou toque duplo em W) indo para frente
             let speed = P.fly ? (flySprint ? 22 : (joy.mag > 0 ? 16 : 11)) : (P.sneak ? 1.8 : (run ? 7 : 4.5)); // voo como no Minecraft criativo: ~11 b/s, ~22 b/s correndo
             if (inW && !P.fly) speed *= 0.6;
+            speed *= spdMul; // cheat /veloz: multiplicador de velocidade (andando ou voando)
             P.eh += ((P.sneak ? 1.27 : 1.62) - P.eh) * Math.min(1, dt * 15);
             P.fk += (((P.sprint || flySprint) ? 0.12 : 0) - P.fk) * Math.min(1, dt * 8);
             const wx = fy * iz + rx * ix, wz = fx * iz + rz * ix;
@@ -2893,6 +3203,10 @@ void main(){
         }
         function surfaceY(x, z) {
             for (let y = CH - 1; y > 0; y--) { const b = getBlock(x, y, z, 0); if (b !== 0 && !isWater(b)) return y + 1; }
+            return 40;
+        }
+        function topPhysicalY(x, z) { // topo real da coluna (agua tambem conta): primeiro bloco nao-ar a partir do ceu
+            for (let y = CH - 1; y > 0; y--) { if (getBlock(x, y, z, 0) !== 0) return y + 1; }
             return 40;
         }
 
@@ -3155,11 +3469,19 @@ void main(){
             tnts.length = 0; bN = 0; history.length = 0; spawned = false; thumb = null; flashAmt = 0; shake = 0;
             raining = false; rainAmt = 0; wxTimer = 60 + Math.random() * 140;
             P.vx = P.vy = P.vz = 0; P.fly = false; pendingSave = wantThumb = false;
+            readyAt = 0; autoEnterDone = true; loadBar = 0; loadWant = 0; // estado da tela de carregamento
         }
         async function openWorld(m) {
             epoch++; pano = false; resetWorld(); cur = m; state = 'loading';
             $('bgFade').classList.remove('on', 'fade'); // saindo do panorama: limpa o fundo de terra
-            $('lTitle').textContent = m.name; $('enter').disabled = true; $('status').textContent = 'Lendo salvamento...'; $('lSpin').style.display = '';
+            $('lTitle').textContent = m.name; $('enter').disabled = true; $('enter').style.display = 'none'; $('enter').classList.remove('pulse');
+            $('enter').textContent = 'Entrar no mundo'; $('status').textContent = 'Lendo salvamento...';
+            readyAt = 0; autoEnterDone = true; loadBar = 0; $('mcBarFill').style.width = '0%'; loadWant = 0;
+            { // quantos chunks a primeira leva vai pedir: base do percentual da barra de progresso
+                let n = 0; const R = renderDist;
+                for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) if (dx * dx + dz * dz <= R * R + 1) n++;
+                loadWant = Math.max(2, n);
+            }
             show('load');
             const rows = await kv.range('chunks', m.id + '/');
             if (cur !== m) return;
@@ -3263,7 +3585,38 @@ void main(){
             startPanorama();
             showWorlds();
         }
-        function enter() { if (isTouch) startTouch(); else canvas.requestPointerLock(); }
+        /* Captura do mouse (desktop): o Chrome nao deixa pedir o lock de novo logo depois que o usuario
+           saiu dele (Esc) — rejeita com SecurityError durante ~1,3s. Aqui tratamos a rejeicao da Promise
+           e repetimos o pedido apos a espera obrigatoria, ate 3 vezes; se nao der, cada chamador decide
+           o fallback (fail). Todos os pedidos do jogo passam por aqui. */
+        function lockPointer(fail) {
+            if (isTouch || document.pointerLockElement === canvas) return;
+            let tries = 0;
+            const go = () => {
+                try {
+                    const r = canvas.requestPointerLock();
+                    if (r && r.catch) r.catch(() => { if (++tries < 3) setTimeout(go, 1350); else if (fail) fail(); });
+                } catch (e) { if (fail) fail(); }
+            };
+            go();
+        }
+        function enter() { if (isTouch) startTouch(); else lockPointer(); }
+
+        /* Entrada automatica ao fim do carregamento. No celular sempre funciona (fullscreen e orientacao
+           sao "melhor esforco": tentados e, se o navegador negar, o jogo entra mesmo assim). No computador
+           o navegador pode exigir um clique recente para capturar o mouse; se o pedido falhar, aparece
+           o botao "Entrar no mundo" pulsando, e um clique resolve. */
+        function autoEnter() {
+            autoEnterDone = true;
+            if (isTouch) { startTouch(); return; }
+            lockPointer(showEnter);
+            setTimeout(() => { if (state === 'loading' && document.pointerLockElement !== canvas) showEnter(); }, 500);
+        }
+        function showEnter() {
+            if (state !== 'loading' || document.pointerLockElement === canvas) return;
+            const b = $('enter'); b.disabled = false; b.style.display = ''; b.classList.add('pulse');
+            statusEl.textContent = 'Pronto! Clique para entrar no mundo';
+        }
 
         /* ---------- Telas do menu ---------- */
         const menu = $('menu'), statusEl = $('status');
@@ -3386,13 +3739,36 @@ void main(){
         /* ---------- Entrada ---------- */
         let locked = false, rewinding = false, rewHold = 0, held = [false, false, false], holdT = 0;
         const aim = { on: false, x: 0, y: 0 }; // toque: mira no ponto da tela onde o dedo esta
-        const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
-        if (isTouch) { document.body.classList.add('touch'); renderDist = 4; }
+        if (isTouch) { document.body.classList.add('touch'); renderDist = 4; } // isTouch ja definido junto aos icones
         /* ---------- Chat de cheats (aperte T) ---------- */
-        const chatEl = $('chat'), chatInput = $('chatInput'), chatHint = $('chatHint'), rainEl = $('rain'), cmdMsgEl = $('cmdMsg');
+        const chatEl = $('chat'), chatInput = $('chatInput'), chatHint = $('chatHint'), chatSugEl = $('chatSug'), rainEl = $('rain'), cmdMsgEl = $('cmdMsg');
         let chatOpen = false, raining = false, rainAmt = 0, rainInt = 0.6, rainIntT = 0.6, wxAuto = true, wxTimer = 120, wxShift = 30, wxIdx = 1, wxLast = -1;
         let cmdMsgT = 0;
-        const CHAT_CMDS = '/dia · /noite · /manha · /tarde · /chuva|/neve [fraca|media|forte] · /tempo claro|auto|manual · /bioma · /voar · /tnt · /hora';
+        /* ajuda do chat: grupos com coluna alinhada (a fonte do hint e monoespacada e usa pre-wrap) */
+        const CHAT_CMDS = [
+            'Ajuda — escreva o comando e aperte Enter',
+            '',
+            'Hora   /dia · /noite · /manha · /tarde · /hora [0-23]',
+            'Clima  /chuva|/neve [fraca|media|forte] · /limpar',
+            '       /garoa · /tempestade · /tempo claro|auto|manual',
+            'Ir     /tp x z (ou x y z) · /origem|/spawn · /topo',
+            'Poder  /voar · /veloz [0.2-5] · /visao [2-12]',
+            'Mundo  /tnt [qtd] · /explodir [raio] · /desarmar',
+            '       /congelar [raio] · /derreter [raio]',
+            'Itens  /dar <bloco> · /inv',
+            'Info   /bioma · /semente · /pos · /status',
+        ].join('\n');
+        /* autocompletar: nomes postos em ordem alfabetica; CMD_USE = como usar quem precisa de argumento */
+        const CMD_AUTOS = ['ajuda', 'bioma', 'chuva', 'congelar', 'dar', 'derreter', 'desarmar', 'dia', 'explodir', 'garoa', 'hora', 'inv', 'limpar', 'manha', 'neve', 'noite', 'origem', 'pos', 'semente', 'status', 'tarde', 'tempestade', 'tempo', 'tnt', 'topo', 'tp', 'veloz', 'visao', 'voar'];
+        const CMD_USE = {
+            tp: '/tp x z (na superficie) ou /tp x y z',
+            chuva: '/chuva [fraca|media|forte]', neve: '/neve [fraca|media|forte]',
+            congelar: '/congelar [raio] — padrao 16 (1 a 32)', derreter: '/derreter [raio] — padrao 16 (1 a 32)',
+            visao: '/visao [2-12]', veloz: '/veloz [0.2-5] (1 volta ao normal)',
+            tempo: '/tempo claro|chuva|tempestade|auto|manual',
+            hora: '/hora [0-23] ou /hora HH:MM', tnt: '/tnt [qtd 1-20] (sem qtd: 1 TNT)',
+            explodir: '/explodir [raio 1-16] — mire num bloco', dar: '/dar <bloco> — ex.: /dar tocha, /dar tnt',
+        };
         const precipWord = () => coldAt(Math.floor(P.x), Math.floor(P.z)) ? 'Neve' : 'Chuva'; // o bioma sob o jogador decide
         function showCmdMsg(txt) {
             cmdMsgEl.textContent = txt;
@@ -3418,6 +3794,7 @@ void main(){
             chatEl.classList.add('on');
             setChatHint('Digite /ajuda e aperte Enter');
             chatInput.value = '/';
+            chatSugCompute(); // mostra/esconde as sugestoes conforme o texto atual
             chatInput.focus();
             chatKbLift();
             setTimeout(() => { try { chatInput.setSelectionRange(1, 1); } catch (e) { } }, 0);
@@ -3458,13 +3835,15 @@ void main(){
                     if (raining) { wxClear(); return { msg: pw + ' desligada' }; }
                     wxSet(0.6); return { msg: pw + ' média' };
                 }
+                case 'garoa': wxSet(0.28); return { msg: precipWord() + ' ' + wxName(0.28) };
+                case 'tempestade': wxSet(1); return { msg: precipWord() + ' ' + wxName(1) + ' (tempestade)' };
                 case 'bioma': {
                     const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
                     if (bi < 0) return { keep: true, msg: 'Bioma ainda carregando', err: true };
                     return { keep: true, msg: 'Bioma: ' + BIOMES[bi].name + (BIOMES[bi].cold ? ' (frio: neve, gelo e neve fina)' : ' (chuva)') };
                 }
                 case 'limpar': wxClear(); return { msg: 'Tempo claro' };
-                case 'tempo': {
+                case 'tempo': case 'clima': {
                     if (!arg) return { keep: true, msg: 'Tempo: ' + (raining ? precipWord().toLowerCase() : 'claro') };
                     if (arg === 'claro' || arg === 'limpo' || arg === 'sol' || arg === 'limpar') { wxClear(); return { msg: 'Tempo claro' }; }
                     if (arg === 'chuva' || arg === 'chuvoso') { wxSet(0.6); return { msg: 'Chuva média' }; }
@@ -3475,16 +3854,145 @@ void main(){
                     if (arg === 'noite') { time = 0.75; return { msg: 'Noite!' }; }
                     return { keep: true, msg: 'Use /tempo claro ou /tempo chuva', err: true };
                 }
-                case 'voar': case 'fly': toggleFly(); return { msg: P.fly ? 'Voando' : 'Andando' };
+                case 'voar': case 'voo': case 'fly': toggleFly(); return { msg: P.fly ? 'Voando' : 'Andando' };
                 case 'tnt': {
+                    const n = Math.max(1, Math.min(20, Math.floor(+parts[1]) || 1));
                     const hit = locked ? raycast(eyePos(), aimDir(), 6) : null;
-                    if (hit) spawnTnt(hit.px + 0.5, hit.py + 0.5, hit.pz + 0.5, 3);
-                    else spawnTnt(P.x + 0.5, P.y + 1, P.z + 0.5, 3);
-                    return { msg: 'TNT!' };
+                    const bx = hit ? hit.px + 0.5 : P.x + 0.5, by = hit ? hit.py + 0.5 : P.y + 1, bz = hit ? hit.pz + 0.5 : P.z + 0.5;
+                    for (let i = 0; i < n; i++) { // 1 TNT = comportamento antigo; várias = anel em volta do alvo com pavios variados
+                        const a = n === 1 ? 0 : i / n * Math.PI * 2, rr = n === 1 ? 0 : 1.8 + Math.random() * 0.6;
+                        spawnTnt(bx + Math.cos(a) * rr, by + (n === 1 ? 0 : Math.random() * 1.2), bz + Math.sin(a) * rr, n === 1 ? 3 : 2 + Math.random() * 2.5);
+                    }
+                    return { msg: n === 1 ? 'TNT!' : 'TNT x' + n };
+                }
+                case 'explodir': case 'explosao': case 'boom': {
+                    const hr = parts[1] === undefined ? 4 : Math.round(+parts[1]);
+                    if (!isFinite(hr) || hr < 1) return { keep: true, msg: 'Use: /explodir [raio 1-16]', err: true };
+                    const r = Math.min(16, hr);
+                    const hit = raycast(eyePos(), aimDir(), 8);
+                    if (!hit) return { keep: true, msg: 'Mire num bloco (até 8 blocos) para explodir', err: true };
+                    explode(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5, r);
+                    return { msg: 'Explosão raio ' + r };
+                }
+                case 'desarmar': case 'limpartnt': {
+                    const n = tnts.length;
+                    if (!n) return { keep: true, msg: 'Nenhuma TNT ativa', err: true };
+                    tnts.length = 0;
+                    return { msg: n + (n > 1 ? ' TNT desarmadas' : ' TNT desarmada') };
                 }
                 case 'hora': {
-                    const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
-                    return { msg: 'Hora: ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') };
+                    if (parts[1] === undefined) {
+                        const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
+                        return { msg: 'Hora: ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') };
+                    }
+                    const hs = parts[1].replace(',', '.').split(':'), h = +hs[0], m = hs[1] === undefined ? 0 : +hs[1];
+                    if (!hs[0] || hs.length > 2 || !isFinite(h) || !isFinite(m) || h < 0 || h >= 24 || m < 0 || m >= 60)
+                        return { keep: true, msg: 'Use: /hora 0 a 23 (ou /hora 18:30)', err: true };
+                    const total = (((h + m / 60) % 24) + 24) % 24;
+                    time = (((total - 6) % 24) + 24) % 24 / 24;
+                    return { msg: 'Hora definida para ' + String(Math.floor(total)).padStart(2, '0') + ':' + String(Math.floor((total % 1) * 60)).padStart(2, '0') };
+                }
+                /* ----- cheats ----- */
+                case 'semente': case 'seed': {
+                    if (!cur || cur.__pano) return { keep: true, msg: 'Entre num mundo primeiro', err: true };
+                    const st = cur.seedText || '';
+                    return { keep: true, msg: 'Semente: ' + cur.seed + (st && st !== String(cur.seed) ? ' (' + st + ')' : '') };
+                }
+                case 'pos': case 'coords': case 'xyz': {
+                    const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
+                    const lv = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z));
+                    return { keep: true, msg: 'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + '\n' +
+                        (bi >= 0 ? 'Bioma: ' + BIOMES[bi].name + ' · ' : '') + 'luz céu ' + (lv >> 4) + ' · bloco ' + (lv & 15) };
+                }
+                case 'status': case 'debug': {
+                    const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
+                    const temp = raining ? precipWord().toLowerCase() + ' ' + wxName(rainIntT) : 'claro';
+                    return { keep: true, msg:
+                        'FPS ' + fps + ' · chunks ' + chunks.size + ' · visão ' + renderDist + '\n' +
+                        'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
+                        'Clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + ' · TNT ' + tnts.length + '\n' +
+                        'Velocidade x' + spdMul };
+                }
+                case 'tp': case 'teleportar': {
+                    const a = parts.slice(1).map(Number);
+                    if ((a.length !== 2 && a.length !== 3) || a.some(n => !isFinite(n))) return { keep: true, msg: 'Use: /tp x z (na superficie) ou /tp x y z', err: true };
+                    const fx = Math.floor(a[0]), fz = Math.floor(a[a.length - 1]);
+                    P.x = fx + 0.5; P.z = fz + 0.5; P.vx = P.vy = P.vz = 0;
+                    P.y = (a.length === 3 ? Math.max(1, Math.min(CH - 2, a[1] | 0)) : topPhysicalY(fx, fz)) + 0.1;
+                    while (hits(P.x, P.y, P.z) && P.y < CH - 2) P.y++; // caiu dentro de blocos: sobe ate achar ar
+                    return { msg: 'Teleportado para ' + fx + ' ' + (P.y | 0) + ' ' + fz };
+                }
+                case 'origem': case 'spawn': case 'inicio': {
+                    P.x = 8.5; P.z = 8.5; P.vx = P.vy = P.vz = 0;
+                    P.y = topPhysicalY(8, 8) + 0.1;
+                    while (hits(P.x, P.y, P.z) && P.y < CH - 2) P.y++;
+                    return { msg: 'De volta a origem do mundo' };
+                }
+                case 'topo': case 'superficie': {
+                    const x = Math.floor(P.x), z = Math.floor(P.z);
+                    P.y = topPhysicalY(x, z) + 0.1; P.vx = P.vy = P.vz = 0;
+                    while (hits(P.x, P.y, P.z) && P.y < CH - 2) P.y++;
+                    return { msg: 'No topo: ' + x + ' ' + (P.y | 0) + ' ' + z };
+                }
+                case 'congelar': case 'congela': { // inverno instantaneo: congela a superficie da agua num raio
+                    const r = Math.max(1, Math.min(32, (+parts[1] | 0) || 16));
+                    const cx = Math.floor(P.x), cz = Math.floor(P.z); let n = 0;
+                    for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+                        if (dx * dx + dz * dz > r * r) continue;
+                        for (let y = CH - 1; y >= 1; y--) {
+                            const b = getBlock(cx + dx, y, cz + dz, -1);
+                            if (b < 0) break;
+                            if (isWater(b)) { if (setBlock(cx + dx, y, cz + dz, ICE)) n++; break; } // so a celula mais alta da coluna
+                        }
+                    }
+                    return { msg: n ? 'Agua congelada (' + n + ' blocos) num raio de ' + r : 'Nao achei agua no raio de ' + r, err: !n };
+                }
+                case 'derreter': { // derrete o gelo de superficie num raio
+                    const r = Math.max(1, Math.min(32, (+parts[1] | 0) || 16));
+                    const cx = Math.floor(P.x), cz = Math.floor(P.z); let n = 0;
+                    for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+                        if (dx * dx + dz * dz > r * r) continue;
+                        for (let y = CH - 1; y >= 1; y--) {
+                            const b = getBlock(cx + dx, y, cz + dz, -1);
+                            if (b < 0) break;
+                            if (b !== ICE) continue;
+                            const up = y + 1 >= CH ? 0 : getBlock(cx + dx, y + 1, cz + dz, -1);
+                            if (up !== ICE && !isWater(up) && setBlock(cx + dx, y, cz + dz, WSRC, false)) n++; // rec=false: volta liquido nem que bioma frio congele de novo
+                            break; // so o gelo mais alto da coluna
+                        }
+                    }
+                    return { msg: n ? 'Gelo derretido (' + n + ' blocos) num raio de ' + r : 'Nao achei gelo no raio de ' + r, err: !n };
+                }
+                case 'visao': case 'view': {
+                    if (!parts[1]) return { keep: true, msg: 'Visao atual: ' + renderDist + ' blocos (use /visao 2 a 12)' };
+                    const v = +parts[1];
+                    if (!isFinite(v)) return { keep: true, msg: 'Use: /visao 2 a 12', err: true };
+                    renderDist = Math.max(2, Math.min(12, Math.round(v))); updDist();
+                    return { msg: 'Distancia de visao: ' + renderDist + ' blocos' };
+                }
+                case 'veloz': case 'speed': {
+                    const v = +parts[1];
+                    if (!isFinite(v) || !v) return { keep: true, msg: 'Velocidade: x' + spdMul + ' (use /veloz 0.2 a 5; /veloz 1 volta ao normal)' };
+                    spdMul = Math.max(0.2, Math.min(5, Math.round(v * 100) / 100));
+                    return { msg: spdMul === 1 ? 'Velocidade normal' : 'Velocidade x' + spdMul };
+                }
+                case 'dar': case 'give': case 'item': {
+                    const q = parts.slice(1).join(' ').trim(), norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    if (!q) return { keep: true, msg: 'Use: /dar <bloco>  (ex.: /dar tocha, /dar tnt, /dar diamante)', err: true };
+                    const nq = norm(q);
+                    const c = CAT.find(x => norm(x[2]) === nq) || CAT.find(x => norm(x[2]).startsWith(nq)) || CAT.find(x => norm(x[2]).includes(nq));
+                    if (!c) return { keep: true, msg: 'Bloco não encontrado: ' + q, err: true };
+                    const j = HOT.findIndex(h => h[0] === c[0]); // ja estava na barra? troca de lugar com o slot atual
+                    if (j >= 0 && j !== sel) { const t = HOT[sel]; HOT[sel] = HOT[j]; HOT[j] = t; }
+                    else HOT[sel] = [c[0], c[1]];
+                    refreshHotbar();
+                    if (cur && !cur.__pano) requestSave();
+                    return { msg: c[2] + ' no slot ' + (sel + 1) };
+                }
+                case 'inv': case 'inventario': {
+                    if (state !== 'playing') return { keep: true, msg: 'Entre no jogo primeiro', err: true };
+                    openInv();
+                    return { msg: 'Inventário aberto' };
                 }
                 default: return null;
             }
@@ -3503,9 +4011,50 @@ void main(){
             e.stopPropagation();
             if (e.key === 'Escape') { e.preventDefault(); closeChat(); }
             else if (e.key === 'Enter') { e.preventDefault(); submitChat(); }
-            else if (e.key === 'Tab') e.preventDefault();
+            else if (e.key === 'Tab') { // Tab completa o comando destacado e cicla entre as sugestoes
+                e.preventDefault();
+                if (!sugList.length) return;
+                const name = sugList[sugIdx];
+                chatInput.value = '/' + name;
+                const n = chatInput.value.length;
+                try { chatInput.setSelectionRange(n, n); } catch (er) { }
+                const use = CMD_USE[name];
+                if (use) setChatHint(use);
+                sugIdx = (sugIdx + 1) % sugList.length;
+                chatSugRender();
+            }
         });
         chatInput.addEventListener('blur', closeChat);
+        chatInput.addEventListener('input', () => { chatSugCompute(); });
+
+        /* ----- chips de sugestao (funciona no celular: tap completa e o teclado continua) ----- */
+        let sugList = [], sugIdx = 0;
+        function chatSugCompute() {
+            const v = chatInput.value;
+            const pre = v && v[0] === '/' && !v.includes(' ') ? v.slice(1).toLowerCase() : '';
+            sugList = pre ? CMD_AUTOS.filter(c => c.startsWith(pre)) : [];
+            if (sugList.length === 1 && sugList[0] === pre) sugList = []; // ja esta completo, nada a sugerir
+            sugIdx = 0;
+            chatSugRender();
+        }
+        function chatSugRender() {
+            chatSugEl.classList.toggle('on', !!sugList.length);
+            chatSugEl.innerHTML = sugList.map((c, i) => '<span data-i="' + i + '"' + (i === sugIdx ? ' class="sel"' : '') + '>/' + c + '</span>').join('');
+        }
+        function chatApply(name) {
+            chatInput.value = '/' + name + ' ';
+            const n = chatInput.value.length;
+            try { chatInput.setSelectionRange(n, n); } catch (er) { }
+            chatInput.focus(); // no celular mantem o teclado aberto
+            const use = CMD_USE[name];
+            if (use) setChatHint(use);
+            chatSugCompute(); // com vaiaveis tipadas (espaco) as sugestoes somem
+        }
+        chatSugEl.addEventListener('pointerdown', e => {
+            e.preventDefault(); // nao rouba o foco do campo (sem blur -> o chat nao fecha)
+            const el = e.target.closest('span');
+            if (el && sugList.length) chatApply(sugList[+el.dataset.i]);
+        });
 
         /* ---------- Teclas configuráveis (computador) ----------
            O jogo continua lendo os codigos originais (KeyW, Space, ControlLeft...).
@@ -3547,9 +4096,9 @@ void main(){
             binds = nb;
         }
         rebuildKeyMap();
-        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); } catch (e) { }
-        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2 })); } catch (e) { } }
-        function updDist() { $('dVal').textContent = renderDist; saveSettings(); }
+        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); if (s.fov) FOVDEG = Math.max(40, Math.min(110, s.fov | 0)); if (s.sens) SENS = Math.max(0.1, Math.min(3, s.sens)); if (s.inv) INVERT_Y = !!s.inv; if (s.fog === false) FOG_ON = false; if (s.dbg === false) DEBUG_HUD = false; } catch (e) { }
+        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2, fov: FOVDEG, sens: SENS, inv: INVERT_Y, fog: FOG_ON, dbg: DEBUG_HUD })); } catch (e) { } }
+        function updDist() { const r = $('dRng'); if (r) r.value = renderDist; $('dVal').textContent = renderDist; saveSettings(); }
         updDist();
         const KNAMES = { Space: 'Espaço', ControlLeft: 'Ctrl', ShiftLeft: 'Shift', AltLeft: 'Alt', AltRight: 'Alt Dir.', CapsLock: 'Caps Lock', Enter: 'Enter', Backspace: 'Backspace', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Backquote: '`', Minus: '-', Equal: '=', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', NumpadEnter: 'Num Enter' };
         function keyName(c) {
@@ -3599,19 +4148,38 @@ void main(){
         }, true);
         $('keyReset').onclick = () => { binds = { ...DEF }; capturing = null; rebuildKeyMap(); saveSettings(); keyMsg('Teclas restauradas.'); renderKeys(); };
         renderKeys();
-        $('dMinus').onclick = () => { renderDist = Math.max(2, renderDist - 1); updDist(); };
-        $('dPlus').onclick = () => { renderDist = Math.min(12, renderDist + 1); updDist(); };
+        /* ---------- Sliders e interruptores da tela de configuracoes ---------- */
+        $('dRng').oninput = e => { renderDist = +e.target.value; updDist(); };
+        $('fRng').oninput = e => { FOVDEG = +e.target.value; $('fVal').textContent = FOVDEG; saveSettings(); };
+        $('sRng').oninput = e => { SENS = +e.target.value / 100; $('sVal').textContent = e.target.value + '%'; saveSettings(); };
+        $('tFog').onclick = function () { FOG_ON = !FOG_ON; this.textContent = FOG_ON ? 'Ligada' : 'Desligada'; saveSettings(); };
+        $('tInv').onclick = function () { INVERT_Y = !INVERT_Y; this.textContent = INVERT_Y ? 'Ligado' : 'Desligado'; saveSettings(); };
+        $('tDebug').onclick = function () { DEBUG_HUD = !DEBUG_HUD; this.textContent = DEBUG_HUD ? 'Ligado' : 'Desligado'; applyDebugHUD(); saveSettings(); };
+        function syncSettingsUI() {
+            $('dRng').value = renderDist; $('dVal').textContent = renderDist;
+            $('fRng').value = FOVDEG; $('fVal').textContent = FOVDEG;
+            $('sRng').value = Math.round(SENS * 100); $('sVal').textContent = Math.round(SENS * 100) + '%';
+            $('tFog').textContent = FOG_ON ? 'Ligada' : 'Desligada';
+            $('tInv').textContent = INVERT_Y ? 'Ligado' : 'Desligado';
+            $('tDebug').textContent = DEBUG_HUD ? 'Ligado' : 'Desligado';
+        }
+        function applyDebugHUD() { $('info').style.display = DEBUG_HUD ? '' : 'none'; } // HUD de depuracao some/aparece sem parar o contador de FPS
+        applyDebugHUD();
+        syncSettingsUI();
         document.addEventListener('pointerlockchange', () => {
             locked = document.pointerLockElement === canvas;
             if (locked) lockKeys(); else unlockKeys();
             if (locked) { invWait = false; state = 'playing'; document.body.classList.add('hud'); menu.style.display = 'none'; }
             else if (state === 'playing') pause();
         });
+        document.addEventListener('pointerlockerror', () => { // Firefox/Safari sinalizam falha por evento, sem Promise
+            if (state === 'loading') showEnter();
+        });
         document.addEventListener('mousemove', e => {
             if (chatOpen) return;
             if (!locked) return;
-            P.yaw -= e.movementX * 0.0025;
-            P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - e.movementY * 0.0025));
+            P.yaw -= e.movementX * 0.0025 * SENS;
+            P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - e.movementY * 0.0025 * SENS * (INVERT_Y ? -1 : 1)));
         });
         const NOSCROLL = ['Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight'];
         addEventListener('keydown', e => {
@@ -3639,6 +4207,10 @@ void main(){
             if (c === 'KeyW' && !e.repeat) { const n = performance.now(); if (n - lastW < 300) sprintLatch = true; lastW = n; }
         });
         addEventListener('keyup', e => { if (chatOpen) return; const c = lc(e.code); if (c === null) return; keys[c] = false; if (c === 'KeyW') sprintLatch = false; if (c === 'KeyR') { rewinding = false; rewHold = 0; } });
+        /* Zoom de mira (C no computador): segure para aproximar ~3x, solte para voltar suave */
+        addEventListener('keydown', e => { if (e.code === 'KeyC' && !chatOpen && state === 'playing') zoomW = 1; });
+        addEventListener('keyup', e => { if (e.code === 'KeyC') zoomW = 0; });
+        addEventListener('blur', () => { zoomW = 0; });
         /* ---------- Teclado/mouse so para o jogo ----------
            Enquanto joga (ou com o inventario aberto) os atalhos do navegador sao bloqueados (Ctrl+E, Ctrl+F, Ctrl+S, F5, Alt, Tab,
            botoes laterais do mouse...). Fora do jogo (menus, digitar nome do mundo) tudo volta ao normal. F11 e F12 continuam livres.
@@ -3679,7 +4251,7 @@ void main(){
         // Esc fecha so o inventario: o navegador nao deixa recapturar o mouse a partir do Esc (nao e um gesto do usuario),
         // entao o jogo espera um clique na tela (ou outro Esc para pausar) em vez de abrir o menu de pausa.
         let invWait = false;
-        canvas.addEventListener('mousedown', () => { if (invWait && state === 'paused') { invWait = false; try { canvas.requestPointerLock(); } catch (e) { state = 'playing'; pause(); } } });
+        canvas.addEventListener('mousedown', () => { if (invWait && state === 'paused') { invWait = false; lockPointer(); } });
         function closeInv(viaEsc) {
             if (state !== 'inv') return;
             invEl.classList.remove('on');
@@ -3690,11 +4262,10 @@ void main(){
                 // Esc so fecha o inventario. O pedido de captura do mouse espera o Esc terminar (senao o navegador
                 // trata esse mesmo Esc como "sair do mouse" e o jogo cairia na tela de pausa). Se nao der, espera um clique.
                 invWait = true; document.body.classList.add('hud'); showCmdMsg('Clique para voltar ao jogo');
-                setTimeout(() => { if (invWait && state === 'paused') { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch (e) { } } }, 180);
+                setTimeout(() => { if (invWait && state === 'paused') lockPointer(); }, 180);
                 return;
             }
-            const fail = () => { if (state === 'paused' && !invWait) show('pause'); };
-            try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(fail); } catch (e) { fail(); }
+            lockPointer(() => { if (state === 'paused' && !invWait) show('pause'); });
         }
         /* Toque fora do quadro: um toque curto na area escura em volta do inventario tambem fecha (celular).
            So para: (a) com o inventario aberto; (b) o toque comecando na propria moldura (#inv), nunca
@@ -3888,18 +4459,25 @@ void main(){
             for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > 6 && n >= 1) break; }
             if (!spawned) {
                 const c = chunks.get(ckey(spawnAt[0] >> 4, spawnAt[1] >> 4));
-                statusEl.textContent = 'Gerando o mundo... (' + chunks.size + ' chunks)';
+                { // barra de progresso estilo Minecraft: 35% chunks gerados + 65% malhas montadas com luz
+                    let ok = 0; for (const ch of chunks.values()) if (!ch.dirty) ok++;
+                    if (loadWant) loadBar = Math.max(loadBar, Math.min(.985, .35 * chunks.size / loadWant + .65 * ok / Math.max(1, chunks.size)));
+                    $('mcBarFill').style.width = Math.round(loadBar * 100) + '%';
+                    statusEl.textContent = chunks.size ? 'Construindo o mundo... ' + Math.round(loadBar * 100) + '%' : 'Construindo o mundo...';
+                }
                 if (c && !c.dirty && chunks.size > 12) {
                     if (!pano) {
                         if (cur.player) { P.fly = !!cur.player.fly; if (hits(P.x, P.y, P.z)) P.y = surfaceY(Math.floor(P.x), Math.floor(P.z)) + 0.1; }
                         else { P.y = surfaceY(8, 8) + 0.1; P.x = 8.5; P.z = 8.5; }
-                        $('lSpin').style.display = 'none';
                     }
-                    spawned = true; statusEl.textContent = 'Pronto!'; $('enter').disabled = false;
+                    loadBar = 1; $('mcBarFill').style.width = '100%';
+                    spawned = true; statusEl.textContent = 'Pronto!';
                     if (pano) { const bf = $('bgFade'); bf.classList.remove('on'); bf.classList.add('fade'); }
+                    else { readyAt = performance.now() + 700; autoEnterDone = false; } // entra sozinho apos a barra completar
                 }
                 return;
             }
+            if (readyAt && !autoEnterDone && performance.now() >= readyAt) { autoEnterDone = true; readyAt = 0; autoEnter(); }
             if (rewinding) {
                 rewHold += dt;
                 let cnt = Math.ceil((300 + rewHold * 2500) * dt);
@@ -4359,7 +4937,8 @@ void main(){
             const dir = lookDir();
             const e2 = [eye[0] + (Math.random() - 0.5) * sh * 0.3, eye[1] + (Math.random() - 0.5) * sh * 0.3, eye[2] + (Math.random() - 0.5) * sh * 0.3];
             const view = lookAt(e2, [e2[0] + dir[0], e2[1] + dir[1], e2[2] + dir[2]], [0, 1, 0]);
-            const mvp = mul(persp(1.2 + P.fk, asp, 0.08, 400), view);
+            zoomT += ((zoomW ? 0.32 : 1) - zoomT) * 0.3; // animacao suave do zoom da mira ao entrar e sair
+            const mvp = mul(persp((FOVDEG * Math.PI / 180) * zoomT + P.fk, asp, 0.08, 400), view);
             const sunH = Math.sin(time * Math.PI * 2);
             const day = Math.max(0, Math.min(1, 0.5 + sunH * 1.2));
             const dusk = Math.max(0, 1 - Math.abs(sunH) * 5) * 0.5;
@@ -4396,6 +4975,7 @@ void main(){
                 fogF = Math.min(fogF, ready);
                 fogN = Math.min(fogN, fogF * 0.55);
             }
+            if (!FOG_ON && !headW) { fogN = 9999; fogF = 20000; } // neblina desligada (configuracoes): horizonte limpo; embaixo d'agua continua nebuloso
 
             /* ---- Ceu: sol, lua, brilho do horizonte, estrelas e nuvens deste quadro ---- */
             const SA = time * Math.PI * 2, sxn = Math.cos(SA) * 0.8, syn = Math.sin(SA), sln = Math.hypot(sxn, syn, 0.35);
@@ -4534,6 +5114,7 @@ void main(){
                 { const v = rewinding ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
                 if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
                 render(); rainSound(dt);
+                if (state === 'loading') mcAnim(dt); // blocos montando na tela de carregamento
                 if (spawned) {
                     if (wantThumb) { wantThumb = false; grabThumb(); }
                     if (pendingSave) { pendingSave = false; saveWorld(); }
@@ -4549,7 +5130,7 @@ void main(){
                     }
                     if (state === 'playing' && SK.q > 0.5) { lowT = fps < 30 ? lowT + 0.5 : 0; if (lowT >= 8) SK.q = 0; } // governador: FPS baixo sustentado -> desliga via lactea, paredes das nuvens e reflexos de nuvem/estrela na agua
                     document.body.classList.toggle('flying', P.fly);
-                    if (state === 'playing') {
+                    if (DEBUG_HUD && state === 'playing') {
                         const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
                         info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
                             'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
