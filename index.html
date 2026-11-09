@@ -219,7 +219,12 @@
             background-color: #8b8b8b;
             border-radius: 0;
             position: relative;
-            cursor: default
+            cursor: default;
+            /* celular: toque comecado num slot e sempre arraste do item. O #invBox tem overflow:auto (costuma
+               transbordar no celular) e roubaria o gesto como rolagem, cancelando o ponteiro (pointercancel) no
+               meio do arraste. O touch-action efetivo vai ate o primeiro ancestor com scroll, entao o none do
+               body nao protegia -- o none aqui no slot e o que impede o sequestro do gesto. */
+            touch-action: none
         }
 
         #inv .slot span {
