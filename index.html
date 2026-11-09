@@ -3664,6 +3664,7 @@ void main(){
         function closeInv(viaEsc) {
             if (state !== 'inv') return;
             invEl.classList.remove('on');
+            invSearch.blur(); // celular: recolhe o teclado da busca, se o campo estiver focado
             if (isTouch) { state = 'playing'; locked = true; document.body.classList.add('hud'); return; }
             state = 'paused'; // se o mouse for recapturado, pointerlockchange volta para 'playing'
             if (viaEsc) {
@@ -3675,6 +3676,26 @@ void main(){
             }
             const fail = () => { if (state === 'paused' && !invWait) show('pause'); };
             try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(fail); } catch (e) { fail(); }
+        }
+        /* Toque fora do quadro: um toque curto na area escura em volta do inventario tambem fecha (celular).
+           So para: (a) com o inventario aberto; (b) o toque comecando na propria moldura (#inv), nunca
+           dentro do quadro/nos slots; (c) sem arrasto em andamento; (d) sem deslizar o dedo.
+           O pointerup do toque volta para #inv (captura implicita), entao o canvas nunca ve esse
+           toque como "colocar bloco" -- a interface nao influencia o mundo do jogo. */
+        {
+            let invTap = null;
+            invEl.addEventListener('pointerdown', e => {
+                if (state !== 'inv' || drag || e.target !== invEl) return;
+                invTap = { id: e.pointerId, x: e.clientX, y: e.clientY };
+            });
+            invEl.addEventListener('pointerup', e => {
+                if (!invTap || e.pointerId !== invTap.id) return;
+                if (state !== 'inv' || drag) { invTap = null; return; }
+                const mv = Math.hypot(e.clientX - invTap.x, e.clientY - invTap.y);
+                invTap = null;
+                if (mv < 12) { e.preventDefault(); closeInv(false); }
+            });
+            invEl.addEventListener('pointercancel', () => { invTap = null; });
         }
         addEventListener('wheel', e => { if (chatOpen) return; if (!locked) return; sel = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; refreshHotbar(); });
         addEventListener('contextmenu', e => e.preventDefault());
