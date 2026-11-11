@@ -354,6 +354,7 @@
             background: #2b1d12;
             /* a textura de terra e aplicada por JS (ver atlasURL) */
             opacity: 0;
+            transition: opacity .45s ease;
             pointer-events: none;
             z-index: 1
         }
@@ -600,7 +601,7 @@
             box-shadow: 0 0 0 3px rgba(105, 200, 92, .28)
         }
 
-        /* ===== Tela de carregamento estilo Minecraft: painel de terra com bevel, blocos montando em loop e barra ===== */
+        /* ===== Tela de carregamento estilo Minecraft: painel de terra com bevel e blocos montando em loop ===== */
         #mcLoadBox {
             display: flex;
             flex-direction: column;
@@ -629,27 +630,11 @@
         }
 
         #mcBuild {
-            width: min(264px, 88%);
+            position: static;
+            width: min(280px, 92%);
             height: auto;
             image-rendering: pixelated;
-            margin: 4px 0 0
-        }
-
-        #mcBar {
-            width: min(300px, 100%);
-            height: 18px;
-            box-sizing: border-box;
-            padding: 3px;
-            background: #141414;
-            border: 2px solid #000;
-            margin: 2px 0 6px;
-            box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .8)
-        }
-
-        #mcBarFill {
-            height: 100%;
-            width: 0;
-            background: repeating-linear-gradient(90deg, #63c74d 0 10px, #58af44 10px 14px)
+            margin: 2px auto 0
         }
 
         #mcLoadBox #status {
@@ -1484,8 +1469,7 @@
         <div class="scr noPanel" id="s-load">
             <div id="mcLoadBox">
                 <h2 id="lTitle">Mundo</h2>
-                <canvas id="mcBuild" width="264" height="196"></canvas>
-                <div id="mcBar"><div id="mcBarFill"></div></div>
+                <canvas id="mcBuild" width="280" height="210"></canvas>
                 <p id="status">Lendo salvamento...</p>
                 <button class="btn g" id="enter" disabled style="display:none">Entrar no mundo</button>
                 <button class="btn" id="lCancel">Cancelar</button>
@@ -1541,8 +1525,7 @@
                             data-k="fly">F</b>) voar · no voo: <b data-k="jump">Espaço</b> sobe,
                         <b data-k="sneak">Shift</b> desce, <b data-k="sprint">Ctrl</b> acelera, tocar o chão encerra
                     </p>
-                    <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>balde
-                            (9)</b>: direito pega a água de uma fonte e solta de novo</p>
+                    <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>baldes (9)</b>: o Balde de água solta água à vontade e o Balde vazio coleta fontes — no criativo nenhum se esgota</p>
                     <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>C</b> zoom (segurar) na mira · <b>[ ]</b>
                         visão · <b data-k="inventory">I</b> inventário
                         (itens do criativo) · <b>Esc</b> pausa</p>
@@ -1579,7 +1562,7 @@
         const isWater = b => b >= 16 && b < 24;
         const WSRC = 23;
         const TORCH = 10;
-        const BUCKET = 30; // item (nao e bloco): balde, vazio ou cheio de agua
+        const BUCKET = 30; // item (nao e bloco): balde em duas variantes no criativo — vazio (tile 14) e cheio de agua (tile 15)
         // Biomas/clima: fonte unica (mkBiome, mais abaixo). ICE = gelo (35), SNOWL = neve fina (36, camada de 1/8 de bloco)
         const BIO = mkBiome(), BIOMES = BIO.BIOMES, ICE = BIO.ICE, SNOWL = BIO.SNOWL;
         // Iluminacao estilo Minecraft: cada celula guarda luz do ceu (4 bits altos) e luz de bloco (4 bits baixos), de 0 a 15.
@@ -2054,7 +2037,7 @@
 
         /* ---------- Texturas pintadas so com codigo ---------- */
         function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-        const atlas = document.createElement('canvas'); const NT = 51; atlas.width = NT * 16; atlas.height = 16;
+        const atlas = document.createElement('canvas'); const NT = 73; atlas.width = NT * 16; atlas.height = 16;
         const actx2 = atlas.getContext('2d');
         function tile(i, fn) {
             const r = rnd(i * 977 + 13);
@@ -2089,18 +2072,35 @@
             const FL = { 24: [236, 72, 22], 39: [255, 122, 30], 40: [255, 122, 30], 55: [255, 172, 48], 56: [255, 172, 48], 70: [232, 90, 26], 71: [255, 214, 92], 72: [255, 214, 92], 73: [232, 90, 26], 86: [226, 80, 22], 87: [255, 244, 170], 88: [255, 244, 170], 89: [226, 80, 22] };
             return FL[y * 16 + x] || [0, 0, 0, 0]; // chama (so no icone)
         });
-        // balde: 14 = vazio, 15 = cheio de agua
+        // balde redesenhado (14 = vazio, 15 = cheio de agua): vista de frente com o interior aberto.
+        // Linhas: 0-4 alca (arco de aco), 5 aro brilhante, 6-12 corpo afunilado, 13 fundo, 14 base alargada.
         const bucketPx = (x, y, full) => {
-            const cx = 7.5, hw = 4.6 - (y - 5) * 0.27, T = [0, 0, 0, 0];
-            if (y >= 2 && y <= 4) { const arc = (y === 2 && x >= 4 && x <= 11) || (y > 2 && (x === 3 || x === 12)); return arc ? [92, 92, 98] : T; }
-            if (y < 5 || y > 14) return T;
-            const dx = Math.abs(x - cx); if (dx > hw) return T;
-            const edge = dx > hw - 1;
-            if (y === 5) return edge ? [218, 218, 224] : (full ? [46, 112, 222] : [58, 58, 64]);
-            if (y === 6 && !edge) return full ? [38, 98, 205] : [96, 96, 104];
-            if (edge || y === 14) return [60, 60, 66];
-            const band = (y === 9 || y === 10) ? -26 : 0;
-            return x < cx ? [190 + band, 190 + band, 197 + band] : [152 + band, 152 + band, 160 + band];
+            const T = [0, 0, 0, 0];
+            if (y < 5) { // alca: arco fino de aco, com as pontas caindo ate o aro
+                const on = (y === 1 && x >= 6 && x <= 9) ||
+                    (y === 2 && ((x >= 4 && x <= 5) || (x >= 10 && x <= 11))) ||
+                    ((y === 3 || y === 4) && (x === 4 || x === 11));
+                return on ? [150, 154, 164] : T;
+            }
+            let L, R; // limites do corpo por fileira: aro largo em cima, afunila embaixo
+            if (y === 5 || y === 6 || y === 7) { L = 2; R = 13; }
+            else if (y >= 8 && y <= 10) { L = 3; R = 12; }
+            else if (y >= 11 && y <= 13) { L = 4; R = 11; }
+            else if (y === 14) { L = 3; R = 12; } // base levemente mais larga
+            else return T;
+            if (x < L || x > R) return T;
+            if (y === 5) return (x === L || x === R) ? [158, 160, 168] : [204, 206, 214]; // aro: metal claro
+            if (y === 13) return [172, 172, 180];  // fundo do corpo
+            if (y === 14) return [72, 72, 80];     // base sombreada
+            if (x === L) return [158, 160, 168];   // parede esquerda (luz)
+            if (x === R) return [102, 104, 112];   // parede direita (sombra)
+            if (!full) { // vazio: buraco escuro, com sombra logo sob o aro
+                const g = y === 6 ? 26 : 44; return [g, g, g + 8];
+            }
+            if (y === 6) return (x === 4 || x === 10) ? [224, 240, 255] : [120, 184, 255]; // superficie da agua: pontos de luz
+            if (y === 7) { const n = ((x * 7 + y * 3) % 5) ? 0 : 14; return [78 + n, 144 + n, 238]; }
+            if (y <= 10) { const n = ((x + y * 2) % 7) ? 0 : -8; return [56 + n, 118 + n, 230]; }
+            return y === 11 ? [42, 98, 214] : [34, 84, 196]; // embaixo, a agua parece mais funda
         };
         tile(14, (x, y) => bucketPx(x, y, false));
         tile(15, (x, y) => bucketPx(x, y, true));
@@ -2173,6 +2173,168 @@
         });
         tile(49, (x, y, r) => { const n = nz(r, 14), v = (x * 5 + y * 7) % 9 === 0 ? -18 : 0; return [232 + n + v, 230 + n + v, 222 + n + v]; });
         tile(50, (x, y, r) => { const n = nz(r, 40), k = r() < 0.35 ? -34 : 0; return [58 + n + k, 58 + n + k, 60 + n + k]; });
+        /* ---------- Peixe (mob voxel): 51 pele com degradê e escamas, 52 barriga, 53 nadadeira, 54 olho,
+           55 opérculo (brânquias) e 56 boca — os dois últimos com fundo transparente, colados fora da pele ---------- */
+        const lerp3 = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+        const sst1 = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }; // smoothstep igual ao do ceu
+        tile(51, (x, y, r) => { // pele: dorso azul-petróleo saturado (v=0) -> aqua -> prata -> quase branco embaixo
+            const n = nz(r, 6), k = sst1(0, 0.5, y / 15), k2 = sst1(0.5, 1, y / 15);
+            let c = lerp3([14, 60, 76], [70, 154, 156], k); c = lerp3(c, [218, 232, 234], k2);
+            // brilho iridescente: matiza azul-esverdeado ao longo do comprimento
+            const ir = Math.sin((x / 15) * 3.14159) * 9;
+            c = [c[0] - ir * 0.35, c[1] + ir, c[2] + ir * 0.55];
+            // linha lateral: faixa sutil mais escura no meio do corpo
+            if (y === 7 || y === 8) c = [c[0] * 0.8, c[1] * 0.85, c[2] * 0.87];
+            // escamas: fileiras de 3px deslocadas, arco claro em cima e sombra embaixo (repete bem em qualquer face)
+            const off = (((y / 3) | 0) & 1) * 2, sc = ((x + off) % 4 === 0) ? (y % 3 === 0 ? 18 : y % 3 === 2 ? -18 : 0) : 0;
+            const edge = (x === 0 || x === 15) ? -9 : 0;
+            return [c[0] + n + sc + edge, c[1] + n + sc * 0.95 + edge, c[2] + n + sc * 0.9 + edge];
+        });
+        tile(52, (x, y, r) => { // barriga: prata quase branca com leve sheen azulado
+            const n = nz(r, 6), k = sst1(0, 1, y / 15);
+            let c = lerp3([196, 212, 218], [246, 250, 252], k);
+            if ((x * 5 + y * 3) % 11 === 0) c = [c[0] - 10, c[1] - 9, c[2] - 7];
+            if (x === 0 || x === 15) c = [c[0] - 18, c[1] - 17, c[2] - 15];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(53, (x, y, r) => { // nadadeira: membrana teal translucida com raios e bordas escuras
+            const n = nz(r, 5), ray = (x % 4 === 1) ? -30 : ((x % 4 === 3) ? 14 : 0);
+            let c = lerp3([56, 108, 122], [150, 196, 200], y / 15);
+            c = [c[0] + ray, c[1] + ray, c[2] + ray];
+            if (y <= 1 || y >= 14) c = [c[0] - 34, c[1] - 30, c[2] - 24];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(54, (x, y) => { // olho: esclera no tom da pele, limbo escuro, anel âmbar, pupila grande com brilho
+            const cx = 7.5, cy = 7.5, d = Math.hypot(x - cx, y - cy);
+            if (d > 7.4) return [0, 0, 0, 0];       // cantos transparentes: a pele aparece por trás
+            if (d > 5.2) return [128, 142, 150];    // esclera
+            if (d > 4.2) return [30, 34, 44];       // limbo escuro
+            if (d > 3.2) return [214, 154, 54];     // anel âmbar
+            if (d < 2.4) return (x === 6 && y === 6) ? [240, 246, 252] : [14, 16, 22]; // pupila + brilho
+            return [52, 66, 88];
+        });
+        tile(55, (x, y) => { // opérculo: fenda branquial escura em arco com borda clara; fundo transparente
+            const bow = 1.2 + 0.05 * (y - 7.5) * (y - 7.5); // arco abre nas pontas
+            if (x >= bow && x < bow + 2.2) return [18, 32, 40];
+            if (x >= bow + 2.2 && x < bow + 3.2) return [232, 242, 246];
+            return [0, 0, 0, 0];
+        });
+        tile(56, (x, y) => { // boca: linha escura horizontal com cantos de "lábio"; fundo transparente
+            if (y >= 7 && y <= 9) return (x === 2 || x === 13) ? [212, 168, 150] : [22, 26, 32];
+            if ((y === 6 || y === 10) && x > 2 && x < 13) return [122, 132, 142];
+            return [0, 0, 0, 0];
+        });
+        /* ---------- Espécies de peixe: palhaço 57-60, baiacu 61-63, sardinha 64-65, dourado 66-68 ---------- */
+        tile(57, (x, y, r) => { // palhaço pele: laranja vivo com degradê suave
+            const n = nz(r, 7), k = sst1(0, 0.8, y / 15);
+            let c = lerp3([226, 88, 14], [250, 142, 32], k);
+            if (y > 12) c = lerp3(c, [254, 188, 110], sst1(0.8, 1, y / 15));
+            const edge = (x === 0 || x === 15) ? -14 : 0;
+            return [c[0] + n + edge, c[1] + n * 0.9 + edge, c[2] + n * 0.6 + edge];
+        });
+        tile(58, (x, y, r) => { // palhaço barriga: laranja clareando para creme
+            const n = nz(r, 5), k = sst1(0, 1, y / 15);
+            let c = lerp3([246, 148, 46], [254, 224, 176], k);
+            if (x === 0 || x === 15) c = [c[0] - 16, c[1] - 12, c[2] - 8];
+            return [c[0] + n, c[1] + n, c[2] + n * 0.8];
+        });
+        tile(59, (x, y, r) => { // palhaço nadadeira: laranja com raios e borda preta
+            const n = nz(r, 5), ray = (x % 4 === 1) ? -36 : ((x % 4 === 3) ? 16 : 0);
+            let c = lerp3([236, 116, 22], [252, 166, 64], y / 15);
+            c = [c[0] + ray, c[1] + ray, c[2] + ray * 0.7];
+            if (y <= 1 || y >= 14) c = [28, 20, 16];
+            return [c[0] + n, c[1] + n, c[2] + n * 0.7];
+        });
+        tile(60, (x, y, r) => { // palhaço faixa branca: branca uniforme (a borda nasce do contraste com o laranja)
+            const n = nz(r, 4);
+            let c = [249, 249, 246];
+            if ((x * 3 + y) % 7 === 0) c = [c[0] - 7, c[1] - 7, c[2] - 7];
+            return [c[0] + n * 0.6, c[1] + n * 0.6, c[2] + n * 0.6];
+        });
+        tile(61, (x, y, r) => { // baiacu pele: amarelo-oliva com pintas marrons
+            const n = nz(r, 6), k = sst1(0, 0.7, y / 15);
+            let c = lerp3([164, 124, 32], [238, 202, 84], k);
+            if ((x * 3 + y * 5) % 13 === 0 || (x * 7 + y * 2) % 17 === 0) c = [108, 76, 26]; // pintas
+            const edge = (x === 0 || x === 15) ? -12 : 0;
+            return [c[0] + n + edge, c[1] + n + edge, c[2] + n * 0.8 + edge];
+        });
+        tile(62, (x, y, r) => { // baiacu barriga: creme claro
+            const n = nz(r, 5), k = sst1(0, 1, y / 15);
+            let c = lerp3([234, 208, 148], [252, 244, 218], k);
+            if ((x * 5 + y * 3) % 11 === 0) c = [198, 172, 112];
+            if (x === 0 || x === 15) c = [c[0] - 16, c[1] - 14, c[2] - 10];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(63, (x, y, r) => { // baiacu nadadeira: amarela translucida com raios
+            const n = nz(r, 5), ray = (x % 4 === 1) ? -30 : ((x % 4 === 3) ? 14 : 0);
+            let c = lerp3([224, 184, 68], [248, 228, 148], y / 15);
+            c = [c[0] + ray, c[1] + ray * 0.9, c[2] + ray * 0.7];
+            if (y <= 1 || y >= 14) c = [128, 98, 28];
+            return [c[0] + n, c[1] + n, c[2] + n * 0.8];
+        });
+        tile(64, (x, y, r) => { // sardinha pele: azul-aço com linha lateral escura e escamas finas
+            const n = nz(r, 6), k = sst1(0, 0.5, y / 15), k2 = sst1(0.5, 1, y / 15);
+            let c = lerp3([26, 54, 92], [124, 168, 198], k); c = lerp3(c, [228, 238, 244], k2);
+            if (y === 7) c = [c[0] * 0.5, c[1] * 0.56, c[2] * 0.62]; // linha lateral
+            const off = (((y / 2) | 0) & 1) * 2, sc = ((x + off) % 3 === 0) ? (y % 2 ? -13 : 13) : 0;
+            return [c[0] + n + sc, c[1] + n + sc, c[2] + n + sc];
+        });
+        tile(65, (x, y, r) => { // sardinha barriga: prata brilhante
+            const n = nz(r, 5), k = sst1(0, 1, y / 15);
+            let c = lerp3([208, 222, 232], [248, 252, 254], k);
+            if ((x * 4 + y * 3) % 9 === 0) c = [c[0] - 10, c[1] - 10, c[2] - 8];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(66, (x, y, r) => { // dourado pele: ouro com escamas brilhantes e pontos de luz
+            const n = nz(r, 6), k = sst1(0, 0.55, y / 15), k2 = sst1(0.55, 1, y / 15);
+            let c = lerp3([148, 90, 10], [240, 176, 38], k); c = lerp3(c, [252, 230, 148], k2);
+            const off = (((y / 3) | 0) & 1) * 2, sc = ((x + off) % 4 === 0) ? (y % 3 === 0 ? 24 : y % 3 === 2 ? -16 : 0) : 0;
+            if ((x * 3 + y * 7) % 23 === 0) c = [255, 244, 190]; // ponto de brilho
+            if (y === 7 || y === 8) c = [c[0] * 0.86, c[1] * 0.88, c[2] * 0.9];
+            return [c[0] + n + sc, c[1] + n + sc * 0.85, c[2] + n + sc * 0.5];
+        });
+        tile(67, (x, y, r) => { // dourado barriga: creme dourado
+            const n = nz(r, 5), k = sst1(0, 1, y / 15);
+            let c = lerp3([248, 218, 138], [254, 246, 214], k);
+            if (x === 0 || x === 15) c = [c[0] - 14, c[1] - 12, c[2] - 8];
+            return [c[0] + n, c[1] + n, c[2] + n * 0.7];
+        });
+        tile(68, (x, y, r) => { // dourado nadadeira: âmbar com raios
+            const n = nz(r, 5), ray = (x % 4 === 1) ? -32 : ((x % 4 === 3) ? 16 : 0);
+            let c = lerp3([214, 138, 22], [250, 206, 94], y / 15);
+            c = [c[0] + ray, c[1] + ray * 0.8, c[2] + ray * 0.5];
+            if (y <= 1 || y >= 14) c = [96, 60, 12];
+            return [c[0] + n, c[1] + n, c[2] + n * 0.6];
+        });
+        /* ---------- Decoração do fundo do mar: alga 69, estrela 70, coral rosa 71, coral roxo 72 ---------- */
+        tile(69, (x, y, r) => { // alga: verde-escuro na base (v=0) clareando até a ponta (v=1), com veios claros
+            const n = nz(r, 6), k = sst1(0, 1, y / 15);
+            let c = lerp3([10, 62, 24], [96, 186, 60], k);
+            if (Math.sin((x / 15) * 3.14159 * 3) > 0.55) c = [c[0] + 24, c[1] + 30, c[2] + 10]; // veios
+            if ((x * 5 + y * 3) % 17 === 0) c = [c[0] - 14, c[1] - 20, c[2] - 8];               // manchas
+            return [c[0] + n, c[1] + n, c[2] + n * 0.7];
+        });
+        tile(70, (x, y, r) => { // estrela-do-mar: vermelho-coral com pintas claras e escuras
+            const n = nz(r, 7);
+            let c = lerp3([204, 64, 44], [240, 122, 78], sst1(0, 1, (x + y) / 30));
+            if ((x * 3 + y * 5) % 11 === 0) c = [156, 44, 34];
+            if ((x * 7 + y * 2) % 19 === 0) c = [252, 176, 128];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(71, (x, y, r) => { // coral rosa: tons de rosa com poros claros
+            const n = nz(r, 8);
+            let c = lerp3([212, 74, 120], [248, 152, 178], sst1(0, 1, y / 15));
+            if ((x * 4 + y * 3) % 9 === 0) c = [255, 200, 214];
+            if ((x * 5 + y * 7) % 13 === 0) c = [172, 48, 92];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(72, (x, y, r) => { // coral roxo: violeta com poros azulados
+            const n = nz(r, 8);
+            let c = lerp3([96, 52, 168], [168, 120, 224], sst1(0, 1, y / 15));
+            if ((x * 4 + y * 3) % 9 === 0) c = [198, 164, 244];
+            if ((x * 5 + y * 7) % 13 === 0) c = [64, 30, 120];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
         const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
         for (let k = 0; k < 7; k++) { TILES[37 + k] = [31 + k, 31 + k, 31 + k]; TILES[45 + k] = [39 + k, 39 + k, 39 + k]; }
         Object.assign(TILES, { 44: [38, 38, 38], 52: [46, 46, 46], 53: [47, 47, 47], 54: [48, 48, 48], 55: [49, 49, 49], 56: [50, 50, 50] });
@@ -2194,7 +2356,8 @@
         const CAT = [[1, 0, 'Grama'], [2, 2, 'Terra'], [3, 3, 'Pedra'], [33, 27, 'Tijolos de pedra'], [4, 4, 'Areia'], [31, 26, 'Arenito'],
         [24, 17, 'Terra com neve'], [32, 16, 'Neve'], [SNOWL, 30, 'Neve fina'], [ICE, 29, 'Gelo'], [5, 5, 'Tronco de carvalho'], [6, 7, 'Folhas de carvalho'], [25, 18, 'Tronco de bétula'],
         [26, 20, 'Folhas de bétula'], [27, 21, 'Tronco de abeto'], [28, 23, 'Folhas de abeto'], [7, 8, 'Tábuas'], [9, 11, 'Vidro'],
-        [29, 24, 'Cacto'], [34, 28, 'Lâmpada'], [8, 9, 'TNT'], [TORCH, 13, 'Tocha'], [BUCKET, 14, 'Balde']];
+        [29, 24, 'Cacto'], [34, 28, 'Lâmpada'], [8, 9, 'TNT'], [TORCH, 13, 'Tocha'],
+        [BUCKET, 14, 'Balde vazio'], [BUCKET, 15, 'Balde de água']]; // dois baldes: o vazio coleta, o de agua solta (dividem o id, o tile distingue)
         { // blocos das cavernas, logo depois dos tijolos de pedra
             const on = ['carvão', 'cobre', 'ferro', 'ouro', 'redstone', 'lápis-lazúli', 'diamante'], ex = [[44, 38, 'Ardósia']];
             on.forEach((n, k) => ex.push([37 + k, 31 + k, 'Minério de ' + n]));
@@ -2204,8 +2367,9 @@
         }
         const DEFHOT = [1, 2, 3, 4, 5, 7, 8, 9, BUCKET, TORCH];
         const catOf = id => CAT.find(c => c[0] === id);
+        const catOfT = (id, t) => CAT.find(c => c[0] === id && c[1] === t) || catOf(id); // por id+tile: os dois baldes dividem o id
         const HOT = DEFHOT.map(id => { const c = catOf(id); return [c[0], c[1]]; });
-        let sel = 0, bucketFull = false;
+        let sel = 0; // balde sem estado: quem decide e o tile do item selecionado (14 vazio / 15 agua)
         const slotEls = [], hotbar = $('hotbar'), invEl = $('inv'), invGrid = $('invGrid'), invHot = $('invHot'), invTip = $('invTip'), invGhost = $('invGhost'), invSearch = $('invSearch');
         /* ---------- Icones 3D (cubo isometrico) estilo Minecraft ----------
            Cada bloco vira um cubo desenhado pixel a pixel a partir das texturas do atlas (topo claro, lado esquerdo medio,
@@ -2288,7 +2452,7 @@
             invGhost.style.display = 'none';
             invHotEls.forEach(el => el.classList.remove('drag-over'));
             if (!d.moved) { // clique simples
-                if (d.from >= 0) { sel = d.from; refreshHotbar(); invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')'; }
+                if (d.from >= 0) { sel = d.from; refreshHotbar(); invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')'; }
                 else invTip.textContent = CAT[d.cat][2];
                 return;
             }
@@ -2301,12 +2465,12 @@
                         if (ti !== d.from) { const t = HOT[ti]; HOT[ti] = HOT[d.from]; HOT[d.from] = t; }
                         sel = ti;
                     } else { // item do catalogo -> barra (alvo ti)
-                        const c = CAT[d.cat], j = HOT.findIndex(h => h[0] === c[0]);
+                        const c = CAT[d.cat], j = HOT.findIndex(h => h[0] === c[0] && h[1] === c[1]); // id+tile: os dois baldes dividem o id
                         if (j >= 0 && j !== ti) { const t = HOT[ti]; HOT[ti] = HOT[j]; HOT[j] = t; }
                         else if (j < 0) HOT[ti] = [c[0], c[1]];
                         sel = ti;
                     }
-                    refreshHotbar(); invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')';
+                    refreshHotbar(); invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
                     if (cur) requestSave();
                 }
             }
@@ -2320,8 +2484,12 @@
         addEventListener('pointermove', dragMove);
         addEventListener('pointerup', dragEnd);
         addEventListener('pointercancel', dragEnd);
-        function applyHot(ids) { // restaura a barra salva no mundo (ou a padrao)
-            for (let i = 0; i < 10; i++) { const c = catOf(Array.isArray(ids) ? ids[i] : DEFHOT[i]) || catOf(DEFHOT[i]); HOT[i] = [c[0], c[1]]; }
+        function applyHot(ids, tiles) { // restaura a barra salva no mundo (ou a padrao); tiles distingue a variante do balde
+            for (let i = 0; i < 10; i++) {
+                const c = catOf(Array.isArray(ids) ? ids[i] : DEFHOT[i]) || catOf(DEFHOT[i]);
+                const t = Array.isArray(tiles) ? tiles[i] : c[1];
+                HOT[i] = (c[0] === BUCKET && t === 15) ? [BUCKET, 15] : [c[0], c[1]];
+            }
         }
         function refreshHotbar() {
             for (let i = 0; i < 10; i++) {
@@ -2331,7 +2499,6 @@
             }
             for (let i = 0; i < CAT.length; i++) setIcon(catEls[i], CAT[i][0], CAT[i][1]);
         }
-        function setBucket(f) { bucketFull = !!f; const t = f ? 15 : 14; for (const h of HOT) if (h[0] === BUCKET) h[1] = t; catOf(BUCKET)[1] = t; refreshHotbar(); }
         refreshHotbar();
 
         /* ---------- Animacao da tela de carregamento: blocos montando uma piramide, em loop ----------
@@ -2339,6 +2506,7 @@
            principal enquanto a tela de carregamento esta na frente (state === 'loading'). Cada ciclo monta
            a piramide de novo com paleta sorteada: blocos caem, quicam no lugar, ficam e desaparecem. */
         const mcCv = $('mcBuild'), mcCx = mcCv.getContext('2d');
+        mcCx.imageSmoothingEnabled = false;
         const mcPool = [[1, 0], [4, 4], [54, 48], [3, 3], [5, 5], [7, 8], [6, 7], [28, 23], [34, 28], [43, 37]];
         const mcSprites = mcPool.map(([id, tile]) => { const im = new Image(); im.src = iconOf(id, tile); return im; });
         const mcL = [[0, 1, 2], [3, 4, 5], [6, 7, 8, 9]]; // paleta por camada: base (grama/areia/cascalho), paredes (pedra/tronco/atabuas), coroa (folhas/lampada/diamante)
@@ -2356,24 +2524,25 @@
             mcT += dt;
             if (!mcPlan) mcPlan = mcNewPlan();
             else if (mcT >= MC_CYCLE) { mcT -= MC_CYCLE; mcPlan = mcNewPlan(); } // reinicia com paleta nova
-            const S = 40, cx = mcCv.width >> 1, cy0 = mcCv.height - 26;
+            // bloco no tamanho natural do icone e piramide centralizada no canvas
+            const S = ICON_S, k = S / 40, cx = mcCv.width >> 1, cy0 = (mcCv.height >> 1) + 28 * k;
             const fade = mcT > MC_CYCLE - .45 ? Math.max(0, 1 - (mcT - (MC_CYCLE - .45)) / .45) : 1;
             mcCx.clearRect(0, 0, mcCv.width, mcCv.height);
             mcCx.fillStyle = 'rgba(0,0,0,.3)';
-            mcCx.beginPath(); mcCx.ellipse(cx, cy0 + 10, 76, 15, 0, 0, 6.2832); mcCx.fill(); // sombra no chao
+            mcCx.beginPath(); mcCx.ellipse(cx, cy0 + 10 * k, 76 * k, 15 * k, 0, 0, 6.2832); mcCx.fill(); // sombra no chao
             for (const p of mcPlan) {
                 const im = mcSprites[p.spr], s = mcT - p.ti;
                 if (!im.complete || !im.naturalWidth || s < 0) continue;
                 let yOff = 0, a = fade * .95;
                 if (s < MC_DROP) { // queda: acelera descer e vai aparecendo
                     const q = s / MC_DROP;
-                    yOff = -(1 - q * q) * MC_FALL; a *= Math.min(1, q / .4);
+                    yOff = -(1 - q * q) * MC_FALL * k; a *= Math.min(1, q / .4);
                 } else if (s < MC_DROP + MC_BNC) { // quicada no pousio
                     const q2 = (s - MC_DROP) / MC_BNC;
-                    yOff = -9 * Math.sin(Math.PI * q2) * (1 - q2 * .4);
+                    yOff = -9 * k * Math.sin(Math.PI * q2) * (1 - q2 * .4);
                 }
                 mcCx.globalAlpha = a;
-                mcCx.drawImage(im, cx + (p.gx - p.gz) * 20 - 20, cy0 + (p.gx + p.gz) * 10 - p.gy * 20 - 40 - yOff, S, S);
+                mcCx.drawImage(im, cx + ((p.gx - p.gz) * 20 - 20) * k, cy0 + ((p.gx + p.gz) * 10 - p.gy * 20 - 40) * k - yOff, S, S);
             }
             mcCx.globalAlpha = 1;
         }
@@ -2766,6 +2935,8 @@ void main(){
         let FOVDEG = 70, SENS = 1, INVERT_Y = false, FOG_ON = true, DEBUG_HUD = true, zoomT = 1, zoomW = 0;
         let cur = null, state = 'menu', epoch = 0; // state: menu | pano | loading | playing | paused
         let pano = false, panoA = 0, panoSpot = null; // panorama dos menus: um pedaco de mundo real girando devagar ao fundo
+        let panoSpots = [], panoIdx = 0, panoTourT = 0, panoHold = 22; // passeio por varios mirantes durante o menu
+        let panoSwitch = false, panoSwitchT = 0, panoMoved = false, panoSunset = false;
 
         function getBlock(x, y, z, def = 0) {
             if (y < 0) return 3;
@@ -3118,13 +3289,31 @@ void main(){
             }
         }
 
+        /* ---------- Prontidao da area inicial ----------
+           O jogador so entra quando os chunks a volta do ponto de nascimento estao prontos de
+           verdade: malha montada e luz calculada. Os vizinhos de cada um desses chunks tambem
+           precisam existir e estar iluminados; senao a borda ainda mudaria (buracos e luz
+           piscando) logo depois da entrada. Chunks mais distantes continuam carregando depois. */
+        function areaReady(cx, cz, r) {
+            for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+                if (dx * dx + dz * dz > r * r + 1) continue;
+                const ch = chunks.get(ckey(cx + dx, cz + dz));
+                if (!ch || !ch.lit || ch.dirty) return false;
+                for (const [nx, nz] of DIRS) {
+                    const nb = chunks.get(ckey(cx + dx + nx, cz + dz + nz));
+                    if (!nb || !nb.lit) return false;
+                }
+            }
+            return true;
+        }
+
         /* ---------- Jogador e fisica ---------- */
         const P = { x: 8.5, y: 70, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: -0.2, ground: false, fly: false, sneak: false, sprint: false, eh: 1.62, fk: 0 };
         let sprintLatch = false, lastW = 0, lastSpace = 0, spdMul = 1; // spdMul: cheat /veloz (1 = normal)
         const GAMEMODE = 'creative'; // no futuro modo sobrevivencia: voo desligado
         function toggleFly(keepVy) { if (GAMEMODE !== 'creative') return; P.fly = !P.fly; if (!keepVy) P.vy = 0; }
         function spaceTap() { const n = performance.now(); if (n - lastSpace < 300) { toggleFly(true); lastSpace = 0; } else lastSpace = n; } // toque duplo em Espaco: liga/desliga o voo
-        let spawned = false, spawnAt = [8, 8], readyAt = 0, autoEnterDone = true, loadBar = 0, loadWant = 0;
+        let spawned = false, spawnAt = [8, 8], readyAt = 0, autoEnterDone = true;
         const keys = {};
         const joy = { x: 0, y: 0, mag: 0 };
         const solidAt = (x, y, z) => { const b = getBlock(x, y, z, 3); return b !== 0 && !isWater(b) && !isSoft(b); };
@@ -3289,6 +3478,7 @@ void main(){
             const near = Math.max(0, 1 - dist / 30);
             flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
             boom();
+            mobsScare(cx, cy, cz, r * 2); // Explosão espanta os peixes num raio maior (declaração içada — seguro)
         }
         function updateTnt(dt) {
             for (let i = tnts.length - 1; i >= 0; i--) {
@@ -3427,7 +3617,7 @@ void main(){
             savedDirty.clear();
             Object.assign(w, {
                 player: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, fly: P.fly },
-                time, sel, hot: HOT.map(h => h[0]), bucket: bucketFull, raining, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
+                time, timeLock, sel, hot: HOT.map(h => h[0]), hotTiles: HOT.map(h => h[1]), raining, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
             });
             ops.push(['worlds', w.id, w]);
             indicate('Salvando...');
@@ -3465,23 +3655,20 @@ void main(){
         /* ---------- Ciclo de vida do mundo ---------- */
         function resetWorld() {
             for (const c of chunks.values()) { freeMesh(c.mo); freeMesh(c.mw); }
-            chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear(); setBucket(false);
+            chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear();
             tnts.length = 0; bN = 0; history.length = 0; spawned = false; thumb = null; flashAmt = 0; shake = 0;
+            timeLock = -1; // volta ao ciclo normal; openWorld restaura a trava salva do mundo, se houver
             raining = false; rainAmt = 0; wxTimer = 60 + Math.random() * 140;
+            mobsReset(); // (declaração içada — seguro)
             P.vx = P.vy = P.vz = 0; P.fly = false; pendingSave = wantThumb = false;
-            readyAt = 0; autoEnterDone = true; loadBar = 0; loadWant = 0; // estado da tela de carregamento
+            readyAt = 0; autoEnterDone = true; // estado da tela de carregamento
         }
         async function openWorld(m) {
             epoch++; pano = false; resetWorld(); cur = m; state = 'loading';
             $('bgFade').classList.remove('on', 'fade'); // saindo do panorama: limpa o fundo de terra
             $('lTitle').textContent = m.name; $('enter').disabled = true; $('enter').style.display = 'none'; $('enter').classList.remove('pulse');
             $('enter').textContent = 'Entrar no mundo'; $('status').textContent = 'Lendo salvamento...';
-            readyAt = 0; autoEnterDone = true; loadBar = 0; $('mcBarFill').style.width = '0%'; loadWant = 0;
-            { // quantos chunks a primeira leva vai pedir: base do percentual da barra de progresso
-                let n = 0; const R = renderDist;
-                for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) if (dx * dx + dz * dz <= R * R + 1) n++;
-                loadWant = Math.max(2, n);
-            }
+            readyAt = 0; autoEnterDone = true; mcT = 0; mcPlan = null; // animacao recomeca do zero a cada mundo
             show('load');
             const rows = await kv.range('chunks', m.id + '/');
             if (cur !== m) return;
@@ -3493,37 +3680,48 @@ void main(){
             const pl = m.player;
             if (pl) { P.x = pl.x; P.y = pl.y; P.z = pl.z; P.yaw = pl.yaw; P.pitch = pl.pitch; spawnAt = [Math.floor(pl.x), Math.floor(pl.z)]; }
             else { P.x = 8.5; P.z = 8.5; P.yaw = 0; P.pitch = -0.2; spawnAt = [8, 8]; }
-            time = m.time ?? 0.2; raining = !!m.raining; rainAmt = raining ? 0.6 : 0; rainInt = rainIntT = 0.6; wxIdx = 1; wxTimer = 60 + Math.random() * 140; applyHot(m.hot); sel = (m.sel || 0) % 10; setBucket(!!m.bucket); refreshHotbar(); streamT = 0;
+            time = m.time ?? 0.2; raining = !!m.raining; rainAmt = raining ? 0.6 : 0; rainInt = rainIntT = 0.6; wxIdx = 1; wxTimer = 60 + Math.random() * 140; applyHot(m.hot, m.hotTiles); sel = (m.sel || 0) % 10; refreshHotbar(); streamT = 0;
+            timeLock = (typeof m.timeLock === 'number' && m.timeLock >= 0) ? m.timeLock % 1 : -1; // restaura a hora travada do mundo
+            if (timeLock >= 0) time = timeLock;
         }
         /* ---------- Panorama: um pedaco de mundo real girando devagar atras das telas (estilo Bedrock) ---------- */
+        function panoSetTime(sunset) { // no menu o mundo fica sempre no dia ou no por do sol, nunca de noite
+            time = sunset ? 0.478 + Math.random() * 0.021 : 0.12 + Math.random() * 0.26;
+        }
         function startPanorama() {
             pano = true; panoA = Math.random() * 6.283; epoch++; resetWorld();
             $('bgFade').classList.remove('fade'); $('bgFade').classList.add('on'); // fundo de terra ate o mundo carregar
-            cur = { __pano: true, id: '__pano', name: '', seedText: '', seed: (Math.random() * 4294967296) >>> 0, created: 0, played: 0, playTime: 0, player: null, time: 0.15 + Math.random() * 0.1, sel: 0, chunkCount: 0, thumb: null };
+            cur = { __pano: true, id: '__pano', name: '', seedText: '', seed: (Math.random() * 4294967296) >>> 0, created: 0, played: 0, playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null };
             state = 'pano'; spawned = false; spawnAt = [8, 8]; panoSpot = null;
-            // escolhe um ponto de vista variado (biomas/relevo/agua) com uma varredura leve no worker
-            choosePanoramaSpot(epoch, cur.seed, (x, z) => { panoSpot = [x, z]; spawnAt = [x, z]; });
+            panoSpots = []; panoIdx = 0; panoTourT = 0; panoHold = 20 + Math.random() * 6; // cada parada dura de 20 a 26s
+            panoSwitch = false; panoSwitchT = 0; panoMoved = false;
+            panoSunset = Math.random() < 0.5; panoSetTime(panoSunset);
+            // escolhe varios mirantes variados (biomas/relevo/agua) com uma varredura leve no worker
+            choosePanoramaSpots(epoch, cur.seed, spots => {
+                panoSpots = spots; panoIdx = 0; panoSpot = spots[0]; spawnAt = spots[0];
+            });
             P.x = P.z = 8.5; P.y = 46; P.yaw = panoA; P.pitch = -0.07; P.vx = P.vy = P.vz = 0; P.fly = false; P.fk = 0;
-            time = cur.time; applyHot(DEFHOT); sel = 0; setBucket(false); refreshHotbar(); streamT = 0;
+            applyHot(DEFHOT); sel = 0; refreshHotbar(); streamT = 0;
         }
-        /* Escolhe o ponto de vista do panorama: um worker temporario faz uma varredura leve (somente ruido de
-           bioma/altura, sem gerar chunks) em duas fases — grade larga e depois fina em volta do melhor candidato.
-           A tela fica com o lugar que mistura biomas, tem relevo e agua por perto. Custa pouquissimo (ms). */
+        /* Escolhe varios mirantes do panorama: um worker temporario faz uma varredura leve (somente ruido
+           de bioma/altura, sem gerar chunks). A grade larga acha as regioes mais bonitas e espalhadas do
+           mapa; a grade fina escolhe o melhor ponto de cada uma. O menu passeia por esses lugares, sempre
+           de dia ou no por do sol. Custa pouquissimo (ms). */
         let scanW = null;
-        function choosePanoramaSpot(ep, seed, cb) {
-            const N = 13, C = (N - 1) >> 1;
+        function choosePanoramaSpots(ep, seed, cb) {
+            const N = 13, C = (N - 1) >> 1, REGIONS = 4, MIN_SEP = 4;
             const randSpot = () => [24 + ((Math.random() * 80) | 0), 24 + ((Math.random() * 80) | 0)];
-            const finish = (x, z) => {
+            const finish = spots => {
                 if (settled) return;
                 settled = true;
                 try { w.terminate(); } catch (err) { }
                 if (scanW === w) scanW = null;
-                if (ep === epoch) cb(x, z);
+                if (ep === epoch) cb(spots);
             };
-            const giveup = () => { if (!settled) finish(...randSpot()); };
+            const giveup = () => { if (!settled) finish([randSpot()]); };
             let settled = false, w = null;
             try { w = new Worker(workerURL); } catch (e) { }
-            if (!w) { const s = randSpot(); cb(s[0], s[1]); return; }
+            if (!w) { cb([randSpot()]); return; }
             if (scanW) { try { scanW.terminate(); } catch (e) { } }
             scanW = w;
             setTimeout(giveup, 3000); // rede de seguranca se o worker nao responder
@@ -3533,8 +3731,8 @@ void main(){
                 for (let i = 0; i < N; i++) { g[i] = []; for (let j = 0; j < N; j++) g[i][j] = { h: out[(i * N + j) * 2], b: out[(i * N + j) * 2 + 1] }; }
                 return g;
             };
-            const bestOf = (g, W) => { // melhor celula pela vizinhanca: diversidade de bioma, relevo e agua
-                let best = null;
+            const rankOf = (g, W) => { // ranqueia celulas pela vizinhanca: diversidade de bioma, relevo e agua
+                const out = [];
                 for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
                     const bs = new Set(); let hMin = 99, hMax = -99, water = false;
                     for (let a = -W; a <= W; a++) {
@@ -3548,20 +3746,40 @@ void main(){
                     }
                     let sc = bs.size * 4 + (hMax - hMin) / 8 + (water ? 2 : 0);
                     if (bs.size > 1 && bs.has(6)) sc += 1.5; // montanha de outro bioma no horizonte
-                    if (!best || sc > best.s) best = { s: sc, i, j };
+                    out.push({ s: sc, i, j });
                 }
-                return best;
+                out.sort((a, b) => b.s - a.s);
+                return out;
             };
-            let p1 = null;
+            let bases = [], regN = 0;
             w.onmessage = e => {
-                const d = e.data, g = arr(d.out), c = bestOf(g, d.W);
-                if (d.scanId === 1) { // fase 2: grade fina de 64m em volta do melhor ponto da fase 1
-                    p1 = [(c.i - C) * 256, (c.j - C) * 256];
+                const d = e.data, g = arr(d.out);
+                if (d.scanId === 1) { // fase 2: melhor ponto fino em cada uma das melhores regioes
+                    const ranked = rankOf(g, d.W);
+                    bases = [];
+                    for (const c of ranked) { // regioes distintas, espalhadas pelo mapa nos dois eixos
+                        if (bases.every(p => Math.abs(p.i - c.i) >= MIN_SEP && Math.abs(p.j - c.j) >= MIN_SEP)) bases.push(c);
+                        if (bases.length >= REGIONS) break;
+                    }
+                    if (!bases.length) { finish([randSpot()]); return; }
+                    regN = bases.length;
                     const f = [];
-                    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) f.push([p1[0] + (i - C) * 64, p1[1] + (j - C) * 64]);
+                    for (const c of bases) {
+                        const ox = (c.i - C) * 256, oz = (c.j - C) * 256;
+                        for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) f.push([ox + (i - C) * 64, oz + (j - C) * 64]);
+                    }
                     w.postMessage({ seed, scan: f, scanId: 2, W: 2 });
                 } else {
-                    finish(p1[0] + (c.i - C) * 64, p1[1] + (c.j - C) * 64);
+                    const spots = [];
+                    for (let r = 0; r < regN; r++) {
+                        const part = d.out.slice(r * N * N * 2, (r + 1) * N * N * 2);
+                        const best = rankOf(arr(part), d.W)[0];
+                        const c = bases[r], ox = (c.i - C) * 256, oz = (c.j - C) * 256;
+                        spots.push([ox + (best.i - C) * 64, oz + (best.j - C) * 64]);
+                    }
+                    const clean = []; // nunca dois mirantes praticamente no mesmo lugar
+                    for (const s of spots) if (clean.every(q => Math.hypot(q[0] - s[0], q[1] - s[1]) >= 256)) clean.push(s);
+                    finish(clean.length ? clean : [spots[0]]);
                 }
             };
             const req = [];
@@ -3621,7 +3839,7 @@ void main(){
         /* ---------- Telas do menu ---------- */
         const menu = $('menu'), statusEl = $('status');
         let curScr = 'title', back = 'title', editing = null;
-        const SPLASH = ['Agora com salvamento!', 'Mundos infinitos!', 'Cuidado com a TNT!', 'Feito só com código!', 'Segure R para voltar no tempo!', 'Barragens! Água!', 'Cada mundo tem sua semente!'];
+        const SPLASH = ['Agora com salvamento!', 'Mundos infinitos!', 'Cuidado com a TNT!', 'Feito só com código!', 'Segure R para voltar no tempo!', 'Barragens! Água!', 'Baldes infinitos!', 'Cada mundo tem sua semente!'];
         $('splash').textContent = SPLASH[Math.floor(Math.random() * SPLASH.length)];
         $('logo').onerror = function () { const t = document.createElement('div'); t.className = 'logoTxt'; t.textContent = 'CUBO'; this.replaceWith(t); };
         (function () { // remove o preenchimento transparente da imagem do logo para nao sobrar espaco entre ela e os botoes
@@ -3724,7 +3942,7 @@ void main(){
         };
         confirm2($('eReset'), async () => {
             const rows = await kv.range('chunks', editing.id + '/');
-            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2, raining: false });
+            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2, timeLock: -1, raining: false });
             await kv.batch([...rows.map(([k]) => ['chunks', k, undefined]), ['worlds', editing.id, editing]]); showWorlds();
         });
         confirm2($('eDel'), async () => {
@@ -3744,14 +3962,40 @@ void main(){
         const chatEl = $('chat'), chatInput = $('chatInput'), chatHint = $('chatHint'), chatSugEl = $('chatSug'), rainEl = $('rain'), cmdMsgEl = $('cmdMsg');
         let chatOpen = false, raining = false, rainAmt = 0, rainInt = 0.6, rainIntT = 0.6, wxAuto = true, wxTimer = 120, wxShift = 30, wxIdx = 1, wxLast = -1;
         let cmdMsgT = 0;
+        /* ---------- Trava da hora (cheat): interrompe o ciclo dia/noite na hora escolhida ----------
+           timeLock < 0  = ciclo normal (o tempo corre)
+           timeLock >= 0 = hora do dia congelada, na mesma escala de `time` (0 = 06:00, 0.25 = meio-dia...) */
+        let timeLock = -1;
+        const hhmm = f => { // fracao de `time` -> 'HH:MM' (o dia do jogo comeca as 06:00)
+            const tot = Math.round(((((f % 1) * 24 + 6) % 24) + 24) % 24 * 60) % 1440; // minutos, arredondados
+            return String(Math.floor(tot / 60)).padStart(2, '0') + ':' + String(tot % 60).padStart(2, '0');
+        };
+        const parseHourArg = s => { // '18' ou '18:30' -> fracao de `time` (null = invalido)
+            if (s === undefined || s === null || s === '') return null;
+            const hs = String(s).replace(',', '.').split(':'), h = +hs[0], m = hs[1] === undefined ? 0 : +hs[1];
+            if (!hs[0] || hs.length > 2 || !isFinite(h) || !isFinite(m) || h < 0 || h >= 24 || m < 0 || m >= 60) return null;
+            const tot = (((h + m / 60) % 24) + 24) % 24;
+            return (((tot - 6) % 24) + 24) % 24 / 24;
+        };
+        function setTime(f) { // muda a hora; se o ciclo estiver travado, a trava acompanha a nova hora
+            time = (((f % 1) + 1) % 1);
+            if (timeLock >= 0) timeLock = time;
+        }
+        function lockTime(f) { // congela o ciclo dia/noite nesta hora
+            timeLock = (((f % 1) + 1) % 1);
+            time = timeLock;
+        }
+        function unlockTime() { timeLock = -1; }
         /* ajuda do chat: grupos com coluna alinhada (a fonte do hint e monoespacada e usa pre-wrap) */
         const CHAT_CMDS = [
             'Ajuda — escreva o comando e aperte Enter',
             '',
             'Hora   /dia · /noite · /manha · /tarde · /hora [0-23]',
+            '       /travar [hora] (para o ciclo) · /destravar (retoma)',
             'Clima  /chuva|/neve [fraca|media|forte] · /limpar',
             '       /garoa · /tempestade · /tempo claro|auto|manual',
             'Ir     /tp x z (ou x y z) · /origem|/spawn · /topo',
+            'Vida   /peixe [n] (0 a 4000) — cardumes e peixes soltos',
             'Poder  /voar · /veloz [0.2-5] · /visao [2-12]',
             'Mundo  /tnt [qtd] · /explodir [raio] · /desarmar',
             '       /congelar [raio] · /derreter [raio]',
@@ -3759,15 +4003,17 @@ void main(){
             'Info   /bioma · /semente · /pos · /status',
         ].join('\n');
         /* autocompletar: nomes postos em ordem alfabetica; CMD_USE = como usar quem precisa de argumento */
-        const CMD_AUTOS = ['ajuda', 'bioma', 'chuva', 'congelar', 'dar', 'derreter', 'desarmar', 'dia', 'explodir', 'garoa', 'hora', 'inv', 'limpar', 'manha', 'neve', 'noite', 'origem', 'pos', 'semente', 'status', 'tarde', 'tempestade', 'tempo', 'tnt', 'topo', 'tp', 'veloz', 'visao', 'voar'];
+        const CMD_AUTOS = ['ajuda', 'bioma', 'chuva', 'congelar', 'dar', 'derreter', 'desarmar', 'destravar', 'dia', 'explodir', 'garoa', 'hora', 'inv', 'limpar', 'manha', 'neve', 'noite', 'origem', 'peixe', 'pos', 'semente', 'status', 'tarde', 'tempestade', 'tempo', 'tnt', 'topo', 'tp', 'travar', 'veloz', 'visao', 'voar'];
         const CMD_USE = {
             tp: '/tp x z (na superficie) ou /tp x y z',
             chuva: '/chuva [fraca|media|forte]', neve: '/neve [fraca|media|forte]',
             congelar: '/congelar [raio] — padrao 16 (1 a 32)', derreter: '/derreter [raio] — padrao 16 (1 a 32)',
             visao: '/visao [2-12]', veloz: '/veloz [0.2-5] (1 volta ao normal)',
             tempo: '/tempo claro|chuva|tempestade|auto|manual',
-            hora: '/hora [0-23] ou /hora HH:MM', tnt: '/tnt [qtd 1-20] (sem qtd: 1 TNT)',
+            hora: '/hora [0-23] ou /hora HH:MM · /hora travar|destravar', tnt: '/tnt [qtd 1-20] (sem qtd: 1 TNT)',
             explodir: '/explodir [raio 1-16] — mire num bloco', dar: '/dar <bloco> — ex.: /dar tocha, /dar tnt',
+            travar: '/travar [0-23 | HH:MM] — para o ciclo dia/noite na hora escolhida (sem hora: trava agora)',
+            destravar: '/destravar — retoma o ciclo dia/noite de onde parou',
         };
         const precipWord = () => coldAt(Math.floor(P.x), Math.floor(P.z)) ? 'Neve' : 'Chuva'; // o bioma sob o jogador decide
         function showCmdMsg(txt) {
@@ -3825,10 +4071,10 @@ void main(){
             const parts = raw.trim().split(/\s+/), name = (parts[0] || '').toLowerCase(), arg = (parts[1] || '').toLowerCase();
             switch (name) {
                 case 'ajuda': case 'help': return { keep: true, msg: CHAT_CMDS };
-                case 'dia': case 'sol': time = 0.25; return { msg: 'Dia!' };
-                case 'noite': case 'lua': time = 0.75; return { msg: 'Noite!' };
-                case 'manha': case 'amanhecer': time = 0.05; return { msg: 'Manhã!' };
-                case 'tarde': case 'crepusculo': time = 0.45; return { msg: 'Tarde!' };
+                case 'dia': case 'sol': setTime(0.25); return { msg: 'Dia!' + (timeLock >= 0 ? ' (hora travada)' : '') };
+                case 'noite': case 'lua': setTime(0.75); return { msg: 'Noite!' + (timeLock >= 0 ? ' (hora travada)' : '') };
+                case 'manha': case 'amanhecer': setTime(0.05); return { msg: 'Manhã!' + (timeLock >= 0 ? ' (hora travada)' : '') };
+                case 'tarde': case 'crepusculo': setTime(0.45); return { msg: 'Tarde!' + (timeLock >= 0 ? ' (hora travada)' : '') };
                 case 'chuva': case 'neve': {
                     const lv = WX_NAMES[arg], pw = precipWord();
                     if (lv) { wxSet(lv); return { msg: pw + ' ' + wxName(lv) }; }
@@ -3850,8 +4096,8 @@ void main(){
                     if (arg === 'tempestade') { wxSet(1); return { msg: 'Chuva forte' }; }
                     if (arg === 'auto') { wxAuto = true; return { msg: 'Clima automático ligado' }; }
                     if (arg === 'manual') { wxAuto = false; return { msg: 'Clima automático desligado' }; }
-                    if (arg === 'dia') { time = 0.25; return { msg: 'Dia!' }; }
-                    if (arg === 'noite') { time = 0.75; return { msg: 'Noite!' }; }
+                    if (arg === 'dia') { setTime(0.25); return { msg: 'Dia!' }; }
+                    if (arg === 'noite') { setTime(0.75); return { msg: 'Noite!' }; }
                     return { keep: true, msg: 'Use /tempo claro ou /tempo chuva', err: true };
                 }
                 case 'voar': case 'voo': case 'fly': toggleFly(); return { msg: P.fly ? 'Voando' : 'Andando' };
@@ -3880,17 +4126,38 @@ void main(){
                     tnts.length = 0;
                     return { msg: n + (n > 1 ? ' TNT desarmadas' : ' TNT desarmada') };
                 }
-                case 'hora': {
+                case 'hora': case 'horario': {
+                    const sub = (parts[1] || '').toLowerCase();
                     if (parts[1] === undefined) {
-                        const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
-                        return { msg: 'Hora: ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') };
+                        return { keep: true, msg: 'Hora: ' + hhmm(time) + (timeLock >= 0 ? ' (travada — /destravar retoma o ciclo)' : '') };
                     }
-                    const hs = parts[1].replace(',', '.').split(':'), h = +hs[0], m = hs[1] === undefined ? 0 : +hs[1];
-                    if (!hs[0] || hs.length > 2 || !isFinite(h) || !isFinite(m) || h < 0 || h >= 24 || m < 0 || m >= 60)
-                        return { keep: true, msg: 'Use: /hora 0 a 23 (ou /hora 18:30)', err: true };
-                    const total = (((h + m / 60) % 24) + 24) % 24;
-                    time = (((total - 6) % 24) + 24) % 24 / 24;
-                    return { msg: 'Hora definida para ' + String(Math.floor(total)).padStart(2, '0') + ':' + String(Math.floor((total % 1) * 60)).padStart(2, '0') };
+                    if (sub === 'travar' || sub === 'parar') { // congela o ciclo agora ou na hora informada
+                        const f = parts[2] !== undefined ? parseHourArg(parts[2]) : ((time % 1) + 1) % 1;
+                        if (f === null) return { keep: true, msg: 'Use: /hora travar [0-23] ou /hora travar 18:30', err: true };
+                        lockTime(f);
+                        return { msg: 'Hora travada em ' + hhmm(timeLock) + ' — ciclo dia/noite parado' };
+                    }
+                    if (sub === 'destravar' || sub === 'continuar' || sub === 'soltar') {
+                        if (timeLock < 0) return { keep: true, msg: 'A hora já está correndo normalmente', err: true };
+                        unlockTime();
+                        return { msg: 'Ciclo dia/noite retomado a partir de ' + hhmm(time) };
+                    }
+                    const f = parseHourArg(parts[1]);
+                    if (f === null) return { keep: true, msg: 'Use: /hora 0 a 23 (ou /hora 18:30)', err: true };
+                    setTime(f);
+                    return { msg: 'Hora definida para ' + hhmm(f) + (timeLock >= 0 ? ' (travada)' : '') };
+                }
+                /* ----- travar/destravar o ciclo dia/noite ----- */
+                case 'travar': case 'travarhora': case 'lockhora': case 'locktime': {
+                    const f = parts[1] !== undefined ? parseHourArg(parts[1]) : ((time % 1) + 1) % 1;
+                    if (f === null) return { keep: true, msg: 'Use: /travar [0-23 | HH:MM] — sem hora trava a hora atual', err: true };
+                    lockTime(f);
+                    return { msg: 'Hora travada em ' + hhmm(timeLock) + ' — ciclo dia/noite parado' };
+                }
+                case 'destravar': case 'liberarhora': case 'unlockhora': case 'unlocktime': {
+                    if (timeLock < 0) return { keep: true, msg: 'A hora já está correndo normalmente', err: true };
+                    unlockTime();
+                    return { msg: 'Ciclo dia/noite retomado a partir de ' + hhmm(time) };
                 }
                 /* ----- cheats ----- */
                 case 'semente': case 'seed': {
@@ -3910,8 +4177,8 @@ void main(){
                     return { keep: true, msg:
                         'FPS ' + fps + ' · chunks ' + chunks.size + ' · visão ' + renderDist + '\n' +
                         'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
-                        'Clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + ' · TNT ' + tnts.length + '\n' +
-                        'Velocidade x' + spdMul };
+                        'Hora ' + hhmm(time) + (timeLock >= 0 ? ' [travada]' : '') + ' · clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + '\n' +
+                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + '/' + MOB.target + ' · velocidade x' + spdMul };
                 }
                 case 'tp': case 'teleportar': {
                     const a = parts.slice(1).map(Number);
@@ -3927,6 +4194,13 @@ void main(){
                     P.y = topPhysicalY(8, 8) + 0.1;
                     while (hits(P.x, P.y, P.z) && P.y < CH - 2) P.y++;
                     return { msg: 'De volta a origem do mundo' };
+                }
+                case 'peixe': case 'fish': {
+                    if (parts[1] === undefined)
+                        return { keep: true, msg: 'Peixes por perto: ' + mobCount() + ' (alvo ' + MOB.target + ')\nUse /peixe <n> (0 a 4000) para mudar a população' };
+                    const n = Math.max(0, Math.min(4000, Math.round(+parts[1]) || 0));
+                    MOB.target = n; MOB.maint = 0.05;
+                    return { msg: n ? 'Alvo de peixes: ' + n + (n >= 1500 ? ' (desafio, cuidado com o FPS)' : '') : 'Peixes desligados — os vivos somem sozinhos' };
                 }
                 case 'topo': case 'superficie': {
                     const x = Math.floor(P.x), z = Math.floor(P.z);
@@ -3982,7 +4256,7 @@ void main(){
                     const nq = norm(q);
                     const c = CAT.find(x => norm(x[2]) === nq) || CAT.find(x => norm(x[2]).startsWith(nq)) || CAT.find(x => norm(x[2]).includes(nq));
                     if (!c) return { keep: true, msg: 'Bloco não encontrado: ' + q, err: true };
-                    const j = HOT.findIndex(h => h[0] === c[0]); // ja estava na barra? troca de lugar com o slot atual
+                    const j = HOT.findIndex(h => h[0] === c[0] && h[1] === c[1]); // id+tile, para achar a variante certa do balde
                     if (j >= 0 && j !== sel) { const t = HOT[sel]; HOT[sel] = HOT[j]; HOT[j] = t; }
                     else HOT[sel] = [c[0], c[1]];
                     refreshHotbar();
@@ -4244,7 +4518,7 @@ void main(){
             if (isTouch) locked = false; else document.exitPointerLock();
             document.body.classList.remove('hud'); // o inventario cobre a tela e ja tem hotbar propria
             invSearch.value = ''; invSearch.dispatchEvent(new Event('input')); // limpa a busca
-            invTip.textContent = catOf(HOT[sel][0])[2] + '  (slot ' + (sel + 1) + ')';
+            invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
             invEl.classList.add('on');
             if (!isTouch) invSearch.focus();
         }
@@ -4303,13 +4577,15 @@ void main(){
         function eyePos() { return [P.x, P.y + P.eh, P.z]; }
         function lookDir() { return [-Math.sin(P.yaw) * Math.cos(P.pitch), Math.sin(P.pitch), -Math.cos(P.yaw) * Math.cos(P.pitch)]; }
         function useBucket() {
-            if (!bucketFull) { // vazio: pega a fonte de agua mirada (so fontes; agua corrente e atravessada)
-                const h = raycast(eyePos(), aimDir(), 6, true);
-                if (h && h.b === WSRC && setBlock(h.x, h.y, h.z, 0)) setBucket(true);
-            } else { // cheio: solta uma fonte na celula livre diante do bloco mirado
+            // Modo criativo: as duas variantes sao "infinitas" — o Balde de agua nunca esvazia e o
+            // Balde vazio nunca enche (nem mesmo ao pegar agua). Cada um repete sempre a mesma acao.
+            if (HOT[sel][1] === 15) { // balde de agua: solta uma fonte na celula livre diante do bloco mirado
                 const h = raycast(eyePos(), aimDir(), 6); if (!h || h.py <= 0) return;
                 const c = getBlock(h.px, h.py, h.pz, 3);
-                if ((c === 0 || isSoft(c) || (isWater(c) && c !== WSRC)) && setBlock(h.px, h.py, h.pz, WSRC)) setBucket(false);
+                if (c === 0 || isSoft(c) || (isWater(c) && c !== WSRC)) setBlock(h.px, h.py, h.pz, WSRC);
+            } else { // balde vazio: pega a fonte de agua mirada (so fontes; agua corrente e atravessada)
+                const h = raycast(eyePos(), aimDir(), 6, true);
+                if (h && h.b === WSRC) setBlock(h.x, h.y, h.z, 0);
             }
         }
         function act(btn, rep) {
@@ -4430,9 +4706,37 @@ void main(){
         addEventListener('resize', resize); resize();
 
         function update(dt) {
-            if (pano) { // camera do panorama: gira devagar no ponto de vista escolhido pela varredura
+            if (pano) { // camera do panorama: gira devagar e troca de mirante de tempos em tempos
                 if (!panoSpot) return; // aguarda a varredura do worker (bem rapida, ms)
-                panoA += dt * 0.07;
+                if (!panoSwitch && spawned && panoSpots.length > 1) {
+                    panoTourT += dt;
+                    if (panoTourT >= panoHold) { // cortina de terra esconde a troca de lugar e a carga dos chunks
+                        panoSwitch = true; panoSwitchT = 0; panoMoved = false;
+                        const bf = $('bgFade'); bf.classList.remove('fade'); bf.classList.add('on');
+                    }
+                }
+                if (panoSwitch) {
+                    panoSwitchT += dt;
+                    if (!panoMoved && panoSwitchT >= 0.55) {
+                        panoMoved = true;
+                        panoIdx = (panoIdx + 1) % panoSpots.length;
+                        panoSpot = panoSpots[panoIdx];
+                        panoSunset = !panoSunset; panoSetTime(panoSunset); // cada parada alterna entre dia e por do sol
+                        panoA = Math.random() * 6.283;
+                        P.x = panoSpot[0] + 0.5; P.z = panoSpot[1] + 0.5;
+                        P.y = Math.max(SEA + 1, surfaceY(panoSpot[0], panoSpot[1])) + 6;
+                    }
+                    if (panoMoved) { // espera o novo mirante ficar montado antes de abrir a cortina
+                        const scx = Math.floor(P.x) >> 4, scz = Math.floor(P.z) >> 4;
+                        if (areaReady(scx, scz, 2)) {
+                            const bf = $('bgFade'); bf.classList.remove('on'); bf.classList.add('fade');
+                            panoSwitch = false; panoMoved = false; panoTourT = 0;
+                            panoHold = 18 + Math.random() * 8;
+                        }
+                    }
+                } else {
+                    panoA += dt * 0.07;
+                }
                 P.yaw = panoA;
                 P.pitch = -0.07 + 0.03 * Math.sin(panoA * 0.43);
                 P.x = panoSpot[0] + 0.5; P.z = panoSpot[1] + 0.5;
@@ -4444,7 +4748,12 @@ void main(){
             if (Math.abs(rainAmt - targetRain) < 0.002) rainAmt = targetRain;
             rainUpdate(dt);
             streamT -= dt;
-            if (streamT <= 0) { streamT = 0.25; streamChunks(); }
+            if (streamT <= 0) {
+                // durante a tela de carregamento (ou troca de mirante do menu) pede chunks assim que um
+                // worker fica livre; no jogo o intervalo maior evita trabalho desnecessario
+                streamT = (spawned && !(pano && panoSwitch)) ? 0.25 : 0.06;
+                streamChunks();
+            }
             const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
             // luz dos chunks recem-chegados: mais proximos primeiro, com orcamento de tempo
             const unlit = _unlit; unlit.length = 0; for (const ch of chunks.values()) if (!ch.lit) unlit.push(ch);
@@ -4458,22 +4767,25 @@ void main(){
             dirty.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
             for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > 6 && n >= 1) break; }
             if (!spawned) {
-                const c = chunks.get(ckey(spawnAt[0] >> 4, spawnAt[1] >> 4));
-                { // barra de progresso estilo Minecraft: 35% chunks gerados + 65% malhas montadas com luz
-                    let ok = 0; for (const ch of chunks.values()) if (!ch.dirty) ok++;
-                    if (loadWant) loadBar = Math.max(loadBar, Math.min(.985, .35 * chunks.size / loadWant + .65 * ok / Math.max(1, chunks.size)));
-                    $('mcBarFill').style.width = Math.round(loadBar * 100) + '%';
-                    statusEl.textContent = chunks.size ? 'Construindo o mundo... ' + Math.round(loadBar * 100) + '%' : 'Construindo o mundo...';
-                }
-                if (c && !c.dirty && chunks.size > 12) {
-                    if (!pano) {
+                const scx = spawnAt[0] >> 4, scz = spawnAt[1] >> 4;
+                if (pano) { // panorama dos menus: basta o chunk central para tirar o fundo de terra
+                    const c = chunks.get(ckey(scx, scz));
+                    if (c && !c.dirty && chunks.size > 12) {
+                        spawned = true;
+                        const bf = $('bgFade'); bf.classList.remove('on'); bf.classList.add('fade');
+                    }
+                } else {
+                    // raio inicial: 5x5 chunks (3x3 se a distancia de visao for minima). A malha
+                    // dos chunks dessa area e a luz dos vizinhos precisam estar prontas antes de entrar.
+                    const r = Math.max(1, Math.min(2, renderDist - 1));
+                    if (areaReady(scx, scz, r)) {
                         if (cur.player) { P.fly = !!cur.player.fly; if (hits(P.x, P.y, P.z)) P.y = surfaceY(Math.floor(P.x), Math.floor(P.z)) + 0.1; }
                         else { P.y = surfaceY(8, 8) + 0.1; P.x = 8.5; P.z = 8.5; }
+                        spawned = true; statusEl.textContent = 'Pronto!';
+                        readyAt = performance.now() + 700; autoEnterDone = false; // entra sozinho com a area proxima pronta
+                    } else {
+                        statusEl.textContent = 'Preparando o mundo...';
                     }
-                    loadBar = 1; $('mcBarFill').style.width = '100%';
-                    spawned = true; statusEl.textContent = 'Pronto!';
-                    if (pano) { const bf = $('bgFade'); bf.classList.remove('on'); bf.classList.add('fade'); }
-                    else { readyAt = performance.now() + 700; autoEnterDone = false; } // entra sozinho apos a barra completar
                 }
                 return;
             }
@@ -4487,14 +4799,14 @@ void main(){
                 }
                 active.clear(); wq.clear(); tnts.length = 0;
             } else {
-                time += dt / (pano ? DAY * 6 : DAY); // no panorama o dia corre bem mais devagar
+                if (!pano && timeLock < 0) time += dt / DAY; // no menu o horario fica travado; /travar congela o ciclo dia/noite
                 acc += dt; let g = 0;
                 while (acc >= 0.05 && g++ < 3) { acc -= 0.05; tick(); }
                 if (acc > 0.2) acc = 0;
                 updateTnt(dt);
             }
             if (!pano) updatePlayer(dt);
-            if (state === 'playing' || state === 'pano') { updateLeaves(dt); updateBeams(dt); }
+            if (state === 'playing' || state === 'pano') { updateLeaves(dt); updateBeams(dt); mobsUpdate(dt); }
             if (state === 'playing') cur.playTime = (cur.playTime || 0) + dt;
             if (locked) {
                 holdT += dt;
@@ -4895,6 +5207,740 @@ void main(){
         gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
         gl.bindVertexArray(null);
 
+        /* ============================================================
+           MOBS — entidades voxel (o peixe é o primeiro tipo).
+           Desempenho: 1 draw call instanciado por espécie o quadro todo,
+           IA barata O(1) por bicho (nada de varredura de vizinhos; o
+           cardume gira em torre de uma âncora, o peixe solto passeia
+           por um ponto-frente). Alvo de população perto do jogador;
+           peixes são transitórios (como a chuva): não vão no save.
+           Caminho para outros mobs: registre uma espécie nova com
+           mobReg() — build() devolve a malha voxel e tick() roda a IA.
+           Uniformes do shader seguem o mesmo formato do terreno
+           (céu/sol/neblina empacotado em ic.x/ic.y), então novos tipos
+           já nascem iluminados e esfumados de graça.
+           ============================================================ */
+        const MOB_V = 1 / 16;                 // lado de um voxel do corpo, em blocos
+        const MOB_MAX = 4000;                 // teto de instâncias por quadro
+        const MOB = { species: new Map(), schools: [], target: isTouch ? 260 : 680, t: 0, maint: 0 };
+        const SC_T = { cc: null };            // peixe temporario: so traz o campo de cache de chunk usado por mobGet()
+        const mobProg = mkProg(`#version 300 es
+layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in float w; layout(location=3) in float sh;
+layout(location=4) in vec4 ia; layout(location=5) in vec4 ib; layout(location=6) in vec4 ic;
+uniform mat4 mvp; uniform vec3 cam; uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
+uniform float light; uniform float fogN; uniform float fogF; uniform float tm;
+out vec2 vUv; out float vSh; out float vS; out float vB; out float vT; out float vD; out vec3 vFog;
+void main(){
+  vec3 q=p*ia.w;
+  float ph=ib.w+tm*(4.0+8.5*min(ic.w,1.5));
+  float amp=(0.026+0.108*min(ic.w,1.5))*ia.w;
+  float k=w*w*amp;
+  q.z+=sin(ph-q.x*3.1)*k;
+  q.y+=sin(ph-q.x*3.1+1.15)*k*0.45;
+  q.z+=sin(ph)*amp*0.3*(w-0.2);
+  float cr=cos(ib.z),sr=sin(ib.z);
+  q=vec3(q.x,cr*q.y-sr*q.z,sr*q.y+cr*q.z);
+  float cp=cos(ib.y),sp=sin(ib.y);
+  q=vec3(cp*q.x+sp*q.y,-sp*q.x+cp*q.y,q.z);
+  float cyw=cos(ib.x),syw=sin(ib.x);
+  vec3 wp=vec3(q.x*cyw+q.z*syw,q.y,-q.x*syw+q.z*cyw)+ia.xyz;
+  vUv=uv; vSh=sh; vS=ic.x; vB=ic.y; vT=ic.z; vD=length(wp-cam); gl_Position=mvp*vec4(wp,1.0);
+  {
+    vec3 dv=(wp-cam)/max(vD,0.001);
+    float sd=max(dot(dv,sun),0.0); sd*=sd; float md=max(-dot(dv,sun),0.0); md*=md;
+    vFog=sky+glow*(sd*sd*sd)+mglow*(md*md*md);
+  }
+}`, `#version 300 es
+precision highp float;
+uniform sampler2D tex; uniform float light; uniform float fogN; uniform float fogF;
+in vec2 vUv; in float vSh; in float vS; in float vB; in float vT; in float vD; in vec3 vFog; out vec4 o;
+void main(){
+  vec4 c=texture(tex,vUv);
+  if(c.a<0.5) discard;
+  float sB=pow(0.8,15.0-vS*15.0)*light;
+  float bB=pow(0.8,15.0-vB*15.0);
+  vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.05));
+  vec3 tint=mix(vec3(0.93,0.99,1.10),vec3(1.16,1.05,0.86),vT);
+  vec3 col=c.rgb*vSh*lc*tint;
+  float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
+  o=vec4(mix(col,vFog,f),1.0);
+}`);
+        const MOBU = {};
+        for (const n of ['mvp', 'cam', 'sky', 'sun', 'glow', 'mglow', 'light', 'fogN', 'fogF', 'tm', 'tex']) MOBU[n] = gl.getUniformLocation(mobProg, n);
+
+        function mkMobMesh(arr) { // vértice: pos(3) uv(2) peso da ondulação(1) soma da face(1) = 7 floats
+            const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+            return { vbo, count: arr.length / 7 };
+        }
+
+        /* ---------- Modelo do peixe: grade de voxels paramétrica (1 voxel = MOB_V) ----------
+           grade: x = comprimento (0 = nariz, no +x local), y = altura (0 = embaixo, +y = cima),
+           z = largura. buildFishBody(cfg) monta qualquer espécie: perfil por fatia (RZ largura,
+           RY altura, CY centro vertical), cauda em slabs (garfo, leque ou pincel), dorsal/anal
+           fincadas no corpo, peitorais/pélvicas, olho/opérculo/boca pintados em quads colados
+           um pouco fora da pele e faixas de cor opcionais ao longo do corpo. */
+        function buildFishBody(cfg) {
+            const NX = cfg.NX, NY = cfg.NY, NZ = cfg.NZ, C = cfg.C, CEN = (NZ - 1) / 2;
+            const V = MOB_V, HX = NX * V / 2, HY = NY * V / 2, HZ = NZ * V / 2;
+            const gid = (x, y, z) => (x * NY + y) * NZ + z;
+            const g = new Uint8Array(NX * NY * NZ); // 0 = vazio, 1 = corpo, 2 = nadadeira
+            const RZ = cfg.RZ, RY = cfg.RY, CY = cfg.CY, T = cfg.tiles;
+            for (let x = 0; x < NX && RZ[x] > 0; x++) for (let y = 0; y < NY; y++) for (let z = 0; z < NZ; z++) {
+                const dy = (y + 0.5 - CY[x]) / RY[x], dz = (z + 0.5 - CEN) / RZ[x];
+                if (dy * dy + dz * dz <= 1.02) g[gid(x, y, z)] = 1;
+            }
+            // cauda: slabs [x, [[y0, y1], ...]]
+            for (const [tx, spans] of cfg.tail) for (const [y0, y1] of spans) for (let y = y0; y <= y1; y++) if (!g[gid(tx, y, C)]) g[gid(tx, y, C)] = 2;
+            // dorsal (vela no dorso) e anal (quilha embaixo): fincam no topo/fundo do corpo de cada fatia
+            for (let x = 0; x < NX && RZ[x] > 0; x++) {
+                let top = -1, bot = NY;
+                for (let y = 0; y < NY; y++) if (g[gid(x, y, C)] === 1) { if (y > top) top = y; if (y < bot) bot = y; }
+                for (let d = 0; d < cfg.DOR[x]; d++) { const y = top + 1 + d; if (y < NY && !g[gid(x, y, C)]) g[gid(x, y, C)] = 2; }
+                for (let d = 0; d < cfg.ANA[x]; d++) { const y = bot - 1 - d; if (y >= 0 && !g[gid(x, y, C)]) g[gid(x, y, C)] = 2; }
+            }
+            // peitorais (par, atrás do opérculo) e pélvicas (par, embaixo, à frente da anal)
+            const pc = cfg.pect, pv = cfg.pelv;
+            for (const zf of [C - pc.d, C + pc.d]) for (let x = pc.x0; x <= pc.x1; x++) for (let y = pc.y0; y <= pc.y1; y++) if (!g[gid(x, y, zf)]) g[gid(x, y, zf)] = 2;
+            for (const zf of [C - pv.d, C + pv.d]) for (let x = pv.x0; x <= pv.x1; x++) if (!g[gid(x, pv.y, zf)]) g[gid(x, pv.y, zf)] = 2;
+            if (cfg.spikes) cfg.spikes(g, gid, C); // espinhos (baiacu)
+            const arr = [];
+            const uf = (t, f) => (t + (f > 0.999 ? 0.999 : f)) / NT; // u: fração f (0..1) dentro do tile
+            function face(x, y, z, d) {
+                const fin = g[gid(x, y, z)] === 2;
+                const skinT = !fin && T.band && cfg.bands && cfg.bands(x) ? T.band : T.skin;
+                const x0 = HX - (x + 1) * V, x1 = HX - x * V; // nariz no +x local
+                const y0 = y * V - HY, y1 = (y + 1) * V - HY;
+                const z0 = z * V - HZ, z1 = (z + 1) * V - HZ;
+                const w = x / (NX - 1); // peso da ondulação: 0 cabeça, 1 cauda
+                let t, sh, P, U;
+                if (d[1] > 0) { // dorso: u acompanha o comprimento, v a largura
+                    t = fin ? T.fin : skinT; sh = fin ? 0.95 : 1.0;
+                    P = [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]];
+                    U = [[uf(t, (x + 1) / NX), z / NZ], [uf(t, x / NX), z / NZ], [uf(t, x / NX), (z + 1) / NZ], [uf(t, (x + 1) / NX), (z + 1) / NZ]];
+                } else if (d[1] < 0) { // barriga
+                    t = fin ? T.fin : T.belly; sh = fin ? 0.62 : 0.58;
+                    P = [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]];
+                    U = [[uf(t, (x + 1) / NX), z / NZ], [uf(t, x / NX), z / NZ], [uf(t, x / NX), (z + 1) / NZ], [uf(t, (x + 1) / NX), (z + 1) / NZ]];
+                } else if (d[0] > 0) { // frente: u acompanha a largura, v a altura
+                    t = fin ? T.fin : band3(x, T, skinT, T.belly); sh = fin ? 0.80 : 0.88;
+                    P = [[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]];
+                    U = [[uf(t, z / NZ), y / NY], [uf(t, (z + 1) / NZ), y / NY], [uf(t, (z + 1) / NZ), (y + 1) / NY], [uf(t, z / NZ), (y + 1) / NY]];
+                } else if (d[0] < 0) { // rabo do corpo
+                    t = fin ? T.fin : skinT; sh = fin ? 0.80 : 0.72;
+                    P = [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]];
+                    U = [[uf(t, z / NZ), y / NY], [uf(t, (z + 1) / NZ), y / NY], [uf(t, (z + 1) / NZ), (y + 1) / NY], [uf(t, z / NZ), (y + 1) / NY]];
+                } else if (d[2] > 0) { // flanco direito: o degradê do tile corre pelo corpo inteiro, voxel a voxel
+                    t = fin ? T.fin : skinT; sh = fin ? 0.86 : 0.86;
+                    P = [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
+                    U = [[uf(t, (x + 1) / NX), y / NY], [uf(t, x / NX), y / NY], [uf(t, x / NX), (y + 1) / NY], [uf(t, (x + 1) / NX), (y + 1) / NY]];
+                } else { // flanco esquerdo (u espelhado para a textura não inverter)
+                    t = fin ? T.fin : skinT; sh = fin ? 0.78 : 0.78;
+                    P = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]];
+                    U = [[uf(t, x / NX), y / NY], [uf(t, (x + 1) / NX), y / NY], [uf(t, (x + 1) / NX), (y + 1) / NY], [uf(t, x / NX), (y + 1) / NY]];
+                }
+                for (const q of [0, 1, 2, 0, 2, 3]) { const v2 = P[q], u = U[q]; arr.push(v2[0], v2[1], v2[2], u[0], u[1], w, sh); }
+            }
+            function band3(x, T, skinT, other) { return T.band && cfg.bands && cfg.bands(x) ? T.band : other; } // faixa também na face frontal
+            const MV6 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+            for (let x = 0; x < NX; x++) for (let y = 0; y < NY; y++) for (let z = 0; z < NZ; z++) {
+                if (!g[gid(x, y, z)]) continue;
+                for (const d of MV6) {
+                    const ox2 = x + d[0], oy2 = y + d[1], oz2 = z + d[2];
+                    if (ox2 < 0 || ox2 >= NX || oy2 < 0 || oy2 >= NY || oz2 < 0 || oz2 >= NZ || !g[gid(ox2, oy2, oz2)]) face(x, y, z, d);
+                }
+            }
+            const quad = (P, t, w, sh) => { // quad pintado colado fora da pele (mesma ondulação da fatia)
+                const u0 = t / NT, u1 = (t + 1) / NT, U = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+                for (const q of [0, 1, 2, 0, 2, 3]) arr.push(P[q][0], P[q][1], P[q][2], U[q][0], U[q][1], w, sh);
+            };
+            const flankZ = gx => (Math.floor(CEN + RZ[gx] - 0.5) + 1 - CEN) * V + 0.0025; // plano da pele nesse fatia
+            const E = cfg.eye, ex = Math.floor(E.cx), eZ = flankZ(ex); // olho (tamanho configurável)
+            const ex0 = HX - (E.cx + E.hw) * V, ex1 = HX - (E.cx - E.hw) * V;
+            const ey0 = (E.cy - E.hh) * V - HY, ey1 = (E.cy + E.hh) * V - HY;
+            for (let sd = 0; sd < 2; sd++) {
+                const zp = sd ? eZ : -eZ;
+                const P = sd ? [[ex0, ey0, zp], [ex1, ey0, zp], [ex1, ey1, zp], [ex0, ey1, zp]] : [[ex1, ey0, zp], [ex0, ey0, zp], [ex0, ey1, zp], [ex1, ey1, zp]];
+                quad(P, 54, ex / (NX - 1), sd ? 0.86 : 0.78);
+            }
+            const G = cfg.gill, gx = Math.floor(G.cx), gZ = flankZ(gx); // opérculo: fenda branquial atrás do olho
+            const gx0 = HX - (G.cx + G.hw) * V, gx1 = HX - (G.cx - G.hw) * V;
+            const gy0 = (G.cy - G.hh) * V - HY, gy1 = (G.cy + G.hh) * V - HY;
+            for (let sd = 0; sd < 2; sd++) {
+                const zp = sd ? gZ : -gZ;
+                const P = sd ? [[gx0, gy0, zp], [gx1, gy0, zp], [gx1, gy1, zp], [gx0, gy1, zp]] : [[gx1, gy0, zp], [gx0, gy0, zp], [gx0, gy1, zp], [gx1, gy1, zp]];
+                quad(P, 55, gx / (NX - 1), sd ? 0.86 : 0.78);
+            }
+            { // boca: linha escura na frente do nariz (face +x)
+                const M = cfg.mouth, X = HX + 0.002;
+                quad([[X, M.yA * V, M.zA * V], [X, M.yA * V, M.zB * V], [X, M.yB * V, M.zB * V], [X, M.yB * V, M.zA * V]], 56, 0, 0.88);
+            }
+            return mkMobMesh(arr);
+        }
+        /* ---------- As cinco espécies ---------- */
+        const FISH_CFG = {
+            peixe: { // tainha: corpo alto, cauda em garfo, dorso petróleo/prata
+                NX: 18, NY: 11, NZ: 9, C: 4,
+                RZ: [1, 2, 2.6, 2.9, 3, 3, 2.9, 2.8, 2.6, 2.3, 2, 1.6, 1.3, 1, 0, 0, 0, 0],
+                RY: [1.1, 2, 2.6, 3, 3.1, 3.1, 3, 2.9, 2.7, 2.4, 2.1, 1.7, 1.3, 1, 0, 0, 0, 0],
+                CY: [4.95, 4.85, 4.75, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.65, 4.6, 0, 0, 0, 0],
+                tail: [[14, [[3, 6]]], [15, [[2, 7]]], [16, [[0, 3], [6, 9]]], [17, [[1, 3], [6, 8]]]],
+                DOR: [0, 0, 0, 1, 2, 3, 3, 3, 2, 1, 1, 0, 0, 0],
+                ANA: [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 1, 0, 0, 0],
+                pect: { x0: 5, x1: 7, y0: 4, y1: 5, d: 3 }, pelv: { x0: 5, x1: 6, y: 1, d: 2 },
+                tiles: { skin: 51, belly: 52, fin: 53 },
+                eye: { cx: 3.5, cy: 6.5, hw: 0.5, hh: 0.5 }, gill: { cx: 4.5, cy: 5.5, hw: 0.5, hh: 1.5 },
+                mouth: { yA: -1.6, yB: 0.6, zA: -0.7, zB: 0.7 },
+                kind: { w: 38, sc: [0.55, 1.05], tint: 0.22, spF: 1, fr: 1, orb: 1, curP: 0.25 }
+            },
+            sardinha: { // slim e rápida, linha lateral escura, cardumes apertados
+                NX: 16, NY: 9, NZ: 7, C: 3,
+                RZ: [0.9, 1.4, 1.7, 1.9, 2, 2, 1.9, 1.8, 1.6, 1.4, 1.1, 0.8, 0.6, 0, 0, 0],
+                RY: [1.1, 1.7, 2.1, 2.4, 2.5, 2.5, 2.4, 2.2, 2, 1.7, 1.4, 1.1, 0.9, 0, 0, 0],
+                CY: [4.35, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 4.3, 0, 0, 0],
+                tail: [[12, [[2, 5]]], [13, [[1, 6]]], [14, [[0, 2], [5, 7]]], [15, [[0, 1], [5, 6]]]],
+                DOR: [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0, 0],
+                ANA: [0, 0, 0, 0, 1, 1, 2, 1, 0, 0, 0, 0, 0],
+                pect: { x0: 4, x1: 5, y0: 3, y1: 4, d: 2 }, pelv: { x0: 4, x1: 5, y: 1, d: 2 },
+                tiles: { skin: 64, belly: 65, fin: 53 },
+                eye: { cx: 2.5, cy: 5.5, hw: 0.45, hh: 0.45 }, gill: { cx: 3.5, cy: 4.8, hw: 0.45, hh: 1.4 },
+                mouth: { yA: -1, yB: 0.4, zA: -0.5, zB: 0.5 },
+                kind: { w: 24, sc: [0.4, 0.62], tint: 0.12, spF: 1.18, fr: 1.15, orb: 0.55, curP: 0.05 }
+            },
+            palhaco: { // corpo redondo, faixas brancas com contorno preto, cauda em leque
+                NX: 14, NY: 10, NZ: 8, C: 4,
+                RZ: [0.9, 1.5, 1.9, 2.2, 2.3, 2.3, 2.2, 2, 1.7, 1.3, 0, 0, 0, 0],
+                RY: [1, 1.6, 2, 2.3, 2.4, 2.4, 2.3, 2.1, 1.8, 1.4, 0, 0, 0, 0],
+                CY: [4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 4.4, 0, 0, 0, 0],
+                tail: [[10, [[3, 6]]], [11, [[2, 7]]], [12, [[1, 8]]], [13, [[1, 8]]]],
+                DOR: [0, 1, 1, 2, 2, 2, 2, 1, 1, 0],
+                ANA: [0, 0, 1, 1, 2, 2, 1, 1, 0, 0],
+                pect: { x0: 3, x1: 4, y0: 4, y1: 5, d: 2 }, pelv: { x0: 3, x1: 4, y: 1, d: 2 },
+                tiles: { skin: 57, belly: 58, fin: 59, band: 60 },
+                bands: x => x === 3 || x === 4 || x === 8 || x === 9,
+                eye: { cx: 2.5, cy: 5.9, hw: 0.45, hh: 0.45 }, gill: { cx: 3.5, cy: 5, hw: 0.45, hh: 1.3 },
+                mouth: { yA: -0.9, yB: 0.5, zA: -0.55, zB: 0.55 },
+                kind: { w: 16, sc: [0.42, 0.6], tint: 0.62, spF: 0.92, fr: 0.9, orb: 0.85, curP: 0.35 }
+            },
+            baiacu: { // bola de espinhos: amarelo-oliva, infla quando assustado
+                NX: 12, NY: 11, NZ: 11, C: 5,
+                RZ: [1.3, 2.3, 3, 3.4, 3.6, 3.6, 3.4, 3, 2.3, 1.3, 0, 0],
+                RY: [1.4, 2.3, 3, 3.4, 3.6, 3.6, 3.4, 3, 2.3, 1.4, 0, 0],
+                CY: [4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 4.8, 0, 0],
+                tail: [[10, [[4, 6]]], [11, [[3, 7]]]],
+                DOR: [0, 0, 1, 2, 2, 2, 2, 1, 0, 0],
+                ANA: [0, 0, 1, 2, 2, 2, 1, 0, 0, 0],
+                pect: { x0: 3, x1: 4, y0: 4, y1: 5, d: 3 }, pelv: { x0: 3, x1: 4, y: 1, d: 2 },
+                spikes: (g, gid, C) => { // espinhos: topo, barriga e flancos na linha média
+                    for (const x of [2, 5, 8]) { let t = -1; for (let y = 0; y < 11; y++) if (g[gid(x, y, C)]) t = y; if (t > -1 && t + 1 < 11 && !g[gid(x, t + 1, C)]) g[gid(x, t + 1, C)] = 1; }
+                    for (const x of [3, 6]) { let b = 11; for (let y = 0; y < 11; y++) if (g[gid(x, y, C)]) { b = y; break; } if (b < 11 && b - 1 >= 0 && !g[gid(x, b - 1, C)]) g[gid(x, b - 1, C)] = 1; }
+                    for (const x of [3, 6]) for (const s of [-1, 1]) { let z = C; while (z + s >= 0 && z + s < 11 && g[gid(x, 5, z + s)]) z += s; const zz = z + s; if (zz >= 0 && zz < 11 && !g[gid(x, 5, zz)]) g[gid(x, 5, zz)] = 1; }
+                },
+                tiles: { skin: 61, belly: 62, fin: 63 },
+                eye: { cx: 3.3, cy: 5.3, hw: 0.75, hh: 0.75 }, gill: { cx: 4.4, cy: 4.9, hw: 0.5, hh: 1.3 },
+                mouth: { yA: -1.2, yB: 0.8, zA: -1, zB: 1 },
+                kind: { w: 12, sc: [0.6, 0.85], tint: 0.72, spF: 0.62, fr: 0.65, orb: 1.35, curP: 0.4, puff: 1 }
+            },
+            dourado: { // raro e valioso: ouro brilhante, dorsal alta, corpo esguio
+                NX: 18, NY: 11, NZ: 9, C: 4,
+                RZ: [1, 2, 2.6, 2.9, 3, 3, 2.9, 2.8, 2.6, 2.3, 2, 1.6, 1.3, 1, 0, 0, 0, 0],
+                RY: [1.05, 1.85, 2.4, 2.75, 2.85, 2.85, 2.75, 2.65, 2.5, 2.2, 1.95, 1.6, 1.2, 0.9, 0, 0, 0, 0],
+                CY: [4.95, 4.85, 4.75, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.7, 4.65, 4.6, 0, 0, 0, 0],
+                tail: [[14, [[3, 6]]], [15, [[2, 7]]], [16, [[0, 3], [6, 9]]], [17, [[1, 3], [6, 8]]]],
+                DOR: [0, 0, 1, 2, 3, 4, 4, 3, 3, 2, 1, 1, 0, 0],
+                ANA: [0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 1, 0, 0, 0],
+                pect: { x0: 5, x1: 7, y0: 4, y1: 5, d: 3 }, pelv: { x0: 5, x1: 6, y: 1, d: 2 },
+                tiles: { skin: 66, belly: 67, fin: 68 },
+                eye: { cx: 3.5, cy: 6.5, hw: 0.5, hh: 0.5 }, gill: { cx: 4.5, cy: 5.5, hw: 0.5, hh: 1.5 },
+                mouth: { yA: -1.6, yB: 0.6, zA: -0.7, zB: 0.7 },
+                kind: { w: 10, sc: [0.7, 1.0], tint: 0.8, spF: 1.08, fr: 1.05, orb: 1, curP: 0.2 }
+            }
+        };
+
+        function mobReg(key, def) { // VAO da espécie: malha (attrs 0-3) + instâncias (attrs 4-6, divisor 1)
+            def.mesh = def.build();
+            def.inst = new Float32Array(MOB_MAX * 12);
+            def.vboI = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, def.vboI);
+            gl.bufferData(gl.ARRAY_BUFFER, def.inst.byteLength, gl.DYNAMIC_DRAW);
+            def.vao = gl.createVertexArray(); gl.bindVertexArray(def.vao);
+            gl.bindBuffer(gl.ARRAY_BUFFER, def.mesh.vbo);
+            gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+            gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 28, 12);
+            gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 28, 20);
+            gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 28, 24);
+            gl.bindBuffer(gl.ARRAY_BUFFER, def.vboI);
+            for (let a = 4; a <= 6; a++) { gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 4, gl.FLOAT, false, 48, (a - 4) * 16); gl.vertexAttribDivisor(a, 1); }
+            gl.bindVertexArray(null);
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+            def.list = [];
+            MOB.species.set(key, def);
+            return def;
+        }
+        for (const key in FISH_CFG) { // todas as espécies usam o mesmo tick (registrado na tainha)
+            const def = FISH_CFG[key];
+            mobReg(key, { build: () => buildFishBody(def), tick: key === 'peixe' ? peixeTick : undefined, kind: def.kind });
+        }
+
+        /* ---------- Decoração do fundo do mar: alga, estrela-do-mar e corais ----------
+           Espécies "mudas" no mesmo pipeline dos peixes: drawMobs instancia a malha de cada uma
+           (luz, névoa e ondulação de graça) e o decorTick espalha/mantém as instâncias no chão
+           submerso perto do jogador, removendo as que ficarem longe ou perderem o apoio. */
+        function buildAlga() { // tufo de 4 fitas de alturas diferentes; mesh "deitada" ao longo de +x (a instância levanta com pitch -90°)
+            const arr = [], V = MOB_V, N = 6, H = 15 * V;
+            const BL = [[0.10, 0.06, 0.5, 1], [-0.08, -0.11, 2.1, 0.85], [0.05, -0.12, 4.0, 0.7], [-0.12, 0.07, 5.5, 0.55]]; // [oy, oz, ângulo, altura relativa]
+            for (const [oy, oz, an, hm] of BL) {
+                const hb = H * hm, lean = 0.34 * (1 - hm * 0.4); // fitas curtas inclinam menos
+                const dby = Math.cos(an) * lean, dbz = Math.sin(an) * lean;
+                for (let cr = 0; cr < 2; cr++) { // duas fitas cruzadas por haste (visto de qualquer ângulo)
+                    const wy = cr ? -Math.sin(an) : Math.cos(an), wz = cr ? Math.cos(an) : Math.sin(an);
+                    for (let i = 0; i < N; i++) {
+                        const t0 = i / N, t1 = (i + 1) / N, x0 = t0 * hb, x1 = t1 * hb;
+                        const w0 = (1 - 0.72 * t0) * 0.055, w1 = (1 - 0.72 * t1) * 0.055; // afina até a ponta
+                        const c0y = oy + dby * t0 * t0 * 2.2, c0z = oz + dbz * t0 * t0 * 2.2; // curva pra fora
+                        const c1y = oy + dby * t1 * t1 * 2.2, c1z = oz + dbz * t1 * t1 * 2.2;
+                        const sh = 0.72 + 0.28 * t0, w = t0 * t0 * (3 - 2 * t0); // ondulação cresce com a altura
+                        const P = [[x0, c0y - wy * w0, c0z - wz * w0], [x0, c0y + wy * w0, c0z + wz * w0], [x1, c1y + wy * w1, c1z + wz * w1], [x1, c1y - wy * w1, c1z - wz * w1]];
+                        const u0 = 69 / NT, u1 = 70 / NT, U = [[u0, t0], [u1, t0], [u1, t1], [u0, t1]];
+                        for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = U[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], w, sh); }
+                    }
+                }
+            }
+            return mkMobMesh(arr);
+        }
+        function buildEstrela() { // estrela-do-mar: placa fina de voxels 7x7 (1/14 de bloco por célula) deitada no chão
+            const M = ['...X...', '...X...', 'XX.X.XX', '.XXXXX.', '..XXX..', '.X...X.', 'X.....X'];
+            const U2 = 1 / 14, S2 = 7 * U2 / 2, h0 = -0.03, h1 = 0.03, arr = [];
+            const cell = (i, j) => i >= 0 && i < 7 && j >= 0 && j < 7 && M[j][i] === 'X';
+            for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) {
+                if (!cell(i, j)) continue;
+                const x0 = -S2 + i * U2, x1 = x0 + U2, z0 = -S2 + j * U2, z1 = z0 + U2;
+                const u0 = (70 + i / 7) / NT, u1 = (70 + (i + 1) / 7) / NT, v0 = 1 - (j + 1) / 7, v1 = 1 - j / 7;
+                const PT = [[x0, h1, z0], [x1, h1, z0], [x1, h1, z1], [x0, h1, z1]], UT = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
+                for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = PT[q], u = UT[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], 0, 1.0); } // topo
+                const sd = (P, su) => { const US = [[u0, 0.42], [u1, 0.42], [u1, 0.58], [u0, 0.58]]; for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = US[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], 0, su); } };
+                if (!cell(i, j - 1)) sd([[x0, h0, z0], [x1, h0, z0], [x1, h1, z0], [x0, h1, z0]], 0.66);
+                if (!cell(i, j + 1)) sd([[x0, h0, z1], [x1, h0, z1], [x1, h1, z1], [x0, h1, z1]], 0.82);
+                if (!cell(i - 1, j)) sd([[x0, h0, z0], [x0, h0, z1], [x0, h1, z1], [x0, h1, z0]], 0.74);
+                if (!cell(i + 1, j)) sd([[x1, h0, z0], [x1, h0, z1], [x1, h1, z1], [x1, h1, z0]], 0.9);
+            }
+            return mkMobMesh(arr);
+        }
+        function buildCoral(T) { // moita de coral: pilares de voxels 5x5x5 com alturas variadas
+            const HH = [[2, 2, 5], [1, 2, 3], [3, 2, 3], [2, 1, 3], [2, 3, 3], [1, 1, 2], [3, 3, 2], [0, 2, 2], [4, 2, 2]];
+            const hAt = (x, z) => { for (const c of HH) if (c[0] === x && c[1] === z) return c[2]; return 0; };
+            const V2 = MOB_V, CX = 5 * V2 / 2, arr = [];
+            for (let x = 0; x < 5; x++) for (let z = 0; z < 5; z++) {
+                const h = hAt(x, z); if (!h) continue;
+                for (let y = 0; y < h; y++) {
+                    const x0 = x * V2 - CX, x1 = x0 + V2, y0 = y * V2, y1 = y0 + V2, z0 = z * V2 - CX, z1 = z0 + V2;
+                    const uf = f => (T + f) / NT, uX = uf(x / 5), uX2 = uf((x + 1) / 5), uZ = uf(z / 5), uZ2 = uf((z + 1) / 5), vY = y / 5, vY2 = (y + 1) / 5;
+                    const qd = (P, U, sh) => { for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = U[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], 0, sh); } };
+                    const PT = [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], UT = [[uX, uZ2], [uX2, uZ2], [uX2, uZ], [uX, uZ]];
+                    qd(PT, UT, 1.0); // topo (degraus expõem o topo de cada pilar)
+                    qd([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], UT, 0.55); // base: 0.002 acima do chão, sem z-fight
+                    if (hAt(x, z - 1) <= y) qd([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], [[uX, vY], [uX2, vY], [uX2, vY2], [uX, vY2]], 0.78); // face -z: u do x, v da altura
+                    if (hAt(x, z + 1) <= y) qd([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [[uX, vY], [uX2, vY], [uX2, vY2], [uX, vY2]], 0.86);
+                    if (hAt(x - 1, z) <= y) qd([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], [[uZ, vY], [uZ2, vY], [uZ2, vY2], [uZ, vY2]], 0.74);
+                    if (hAt(x + 1, z) <= y) qd([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]], [[uZ, vY], [uZ2, vY], [uZ2, vY2], [uZ, vY2]], 0.9);
+                }
+            }
+            return mkMobMesh(arr);
+        }
+        const DECOR = {
+            alga: { tgt: 90, sc: [0.75, 1.5], h: 2, pitch: -1.5707963267948966, ix: 0.42, tint: 0.25 },
+            estrela: { tgt: 30, sc: [0.7, 1.1], h: 1, ix: 0, tint: 0.8 },
+            coralA: { tgt: 18, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.55 },
+            coralV: { tgt: 14, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.4 }
+        };
+        let decorT = 0.4;
+        const decorFloor = b => b === 2 || b === 3 || b === 4 || b === 31 || b === 44 || b === 54 || b === 55; // areia, pedra, terra, arenito, ardósia, cascalho, calcita
+        function decorTick(dt) { // espalha e mantém as decorações no chão submerso perto do jogador
+            decorT -= dt; if (decorT > 0) return; decorT = 0.6;
+            const px = P.x, pz = P.z;
+            for (const key in DECOR) {
+                const D = DECOR[key], S = MOB.species.get(key); if (!S) continue;
+                const L = S.list;
+                for (let i = L.length - 1; i >= 0; i--) { // longe demais ou apoio sumiu (quebrou o chão / drenou): some
+                    const f = L[i], dx = f.x - px, dz = f.z - pz;
+                    let ok = dx * dx + dz * dz < 6400;
+                    if (ok) ok = decorFloor(getBlock(f.x | 0, f.by, f.z | 0, 3)) && isWater(getBlock(f.x | 0, f.by + 1, f.z | 0, 3));
+                    if (!ok) L.splice(i, 1);
+                }
+                let need = D.tgt - L.length, tries = need * 4;
+                while (need > 0 && tries-- > 0) {
+                    const a = Math.random() * 6.28318530718, r = 5 + Math.sqrt(Math.random()) * 42;
+                    const bx = (px + Math.cos(a) * r) | 0, bz = (pz + Math.sin(a) * r) | 0;
+                    if (!chunks.get((bx >> 4) + ',' + (bz >> 4))) continue;
+                    let y = SEA + 4;
+                    while (y > 2 && isWater(getBlock(bx, y, bz, 0))) y--; // desce até o fundo
+                    if (y < 3 || y > SEA - 2) continue;                   // fundo precisa estar afogado
+                    if (!decorFloor(getBlock(bx, y, bz, 0))) continue;
+                    let wd = 0; while (wd < D.h && isWater(getBlock(bx, y + 1 + wd, bz, 0))) wd++;
+                    if (wd < D.h) continue;
+                    L.push({
+                        x: bx + 0.5, y: y + 1.002, z: bz + 0.5, by: y,
+                        scale: D.sc[0] + Math.random() * (D.sc[1] - D.sc[0]),
+                        yaw: Math.random() * 6.28318530718, pitch: D.pitch || 0, roll: 0,
+                        ph: Math.random(), tint: Math.max(0, Math.min(1, D.tint + (Math.random() - 0.5) * 0.16)),
+                        ix: D.ix
+                    });
+                    need--;
+                }
+            }
+        }
+        for (const key in DECOR) {
+            const D = DECOR[key];
+            mobReg(key, {
+                build: key === 'alga' ? buildAlga : (key === 'estrela' ? buildEstrela : () => buildCoral(key === 'coralA' ? 71 : 72)),
+                tick: key === 'alga' ? decorTick : undefined
+            });
+        }
+
+        function mobCount() { let n = 0; for (const sp of MOB.species.values()) if (sp.kind) n += sp.list.length; return n; }
+        function mobGet(f, x, y, z) { // bloco com chunk em cache no próprio bicho (-1 = chunk ausente)
+            if (y < 0 || y >= CH) return 0;
+            const cx = x >> 4, cz = z >> 4;
+            let c = f.cc;
+            if (!c || c.cx !== cx || c.cz !== cz) { c = chunks.get(cx + ',' + cz) || null; f.cc = c; }
+            return c ? c.data[idx(x & 15, y, z & 15)] : -1;
+        }
+        function fishWaterSpot(x, z, yFrom) { // topo de uma coluna d'água com pelo menos 3 de fundo
+            const ch = chunks.get((x >> 4) + ',' + (z >> 4)); if (!ch) return null;
+            for (let y = Math.min(CH - 2, yFrom); y > 3; y--) {
+                const i = (y << 8) | ((z & 15) << 4) | (x & 15);
+                if (!isWater(ch.data[i])) continue;
+                if (y < CH - 1 && isWater(ch.data[i + 256])) continue;                 // não é o topo
+                if (!isWater(ch.data[i - 256]) || !isWater(ch.data[i - 512])) return null; // raso demais
+                return y;
+            }
+            return null;
+        }
+        function fishSpotNear(px, pz, r0, r1) { // sorteia um ponto d'água carregado perto de (px, pz)
+            for (let t = 0; t < 22; t++) {
+                const a = Math.random() * 6.28318530718, r = r0 + Math.sqrt(Math.random()) * (r1 - r0);
+                const wx = (px + Math.cos(a) * r) | 0, wz = (pz + Math.sin(a) * r) | 0;
+                const wy = fishWaterSpot(wx, wz, SEA + 8);
+                if (wy) return { x: wx + 0.5, y: wy + 0.55 - Math.random() * 1.7, z: wz + 0.5 };
+            }
+            return null;
+        }
+        function fishNew(inSchool, K) {
+            K = K || FISH_CFG.peixe.kind;
+            const f = {
+                x: 0, y: 60, z: 0, dx: Math.random() * 2 - 1, dy: Math.random() * 0.3, dz: Math.random() * 2 - 1,
+                yaw: Math.random() * 6.28318530718, pitch: 0, roll: 0, spd: 0.9, ix: 0.3,
+                scale: K.sc[0] + Math.random() * (K.sc[1] - K.sc[0]), ph: Math.random(),
+                tint: Math.max(0, Math.min(1, K.tint + (Math.random() - 0.5) * 0.14)),
+                s: null, orba: 0, orbR: 0, orbV: 0, orbY: 0, puff: 0,
+                wx: 0, wy: 0, wz: 0, wT: Math.random() * 2, ft: 0,
+                cur: Math.random() < K.curP, orbS: Math.random() < 0.5 ? 1 : -1, flopT: 0, tbv: 0, cc: null
+            };
+            f.sc0 = f.scale;
+            const l = Math.hypot(f.dx, f.dy, f.dz) || 1; f.dx /= l; f.dy /= l; f.dz /= l;
+            if (inSchool) { f.orbR = (0.7 + Math.random() * 3.6) * K.orb; f.orbY = (Math.random() - 0.45) * 2.6; f.orba = Math.random() * 6.28318530718; f.orbV = (0.5 + Math.random() * 0.8) / f.orbR * (Math.random() < 0.5 ? 1 : -1); }
+            return f;
+        }
+        function fishDrop(L, i) {
+            const f = L[i];
+            if (f.s) f.s.n = Math.max(0, f.s.n - 1);
+            L.splice(i, 1);
+        }
+        function fishSchoolNew(x, y, z, kind) {
+            const s = { x, y, z, tx: 0, ty: 0, tz: 0, hasT: false, tT: 0, n: 0, cap: 16 + ((Math.random() * 30) | 0), scT: 0, okT: 0, dead: false, kind: kind || 'peixe' };
+            MOB.schools.push(s);
+            return s;
+        }
+        function fishPickTarget(f) { // ponto de passeio à frente, sempre em água
+            for (let t = 0; t < 4; t++) {
+                const d = 5 + Math.random() * 10, a = Math.random() * 6.28318530718;
+                const x = (f.x + Math.cos(a) * d) | 0, z = (f.z + Math.sin(a) * d) | 0;
+                const y = Math.max(2, Math.min(CH - 2, (f.y + (Math.random() - 0.5) * 4) | 0));
+                const b = mobGet(f, x, y, z);
+                if (b > -1 && isWater(b)) { f.wx = x + 0.5; f.wy = y + 0.5; f.wz = z + 0.5; return; }
+            }
+            f.wy = Math.max(3, f.y); // segue onde está; sorteia de novo em breve
+        }
+        function fishFlop(f, dt, here) { // fora d'água (drenou/puxou a água): cai, flopa e sumiu
+            f.flopT += dt; f.ix = 0.08;
+            const fx = f.x | 0, fy = Math.max(0, Math.min(CH - 1, f.y | 0)), fz = f.z | 0;
+            const dn = mobGet(f, fx, fy - 1, fz);
+            if (dn > -1 && isWater(dn)) { f.y = Math.max(f.y - 0.5, fy - 0.45); return; } // voltou pra água de rasão
+            const onGround = dn > -1 && dn !== 0 && !isWater(dn) && !isTorch(dn) && dn !== SNOWL;
+            if (onGround && here === 0) {
+                f.y = Math.min(f.y, fy + 0.12);
+                f.spd *= Math.max(0, 1 - dt * 5);
+                if (Math.random() < dt * 1.2) { // pulinho com giro
+                    f.spd = 2.6; f.y = fy + 0.6;
+                    const a = Math.random() * 6.28318530718;
+                    f.dx = Math.cos(a); f.dz = -Math.sin(a); f.dy = 0.55;
+                } else { f.dx = 0; f.dz = 0; f.dy = 0; }
+            } else { f.dy = -0.9; f.spd = Math.min(4, f.spd + dt * 10); }
+            const l2 = Math.hypot(f.dx, f.dy, f.dz) || 1; f.dx /= l2; f.dy /= l2; f.dz /= l2;
+            f.x += f.dx * f.spd * dt * 0.5; f.y += f.dy * f.spd * dt; f.z += f.dz * f.spd * dt * 0.5;
+            const ty = Math.atan2(-f.dz, f.dx);
+            let wd = ty - f.yaw; while (wd > Math.PI) wd -= 6.28318530718; while (wd < -Math.PI) wd += 6.28318530718;
+            f.yaw += wd * Math.min(1, dt * 9);
+            f.pitch += ((onGround && here === 0 ? -1.25 : -0.5) - f.pitch) * Math.min(1, dt * 6);
+            f.roll += (Math.sin(f.flopT * 8) * 0.5 - f.roll) * Math.min(1, dt * 4);
+        }
+        function mobsScare(x, y, z, r) { // explosões (e sobras futuras) espantam os peixes por perto
+            const r2 = (r * 1.6) * (r * 1.6);
+            for (const sp of MOB.species.values()) {
+                if (!sp.kind) continue;
+                for (const f of sp.list) {
+                    const d2 = (f.x - x) * (f.x - x) + (f.y - y) * (f.y - y) + (f.z - z) * (f.z - z);
+                    if (d2 > r2) continue;
+                    f.ft = Math.max(f.ft, 2.2);
+                    if (f.s) f.s.scT = Math.max(f.s.scT, 2.4);
+                }
+            }
+        }
+        function mobsReset() {
+            for (const sp of MOB.species.values()) sp.list.length = 0;
+            MOB.schools.length = 0;
+            MOB.maint = 0.1;
+        }
+        function mobsMaintain() { // mantém a população perto do jogador, repartida entre as espécies
+            if (!MOB.species.size) return;
+            let W = 0; for (const key in FISH_CFG) W += FISH_CFG[key].kind.w;
+            for (const key in FISH_CFG) {
+                const K = FISH_CFG[key].kind, S = MOB.species.get(key); if (!S) continue;
+                const L = S.list, tgt = Math.round(MOB.target * K.w / W);
+                if (L.length > tgt + 20) { // alvo diminuído: joga fora os mais longe primeiro
+                    L.sort((a, b) => ((b.x - P.x) * (b.x - P.x) + (b.z - P.z) * (b.z - P.z)) - ((a.x - P.x) * (a.x - P.x) + (a.z - P.z) * (a.z - P.z)));
+                    while (L.length > tgt) fishDrop(L, L.length - 1);
+                }
+                let need = tgt - L.length; if (need <= 0) continue;
+                let qtd = Math.min(need, Math.round(need * 0.16 + 6));
+                while (qtd-- > 0 && L.length < tgt) {
+                    let s = null, nova = false; // nova=true: cardume acabou de nascer, pode ser descartado se nao achar agua
+                    if (Math.random() < 0.6) {
+                        s = MOB.schools.find(ss => !ss.dead && (!ss.kind || ss.kind === key) && ss.n < ss.cap && ((ss.x - P.x) * (ss.x - P.x) + (ss.z - P.z) * (ss.z - P.z)) < 2500);
+                        if (!s) { s = fishSchoolNew(0, 0, 0, key); nova = true; }
+                        if (nova && !s.hasT) { // só cardume novo busca lugar; os existentes ficam onde estão
+                            const spot = fishSpotNear(P.x, P.z, 10, 34);
+                            if (!spot) { // sem agua: so joga fora o cardume novo
+                                if (!s.n) MOB.schools.pop();
+                                s = null;
+                            }
+                            else { s.x = spot.x; s.y = spot.y; s.z = spot.z; s.hasT = false; }
+                        }
+                    } else s = 'solo';
+                    if (!s) continue;
+                    if (s === 'solo') {
+                        const spot = fishSpotNear(P.x, P.z, 10, 36);
+                        if (!spot) continue;
+                        const f = fishNew(false, K);
+                        f.x = spot.x; f.y = spot.y; f.z = spot.z;
+                        fishPickTarget(f);
+                        L.push(f);
+                        continue;
+                    }
+                    const q = Math.min(tgt - L.length, s.cap - s.n);
+                    for (let k = 0; k < q; k++) {
+                        const f = fishNew(true, K);
+                        f.x = s.x + Math.cos(f.orba) * f.orbR; f.y = s.y + f.orbY; f.z = s.z + Math.sin(f.orba) * f.orbR;
+                        const fx = f.x | 0, fz = f.z | 0; let fy = Math.max(2, Math.min(CH - 2, f.y | 0));
+                        let ok = false;
+                        for (let wl = 0; wl < 5 && !ok; wl++) {
+                            const b = mobGet(f, fx, fy, fz);
+                            if (b > -1 && isWater(b)) ok = true; else fy += (Math.random() < 0.5 ? 1 : -1);
+                        }
+                        if (!ok) { continue; }
+                        f.y = fy + 0.5; s.n++; L.push(f);
+                    }
+                }
+            }
+        }
+        function mobsUpdate(dt) {
+            if (!MOB.species.size) return;
+            MOB.t += dt;
+            for (const sp of MOB.species.values()) if (sp.tick) sp.tick(dt);
+        }
+        function peixeTick(dt) { // cérebro de todos os peixes: cardumes + IA de cada espécie
+            const S = MOB.species.get('peixe'); if (!S) return;
+            MOB.maint -= dt;
+            if (MOB.maint <= 0) { MOB.maint = 0.5; mobsMaintain(); }
+            const px = P.x, py = P.y + 0.9, pz = P.z;
+            const pSpd = Math.hypot(P.vx, P.vz) + Math.abs(P.vy) * 0.5;
+            for (let i = MOB.schools.length - 1; i >= 0; i--) {
+                const s = MOB.schools[i];
+                if (s.dead) { MOB.schools.splice(i, 1); continue; }
+                if (s.scT > 0) { // assustado: a âncora foge da sombra do jogador (velocidade limitada)
+                    s.scT -= dt;
+                    const d0s = Math.hypot(s.x - px, s.z - pz) || 1;
+                    const qs = Math.min(1, 2.2 * dt / d0s);
+                    s.x += (s.x - px) * qs; s.z += (s.z - pz) * qs;
+                    s.y += (s.y - py) * Math.min(1, 0.8 * dt / Math.max(1, Math.abs(s.y - py)));
+                } else {
+                    s.tT -= dt;
+                    if (s.tT <= 0) {
+                        s.tT = 3 + Math.random() * 6;
+                        const a = Math.random() * 6.28318530718, r2 = 8 + Math.random() * 12;
+                        const wy = fishWaterSpot((s.x + Math.cos(a) * r2) | 0, (s.z + Math.sin(a) * r2) | 0, SEA + 8);
+                        if (wy) { s.tx = (s.x + Math.cos(a) * r2 | 0) + 0.5; s.ty = wy + 0.4 - Math.random() * 2.2; s.tz = (s.z + Math.sin(a) * r2 | 0) + 0.5; s.hasT = true; }
+                    }
+                    if (s.hasT) { s.x += (s.tx - s.x) * Math.min(1, dt * 0.55); s.y += (s.ty - s.y) * Math.min(1, dt * 0.7); s.z += (s.tz - s.z) * Math.min(1, dt * 0.55); }
+                }
+                if ((s.okT -= dt) <= 0) { // âncora tem que ficar em água carregada
+                    s.okT = 1;
+                    const ab = mobGet(SC_T, s.x | 0, Math.min(CH - 2, Math.max(1, s.y | 0)), s.z | 0);
+                    if (ab === -1 || !isWater(ab)) {
+                        const sp2 = fishSpotNear(px, pz, 10, 34);
+                        if (sp2) { s.x = sp2.x; s.y = sp2.y; s.z = sp2.z; s.hasT = false; s.tT = 0.6; }
+                        else s.dead = true;
+                    }
+                }
+            }
+            for (const sp of MOB.species.values()) {
+                if (!sp.kind || !sp.list.length) continue;
+                fishKindTick(sp, dt, px, py, pz, pSpd);
+            }
+        }
+        function fishKindTick(sp, dt, px, py, pz, pSpd) { // IA por espécie: fugir, curiosidade, passeio, cardume
+            const K = sp.kind, L = sp.list;
+            const frR = (pano ? 2.7 : 4.2) * K.fr, fr2 = frR * frR;
+            for (let i = L.length - 1; i >= 0; i--) {
+                const f = L[i];
+                const fx = f.x | 0, fy = Math.max(1, Math.min(CH - 1, f.y | 0)), fz = f.z | 0;
+                const rx = f.x - px, ry = f.y - py, rz = f.z - pz;
+                const d2 = rx * rx + ry * ry + rz * rz;
+                if (d2 > 4225) { fishDrop(L, i); continue; } // longe demais (65 blocos)
+                const bHere = mobGet(f, fx, fy, fz);
+                if (bHere === -1) continue;                    // chunk descarregado: espera o despawn
+                if (!isWater(bHere)) { fishFlop(f, dt, bHere); if (f.flopT > 18) fishDrop(L, i); continue; }
+                f.flopT = 0;
+                /* ---------- rumo desejado ---------- */
+                let desx, desy, desz;
+                if (f.s) {
+                    if (f.s.dead) { f.s = null; desx = desy = desz = f.dx; }
+                    else {
+                        const sc = f.s;
+                        f.orba += f.orbV * dt * (1 + sc.scT * 0.8);
+                        desx = sc.x + Math.cos(f.orba) * f.orbR - f.x;
+                        desy = sc.y + f.orbY + Math.sin(MOB.t * 0.9 + f.orba * 2) * 0.35 - f.y;
+                        desz = sc.z + Math.sin(f.orba) * f.orbR - f.z;
+                    }
+                } else {
+                    f.wT -= dt;
+                    if (f.wT <= 0) {
+                        f.wT = 2 + Math.random() * 4; fishPickTarget(f);
+                        if (Math.random() < 0.14) { f.wT = 0.5 + Math.random() * 0.6; f.spd = (2.7 + Math.random() * 0.9) * K.spF; } // arrancada curta
+                    }
+                    desx = f.wx - f.x; desy = f.wy - f.y; desz = f.wz - f.z;
+                }
+                const tgtD = Math.hypot(desx, desy, desz);
+                if (!f.s && tgtD < 0.9) f.wT = 0;
+                // passeio leve: ângulos crescem/decrescem para nada do mesmo jeito
+                desx += Math.sin(MOB.t * 1.5 + f.ph * 12) * 0.28;
+                desy += Math.sin(MOB.t * 1.05 + f.ph * 19) * 0.17;
+                desz += Math.cos(MOB.t * 1.35 + f.ph * 9) * 0.28;
+                let spdT;
+                if (d2 < fr2 || f.ft > 0) { // fuga do jogador
+                    const d0 = Math.sqrt(d2) || 1;
+                    desx = rx / d0; desy = ry / d0 * 0.7; desz = rz / d0; // foge PARA LONGE do jogador
+                    if (d2 < fr2) { f.ft = 1.3; if (f.s) f.s.scT = Math.max(f.s.scT, 1.5); }
+                    else f.ft -= dt;
+                    spdT = (3.3 + f.ph * 0.9) * K.spF;
+                } else if (f.cur && pSpd < 0.55 && d2 > 2.25 && d2 < 200) { // curioso: nada até quem fica parado e orbita devagar
+                    const d0 = Math.sqrt(d2);
+                    const cx = -rx / d0, cy = -ry / d0 * 0.4, cz = -rz / d0; // rumo ao jogador
+                    if (d2 < 14) { // perto: órbita lenta em volta (cada peixe num sentido)
+                        const tx = cz * f.orbS, tz = -cx * f.orbS; // tangente ao círculo
+                        desx = desx * 0.3 + tx * 0.7; desy = desy * 0.4 + cy * 0.6; desz = desz * 0.3 + tz * 0.7;
+                        spdT = 0.55 * K.spF;
+                    } else { desx = desx * 0.5 + cx * 0.5; desy = desy * 0.5 + cy * 0.5; desz = desz * 0.5 + cz * 0.5; spdT = 0.45 * K.spF; }
+                } else if (f.s) { spdT = Math.min(2.3, 0.65 + tgtD * 0.4 + f.s.scT * 0.25) * K.spF; }
+                else { spdT = Math.max(0.4, Math.min(1.9, 0.65 + tgtD * 0.3 + Math.sin(MOB.t * 0.43 + f.ph * 9) * 0.3)) * K.spF; }
+                if (K.puff) { // baiacu: infla quando assustado, esvazia em paz
+                    if (d2 < fr2 || f.ft > 0) f.puff = Math.min(1, f.puff + dt * 3); else f.puff = Math.max(0, f.puff - dt * 1.2);
+                    f.scale = f.sc0 * (1 + f.puff * 0.75);
+                }
+                /* ---------- água em cima/embaixo ---------- */
+                const up = mobGet(f, fx, Math.min(CH - 1, fy + 1), fz);
+                const dn = mobGet(f, fx, Math.max(0, fy - 1), fz);
+                if (up > -1 && !isWater(up)) desy = Math.min(desy, -0.25);
+                if (dn > -1 && !isWater(dn)) desy = Math.max(desy, 0.12);
+                /* ---------- vira suavemente ---------- */
+                const dl = Math.hypot(desx, desy, desz);
+                if (dl > 0.02) {
+                    desx /= dl; desy /= dl; desz /= dl;
+                    const tk = Math.min(1, dt * (2.5 + 3 * f.tbv));
+                    f.dx += (desx - f.dx) * tk; f.dy += (desy - f.dy) * tk; f.dz += (desz - f.dz) * tk;
+                    const tl = Math.hypot(f.dx, f.dy, f.dz) || 1; f.dx /= tl; f.dy /= tl; f.dz /= tl;
+                }
+                f.spd += (spdT - f.spd) * Math.min(1, dt * 2.8);
+                f.x += f.dx * f.spd * dt; f.y += f.dy * f.spd * dt; f.z += f.dz * f.spd * dt;
+                f.y = Math.max(0.6, Math.min(CH - 1.2, f.y));
+                /* ---------- radar do nariz: não encravar em parede/chão/topo ---------- */
+                const nx2 = (f.x + f.dx * 0.32) | 0, nz2 = (f.z + f.dz * 0.32) | 0;
+                const ny2 = Math.max(0, Math.min(CH - 1, f.y | 0));
+                const bh = mobGet(f, nx2, ny2, nz2);
+                if (bh > -1 && !isWater(bh)) {
+                    const sgn = Math.random() < 0.5 ? 1 : -1;
+                    const a = Math.atan2(-f.dz, f.dx) + sgn * (0.5 + Math.random() * 0.7);
+                    f.dx = Math.cos(a); f.dz = -Math.sin(a);
+                    f.dy += (dn > -1 && !isWater(dn) ? 0.45 : -0.25) + (Math.random() - 0.3) * 0.3;
+                    f.tbv = 1;
+                } else f.tbv = Math.max(0, f.tbv - dt * 2.2);
+                const tl2 = Math.hypot(f.dx, f.dy, f.dz) || 1; f.dx /= tl2; f.dy /= tl2; f.dz /= tl2;
+                /* ---------- pose ---------- */
+                const ty = Math.atan2(-f.dz, f.dx);
+                let wd = ty - f.yaw; while (wd > Math.PI) wd -= 6.28318530718; while (wd < -Math.PI) wd += 6.28318530718;
+                f.yaw += wd * Math.min(1, dt * (2.4 + 3 * f.tbv));
+                const rr = wd / Math.max(dt, 0.001);
+                f.roll += (Math.max(-0.5, Math.min(0.5, rr * -0.32)) - f.roll) * Math.min(1, dt * 5);
+                const tp = Math.max(-0.55, Math.min(0.55, Math.asin(Math.max(-1, Math.min(1, f.dy)))));
+                f.pitch += (tp - f.pitch) * Math.min(1, dt * 3);
+                f.ix = Math.min(1.5, f.spd / 3.3);
+            }
+        }
+        function drawMobs(mvp, eye, dir, light, fogN, fogF) {
+            if (!MOB.species.size) return;
+            gl.useProgram(mobProg);
+            gl.uniformMatrix4fv(MOBU.mvp, false, mvp);
+            gl.uniform3f(MOBU.cam, eye[0], eye[1], eye[2]);
+            gl.uniform3fv(MOBU.sky, SK.sky);
+            gl.uniform3fv(MOBU.sun, SK.sun);
+            gl.uniform3fv(MOBU.glow, SK.glow);
+            gl.uniform3fv(MOBU.mglow, SK.mglow);
+            gl.uniform1f(MOBU.light, light);
+            gl.uniform1f(MOBU.fogN, fogN);
+            gl.uniform1f(MOBU.fogF, fogF);
+            gl.uniform1f(MOBU.tm, SK.tm);
+            gl.uniform1i(MOBU.tex, 0);
+            const lim = (fogF + 10) * (fogF + 10);
+            for (const sp of MOB.species.values()) {
+                if (!sp.list.length) continue;
+                let n = 0;
+                const I = sp.inst, D = sp.list;
+                for (let i = 0; i < D.length && n < MOB_MAX; i++) {
+                    const f = D[i];
+                    const dx2 = f.x - eye[0], dy2 = f.y - eye[1], dz2 = f.z - eye[2];
+                    const d2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
+                    if (d2 > lim) continue;
+                    if (dx2 * dir[0] + dy2 * dir[1] + dz2 * dir[2] < -3) continue;
+                    const cx = f.x | 0, cz = f.z | 0;
+                    let c = f.cc && f.cc.cx === (cx >> 4) && f.cc.cz === (cz >> 4) ? f.cc : chunks.get((cx >> 4) + ',' + (cz >> 4));
+                    let sL = 0.7, bL = 0;
+                    if (c && c.lit) { const v = c.light[((Math.min(CH - 1, Math.max(0, f.y | 0))) << 8) | ((cz & 15) << 4) | (cx & 15)]; sL = (v >> 4) / 15; bL = (v & 15) / 15; }
+                    const o = n * 12; n++;
+                    I[o] = f.x; I[o + 1] = f.y; I[o + 2] = f.z; I[o + 3] = f.scale;
+                    I[o + 4] = f.yaw; I[o + 5] = f.pitch; I[o + 6] = f.roll; I[o + 7] = f.ph * 6.28318530718;
+                    I[o + 8] = sL; I[o + 9] = bL; I[o + 10] = f.tint; I[o + 11] = f.ix;
+                }
+                if (!n) continue;
+                gl.bindVertexArray(sp.vao);
+                gl.bindBuffer(gl.ARRAY_BUFFER, sp.vboI);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, I.subarray(0, n * 12));
+                gl.drawArraysInstanced(gl.TRIANGLES, 0, sp.mesh.count, n);
+                gl.bindVertexArray(null);
+            }
+        }
+
+
 
         /* ---------- Tocha na mao (1a pessoa): mesma geometria do mundo, balanco ao andar e inercia ao girar a camera ---------- */
         const heldArr = new Float32Array(48 * 8);
@@ -5048,7 +6094,8 @@ void main(){
                 gl.bindVertexArray(cubeMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, cubeMesh.count);
             }
             gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
-            const hit = (locked && (!isTouch || aim.on)) ? raycast(eyePos(), aimDir(), 6, HOT[sel][0] === BUCKET && !bucketFull) : null;
+            drawMobs(mvp, e2, dir, light, fogN, fogF); // mobs opacos antes da nevoa/agua passam por aqui (lprog/brilho deixam tudo pronto)
+            const hit = (locked && (!isTouch || aim.on)) ? raycast(eyePos(), aimDir(), 6, HOT[sel][0] === BUCKET && HOT[sel][1] === 14) : null;
             if (hit) {
                 gl.useProgram(lprog); gl.uniformMatrix4fv(LU.mvp, false, mvp); if (hit.box) { const B = hit.box; gl.uniform3f(LU.off, hit.x + B[0], hit.y + B[1], hit.z + B[2]); gl.uniform3f(LU.sc, B[3] - B[0], B[4] - B[1], B[5] - B[2]); }
                 else { gl.uniform3f(LU.off, hit.x, hit.y, hit.z); gl.uniform3f(LU.sc, 1, 1, 1); }
@@ -5134,7 +6181,7 @@ void main(){
                         const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
                         info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
                             'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
-                            'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '   TNT ativas ' + tnts.length +
+                            'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + (timeLock >= 0 ? ' (travada)' : '') + '   TNT ativas ' + tnts.length + '   peixes ' + mobCount() +
                             (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
                     } else info.textContent = '';
                 }
