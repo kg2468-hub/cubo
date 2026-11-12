@@ -1498,6 +1498,8 @@
                         class="btn tg" id="tFog" type="button">Ligada</button></div>
                 <div class="cwr"><span class="lb">FPS e XYZ (HUD de depuração)</span><button class="btn tg" id="tDebug"
                         type="button">Ligado</button></div>
+                <div class="cwr"><span class="lb">Limitador de quadros (constância de FPS)</span><button class="btn tg"
+                        id="tCap" type="button">Automático</button></div>
             </div>
             <div class="cfg" id="keyCfg">
                 <h3>Controles</h3>
@@ -1556,7 +1558,7 @@
            Menu estilo Bedrock + varios mundos + salvamento em IndexedDB.
            ============================================================ */
         const $ = id => document.getElementById(id);
-        const CS = 16, CH = 64, SEA = 22;
+        const CS = 16, CH = 96, SEA = 54;
 
         const idx = (x, y, z) => (y << 8) | (z << 4) | x;
         const isWater = b => b >= 16 && b < 24;
@@ -1586,7 +1588,7 @@
            O bioma de cada coluna e guardado no chunk (ch.bio, 256 bytes) e e ele que decide o clima.
            cold = bioma frio: a precipitacao e neve, a agua exposta congela e a neve fina cobre tudo por cima. */
         function mkBiome() {
-            const CS = 16, CH = 64, SEA = 22, ICE = 35, SNOWL = 36;
+            const CS = 16, CH = 96, SEA = 54, ICE = 35, SNOWL = 36;
             let perm = new Uint8Array(512), SD = 0, seedCur = null;
             function init(seed) {
                 seedCur = seed; SD = seed | 0;
@@ -1633,11 +1635,11 @@
             let gH = 0, gB = 0;
             function col(wx, wz) {
                 const n = fbm(wx * 0.006, wz * 0.006, 5), m = fbm(wx * 0.02 + 100, wz * 0.02, 3);
-                let h = Math.floor(26 + n * 36 + m * 5);
+                let h = Math.floor(58 + n * 36 + m * 5);
                 h = Math.max(3, Math.min(CH - 12, h));
                 gH = h;
                 const t = fbm(wx * 0.0022 + 300, wz * 0.0022 - 300, 2), w = fbm(wx * 0.003 - 700, wz * 0.003 + 200, 2);
-                if (h >= 38) gB = 6;
+                if (h >= 70) gB = 6;
                 else if (t < -0.1) gB = w > 0 ? 3 : 4;
                 else if (t > 0.12) gB = w < 0.12 ? 5 : 0;
                 else gB = w > 0.12 ? 2 : (w > -0.02 ? 1 : 0);
@@ -1668,7 +1670,7 @@
         }
 
         function workerMain() {
-            const CS = 16, CH = 64, SEA = 22;
+            const CS = 16, CH = 96, SEA = 54;
             const BM = mkBiome(), hash = BM.hash, init = BM.init;
             let gH = 0, gB = 0;
             function col(wx, wz) { BM.col(wx, wz); gH = BM.h; gB = BM.b; }
@@ -1710,7 +1712,7 @@
                 if (h3(ci, cj, 0, 901) < 0.40) {
                     const cx = ci * 40 + ((h3(ci, cj, 1, 901) * 40) | 0), cz = cj * 40 + ((h3(ci, cj, 2, 901) * 40) | 0);
                     col(cx, cz); const h = gH, sx = cx - 8, sz = cz - 8;
-                    if (h > SEA + 6 && sx * sx + sz * sz > 900) s = { x: cx, z: cz, h, r: 2.2 + h3(ci, cj, 3, 901) * 2.6, bot: 7 + ((h3(ci, cj, 4, 901) * 9) | 0) };
+                    if (h > SEA + 6 && sx * sx + sz * sz > 900) s = { x: cx, z: cz, h, r: 2.2 + h3(ci, cj, 3, 901) * 2.6, bot: 39 + ((h3(ci, cj, 4, 901) * 9) | 0) };
                 }
                 skMap.set(key, s); return s;
             }
@@ -1760,13 +1762,13 @@
                     const t = (o.h - y) / o.rd; if (o.rv < o.rw * (1 - 0.8 * t)) return 2;
                 }
                 if (y > o.top) return 0;
-                if (y >= 4 && y <= 31 && y <= o.top - 1) { // saloes: so em baixa altitude, e quanto mais fundo mais faceis
-                    const g = y <= 26 ? 1 : (31 - y) / 5;
+                if (y >= 36 && y <= 63 && y <= o.top - 1) { // saloes: so em baixa altitude, e quanto mais fundo mais faceis
+                    const g = y <= 58 ? 1 : (63 - y) / 5;
                     const c = P3(wx * 0.0105 + 17, y * 0.024 + 3, wz * 0.0105 - 9) + 0.28 * P3(wx * 0.03, y * 0.06 + 7, wz * 0.03 + 41);
-                    if (c > T3 + (1 - g) * 0.5 - Math.max(0, 26 - y) * 0.0042) return 3;
+                    if (c > T3 + (1 - g) * 0.5 - Math.max(0, 58 - y) * 0.0042) return 3;
                 }
                 const a = P3(wx * 0.021, y * 0.027 + 9, wz * 0.021), b = P3(wx * 0.021 + 200, y * 0.027 + 60, wz * 0.021 - 100);
-                const R = TR + 0.02 * (1 - Math.min(1, y / 44)); // tuneis ficam mais largos no fundo
+                const R = TR + 0.02 * (1 - Math.min(1, (y - 32) / 44)); // tuneis ficam mais largos no fundo
                 if (a * a + b * b < R * R) return 2;
                 if (P3(wx * 0.08 + 5, y * 0.10 - 3, wz * 0.08 + 11) + 0.4 * P3(wx * 0.16, y * 0.2, wz * 0.16 + 3) > T1) return 1;
                 return 0;
@@ -1780,10 +1782,10 @@
                 if (y > 0) { v = cls[r - 324]; if (v > m) m = v; }
                 return m;
             }
-            // veios de minerio: [id, ymin, ymax, veios por chunk, tamanho]. Do mais facil (carvao) ao mais dificil (diamante).
-            const OREV = [[0, 5, 50, 14, 10], [1, 4, 38, 6, 8], [2, 3, 32, 6, 6], [3, 3, 19, 1.4, 4], [4, 3, 14, 1.8, 5], [5, 3, 17, 1.0, 3], [6, 3, 11, 0.6, 3]];
-            // minerios na parede das cavernas: [id, ymin, ymax, prob. pequena, media, grande] - os raros so aparecem em cavernas maiores
-            const WALLO = [[6, 3, 11, 0, 0, 0.040], [5, 3, 17, 0, 0, 0.022], [4, 3, 14, 0, 0.020, 0.040], [3, 3, 20, 0, 0.014, 0.032], [2, 3, 32, 0, 0.032, 0.050], [1, 4, 40, 0.020, 0.040, 0.040], [0, 4, 50, 0.050, 0.050, 0.040]];
+            // veios de minerio: [id, ymin, ymax, pico, veios por chunk, tamanho]. Distribuicao triangular (estilo Minecraft): cada minerio tem uma faixa de profundidade onde e mais comum.
+            const OREV = [[0, 44, 84, 70, 4.5, 8], [1, 8, 64, 42, 3.0, 7], [2, 4, 76, 26, 4.0, 5], [3, 2, 36, 12, 1.4, 3], [4, 2, 24, 6, 1.1, 4], [5, 2, 32, 14, 0.7, 2], [6, 2, 16, 5, 0.45, 2]];
+            // minerios na parede das cavernas: [id, ymin, ymax, prob. pequena, media, grande] - os raros so aparecem em cavernas maiores e mais fundas (10x mais raros que antes)
+            const WALLO = [[6, 2, 16, 0, 0, 0.0035], [5, 2, 32, 0, 0, 0.0035], [4, 2, 24, 0, 0.0025, 0.005], [3, 2, 36, 0, 0.0025, 0.005], [2, 4, 76, 0, 0.003, 0.005], [1, 8, 64, 0, 0.004, 0.005], [0, 44, 84, 0.004, 0.004, 0.004]];
             function caveSystem(d, X0, Z0) {
                 SDW = BM.seed | 0; if (skSeed !== BM.seed) { skSeed = BM.seed; skMap.clear(); }
                 const cls = new Uint8Array(18 * 18 * CH);
@@ -1800,11 +1802,11 @@
                     if (b !== 3 && b !== DEEP) continue;
                     const w = nbMax(cls, lx, y, lz); if (!w) continue;
                     const wx = X0 + lx, wz = Z0 + lz;
-                    if (w === 3 && y <= 14) { // cristal solto na parede: raro e isolado (o grosso dos cristais fica nos geodos)
+                    if (w === 3 && y <= 46) { // cristal solto na parede: raro e isolado (o grosso dos cristais fica nos geodos)
                         if (h3(wx, y, wz, 33) < 0.0022 && h3(wx >> 3, y >> 3, wz >> 3, 36) < 0.5) { d[i] = CRYST; continue; }
                     }
                     if (cls[((y + 1) * 18 + lz + 1) * 18 + lx + 1] >= 2) { // chao de caverna media/grande
-                        if (y <= 10 && h3(wx >> 1, wz >> 1, y >> 2, 32) < 0.24) d[i] = MAGMA;
+                        if (y <= 42 && h3(wx >> 1, wz >> 1, y >> 2, 32) < 0.24) d[i] = MAGMA;
                         else if (h3(wx >> 2, wz >> 2, 0, 31) < 0.2 && h3(wx, y, wz, 35) < 0.85) d[i] = GRAVEL;
                     }
                 }
@@ -1827,8 +1829,10 @@
                 for (let ci = i0; ci <= i1; ci++) for (let cj = j0; cj <= j1; cj++) {
                     if (h3(ci, cj, 0, 611) > 0.30) continue;
                     const gx = ci * CL + ((h3(ci, cj, 1, 611) * CL) | 0), gz = cj * CL + ((h3(ci, cj, 2, 611) * CL) | 0);
-                    const r = 3.2 + h3(ci, cj, 3, 611) * 2.2, gy = 7 + ((h3(ci, cj, 4, 611) * 10) | 0);
-                    col(gx, gz); const gh = gH; if (gh <= SEA + 2 || gy + r + 4 > gh) continue;
+                    const r = 3.2 + h3(ci, cj, 3, 611) * 2.2;
+                    col(gx, gz); const gh = gH; if (gh <= SEA + 2) continue; // geodo sempre bem fundo, colado no fundo do terreno
+                    const gy = Math.max(4, gh - 22 - ((h3(ci, cj, 4, 611) * 22) | 0));
+                    if (gy + r + 4 > gh) continue;
                     const R = Math.ceil(r + 2);
                     for (let dz = -R; dz <= R; dz++) for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
                         const lx = gx + dx - X0, lz = gz + dz - Z0, y = gy + dy;
@@ -1847,8 +1851,10 @@
                         for (let a = 0; a < n; a++) {
                             let s = (h3(ox, oz, O[0] * 37 + a, 901) * 4294967296) >>> 0;
                             const rr = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
-                            const px = [ox * 16 + ((rr() * 16) | 0)], py = [O[1] + ((rr() * (O[2] - O[1] + 1)) | 0)], pz = [oz * 16 + ((rr() * 16) | 0)];
-                            const sz = Math.max(1, Math.round(O[4] * (0.6 + 0.8 * rr())));
+                            const fp = (O[3] - O[1]) / (O[2] - O[1]); // pico do veio: sorteio triangular, denso na faixa certa e raro nas pontas
+                            const uy = rr() < fp ? fp * Math.sqrt(rr()) : fp + (1 - fp) * (1 - Math.sqrt(rr()));
+                            const px = [ox * 16 + ((rr() * 16) | 0)], py = [O[1] + Math.round(uy * (O[2] - O[1]))], pz = [oz * 16 + ((rr() * 16) | 0)];
+                            const sz = Math.max(1, Math.round(O[5] * (0.6 + 0.8 * rr())));
                             for (let t = 0; t < sz; t++) {
                                 const k = (rr() * px.length) | 0; let x = px[k], y = py[k], z = pz[k];
                                 const ax = (rr() * 3) | 0, sg = rr() < 0.5 ? -1 : 1;
@@ -1856,7 +1862,7 @@
                                 const lx = x - X0, lz = z - Z0;
                                 if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 3 || y >= CH) continue;
                                 const q = (y << 8) | (lz << 4) | lx, b = d[q];
-                                if (b === 3) d[q] = ORE0 + O[0]; else if (b === DEEP) d[q] = ORE0 + DOFF + O[0];
+                                if (b === DEEP) d[q] = ORE0 + DOFF + O[0]; else if (b === 3 && O[0] < 4) d[q] = ORE0 + O[0]; // pedra comum: so carvao, cobre e ferro; raros ficam na ardosia
                             }
                         }
                     }
@@ -1890,13 +1896,13 @@
                     col(wx, wz);
                     const h = gH, b = gB, beach = h <= SEA + 1;
                     bio[(z << 4) | x] = b;
-                    const ds = 12 + Math.round(P2(wx * 0.06 + 400, wz * 0.06 - 200) * 4); // limite da ardosia (onda suave entre y 8 e 16)
+                    const ds = 44 + Math.round(P2(wx * 0.06 + 400, wz * 0.06 - 200) * 4); // limite da ardosia (onda suave entre y 40 e 48)
                     for (let y = 0; y <= h; y++) {
                         let id = 3;
                         if (y > 0) {
                             if (beach) { if (y >= h - 3) id = 4; }
                             else if (b === 5) id = y >= h - 3 ? 4 : (y >= h - 7 ? 31 : 3);
-                            else if (b === 6) id = (y === h && h >= 44) ? 32 : 3;
+                            else if (b === 6) id = (y === h && h >= 76) ? 32 : 3;
                             else if (b === 3 || b === 4) id = y === h ? 24 : (y >= h - 3 ? 2 : 3);
                             else id = y === h ? 1 : (y >= h - 3 ? 2 : 3);
                         }
@@ -1997,7 +2003,7 @@
                     for (let dz = -2; dz <= 2 && ok; dz++) for (let dx = -2; dx <= 2; dx++) if ((dx || dz) && hash(wx + dx, wz + dz) < r) { ok = false; break; }
                     if (!ok) continue;
                     col(wx, wz); const h = gH, b = gB;
-                    if (r >= DENS[b] || h <= SEA + 1 || (b === 6 && h >= 44)) continue;
+                    if (r >= DENS[b] || h <= SEA + 1 || (b === 6 && h >= 76)) continue;
                     if (treeBlocked(wx, wz)) continue;
                     const a = hash(wx + 11, wz + 5), s = hash(wx + 31, wz - 17), c = hash(wx - 7, wz + 23), pk = hash(wx + 3, wz + 9);
                     if (b === 5) { const ch = 1 + (a * 3 | 0); for (let y = 1; y <= ch; y++) put(wx, h + y, wz, 29, 1); }
@@ -2037,7 +2043,7 @@
 
         /* ---------- Texturas pintadas so com codigo ---------- */
         function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-        const atlas = document.createElement('canvas'); const NT = 73; atlas.width = NT * 16; atlas.height = 16;
+        const atlas = document.createElement('canvas'); const NT = 76; atlas.width = NT * 16; atlas.height = 16;
         const actx2 = atlas.getContext('2d');
         function tile(i, fn) {
             const r = rnd(i * 977 + 13);
@@ -2072,35 +2078,89 @@
             const FL = { 24: [236, 72, 22], 39: [255, 122, 30], 40: [255, 122, 30], 55: [255, 172, 48], 56: [255, 172, 48], 70: [232, 90, 26], 71: [255, 214, 92], 72: [255, 214, 92], 73: [232, 90, 26], 86: [226, 80, 22], 87: [255, 244, 170], 88: [255, 244, 170], 89: [226, 80, 22] };
             return FL[y * 16 + x] || [0, 0, 0, 0]; // chama (so no icone)
         });
-        // balde redesenhado (14 = vazio, 15 = cheio de agua): vista de frente com o interior aberto.
-        // Linhas: 0-4 alca (arco de aco), 5 aro brilhante, 6-12 corpo afunilado, 13 fundo, 14 base alargada.
+        // balde estilo Minecraft (14 = vazio, 15 = cheio de agua): pixel art 16x16 fiel ao icone classico.
+        // Sem alca — apenas stubs de encaixe no topo, corpo trapezoidal com sombreamento de ferro e
+        // reflexo branco no corpo, igual a textura do Minecraft.
         const bucketPx = (x, y, full) => {
             const T = [0, 0, 0, 0];
-            if (y < 5) { // alca: arco fino de aco, com as pontas caindo ate o aro
-                const on = (y === 1 && x >= 6 && x <= 9) ||
-                    (y === 2 && ((x >= 4 && x <= 5) || (x >= 10 && x <= 11))) ||
-                    ((y === 3 || y === 4) && (x === 4 || x === 11));
-                return on ? [150, 154, 164] : T;
+            // paleta de ferro Minecraft
+            const O  = [55, 55, 55];       // contorno
+            const VD = [78, 78, 78];       // muito escuro
+            const DK = [106, 106, 106];    // escuro
+            const MD = [139, 139, 139];    // medio
+            const LG = [168, 168, 168];    // cinza claro
+            const LT = [196, 196, 196];    // claro
+            const WH = [226, 226, 226];    // reflexo branco
+
+            if (y === 0 || y >= 15) return T;
+
+            // y=1: stubs do encaixe da alca (sem arco)
+            if (y === 1) return (x === 5 || x === 6 || x === 9 || x === 10) ? DK : T;
+
+            // y=2: topo do aro
+            if (y === 2) {
+                if (x < 4 || x > 11) return T;
+                if (x === 4 || x === 11) return O;
+                if (x <= 6) return LG;
+                if (x <= 8) return MD;
+                return DK;
             }
-            let L, R; // limites do corpo por fileira: aro largo em cima, afunila embaixo
-            if (y === 5 || y === 6 || y === 7) { L = 2; R = 13; }
-            else if (y >= 8 && y <= 10) { L = 3; R = 12; }
-            else if (y >= 11 && y <= 13) { L = 4; R = 11; }
-            else if (y === 14) { L = 3; R = 12; } // base levemente mais larga
-            else return T;
+            // y=3: aro meio
+            if (y === 3) {
+                if (x < 3 || x > 12) return T;
+                if (x === 3 || x === 12) return O;
+                if (x === 4) return LT;
+                if (x <= 6) return LG;
+                if (x <= 9) return MD;
+                return DK;
+            }
+            // y=4: aro inferior
+            if (y === 4) {
+                if (x < 3 || x > 12) return T;
+                if (x === 3 || x === 12) return O;
+                if (x === 4) return LG;
+                if (x === 5) return LT;
+                if (x <= 8) return MD;
+                if (x <= 10) return DK;
+                return VD;
+            }
+            // y=5: faixa escura separadora (borda do aro)
+            if (y === 5) {
+                if (x < 3 || x > 12) return T;
+                return (x === 3 || x === 12) ? O : DK;
+            }
+
+            // corpo (y 6-14)
+            let L, R;
+            if (y <= 7)       { L = 3; R = 12; }
+            else if (y <= 10) { L = 4; R = 11; }
+            else if (y <= 13) { L = 5; R = 10; }
+            else              { L = 5; R = 10; } // y=14 base
             if (x < L || x > R) return T;
-            if (y === 5) return (x === L || x === R) ? [158, 160, 168] : [204, 206, 214]; // aro: metal claro
-            if (y === 13) return [172, 172, 180];  // fundo do corpo
-            if (y === 14) return [72, 72, 80];     // base sombreada
-            if (x === L) return [158, 160, 168];   // parede esquerda (luz)
-            if (x === R) return [102, 104, 112];   // parede direita (sombra)
-            if (!full) { // vazio: buraco escuro, com sombra logo sob o aro
-                const g = y === 6 ? 26 : 44; return [g, g, g + 8];
+            if (x === L || x === R) return O;
+
+            // base
+            if (y === 14) return DK;
+            if (y === 13) return MD;
+
+            // interior vazio: reflexo branco + gradiente esquerda→direita
+            if (!full) {
+                // reflexo branco (bloco de destaque no corpo)
+                if ((y === 7 || y === 8) && (x === L + 1 || x === L + 2)) return WH;
+                if (y === 9 && x === L + 1) return WH;
+                // gradiente de ferro: claro na esquerda, escuro na direita
+                const w = R - L - 1, p = x - L - 1, f = p / Math.max(w - 1, 1);
+                if (f < 0.25) return LT;
+                if (f < 0.5)  return LG;
+                if (f < 0.75) return MD;
+                return DK;
             }
-            if (y === 6) return (x === 4 || x === 10) ? [224, 240, 255] : [120, 184, 255]; // superficie da agua: pontos de luz
-            if (y === 7) { const n = ((x * 7 + y * 3) % 5) ? 0 : 14; return [78 + n, 144 + n, 238]; }
-            if (y <= 10) { const n = ((x + y * 2) % 7) ? 0 : -8; return [56 + n, 118 + n, 230]; }
-            return y === 11 ? [42, 98, 214] : [34, 84, 196]; // embaixo, a agua parece mais funda
+
+            // interior cheio de agua
+            if (y === 6) { return ((x + y) % 3 === 0) ? [100, 165, 240] : [55, 120, 215]; }
+            if (y <= 9)  { const n = ((x * 3 + y * 7) % 5 === 0) ? 12 : 0; return [40 + n, 92 + n, 200]; }
+            if (y <= 11) { const n = ((x + y) % 4 === 0) ? 8 : 0; return [30 + n, 72 + n, 185]; }
+            return [25, 58, 168];
         };
         tile(14, (x, y) => bucketPx(x, y, false));
         tile(15, (x, y) => bucketPx(x, y, true));
@@ -2333,6 +2393,27 @@
             let c = lerp3([96, 52, 168], [168, 120, 224], sst1(0, 1, y / 15));
             if ((x * 4 + y * 3) % 9 === 0) c = [198, 164, 244];
             if ((x * 5 + y * 7) % 13 === 0) c = [64, 30, 120];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(73, (x, y, r) => { // coral amarelo (Fire Coral): dourado vivo com poros alaranjados
+            const n = nz(r, 8);
+            let c = lerp3([210, 140, 20], [255, 214, 46], sst1(0, 1, y / 15));
+            if ((x * 4 + y * 3) % 9 === 0) c = [255, 240, 130];
+            if ((x * 5 + y * 7) % 13 === 0) c = [170, 95, 10];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(74, (x, y, r) => { // coral vermelho (Tubipora): carmesim vibrante com poros rosados
+            const n = nz(r, 8);
+            let c = lerp3([175, 26, 36], [235, 65, 75], sst1(0, 1, y / 15));
+            if ((x * 4 + y * 3) % 9 === 0) c = [255, 150, 160];
+            if ((x * 5 + y * 7) % 13 === 0) c = [120, 12, 20];
+            return [c[0] + n, c[1] + n, c[2] + n];
+        });
+        tile(75, (x, y, r) => { // anêmona / coral ciano: turquesa vivo com pontas brilhantes
+            const n = nz(r, 8);
+            let c = lerp3([18, 135, 155], [50, 210, 215], sst1(0, 1, y / 15));
+            if ((x * 4 + y * 3) % 9 === 0) c = [135, 245, 250];
+            if ((x * 5 + y * 7) % 13 === 0) c = [10, 85, 105];
             return [c[0] + n, c[1] + n, c[2] + n];
         });
         const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
@@ -2640,7 +2721,7 @@ precision mediump float; out vec4 o; void main(){ o=vec4(0.0,0.0,0.0,0.9); }`);
 
         /* ---------- Ceu: GLSL compartilhado pelo domo e pelo reflexo da agua ----------
            Tudo em estilo Minecraft: sol e lua quadrados, estrelas em pixels, nuvens em blocos 12x12x4 com lado e fundo sombreados. */
-        const CLOUD_Y = 84, CLOUD_CELL = 12, CLOUD_N = 128;
+        const CLOUD_Y = 116, CLOUD_CELL = 12, CLOUD_N = 128;
         const SKN = ['sky', 'cam', 'sun', 'sunI', 'tm', 'zen', 'glow', 'mglow', 'sunC', 'starI', 'moonI', 'moonPh', 'cThr', 'cTop', 'cSide', 'cBot', 'cOff', 'starM', 'ctex', 'ntex', 'skyQ'];
         const SKYGLSL = `
 uniform vec3 sky; uniform vec3 cam; uniform vec3 sun; uniform float sunI; uniform float tm;
@@ -2910,14 +2991,26 @@ void main(){
         function freeMesh(m) { if (m) { gl.deleteBuffer(m.vbo); gl.deleteVertexArray(m.vao); } }
 
         /* ---------- Matematica ---------- */
-        function persp(fov, asp, n, f) { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); }
-        function lookAt(e, c, u) {
+        // Vetores e matrizes reutilizadas (zero alocacao por quadro): os quadros estaveis dependem
+        // de nao irritar o coletor de lixo a cada render.
+        const _eye = new Float32Array(3), _dir = new Float32Array(3), _aim = new Float32Array(3);
+        const _e2 = new Float32Array(3), _ctr = new Float32Array(3), _sky = new Float32Array(3), UPV = [0, 1, 0];
+        const _view = new Float32Array(16), _proj = new Float32Array(16), _mvpM = new Float32Array(16);
+        function persp(fov, asp, n, f, o) {
+            const t = 1 / Math.tan(fov / 2);
+            o[0] = t / asp; o[1] = 0; o[2] = 0; o[3] = 0; o[4] = 0; o[5] = t; o[6] = 0; o[7] = 0;
+            o[8] = 0; o[9] = 0; o[10] = (f + n) / (n - f); o[11] = -1; o[12] = 0; o[13] = 0; o[14] = 2 * f * n / (n - f); o[15] = 0;
+            return o;
+        }
+        function lookAt(e, c, u, o) {
             let zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
             let xx = u[1] * zz - u[2] * zy, xy = u[2] * zx - u[0] * zz, xz = u[0] * zy - u[1] * zx; l = Math.hypot(xx, xy, xz); xx /= l; xy /= l; xz /= l;
             const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
-            return new Float32Array([xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0, -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1]);
+            o[0] = xx; o[1] = yx; o[2] = zx; o[3] = 0; o[4] = xy; o[5] = yy; o[6] = zy; o[7] = 0; o[8] = xz; o[9] = yz; o[10] = zz; o[11] = 0;
+            o[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); o[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); o[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); o[15] = 1;
+            return o;
         }
-        function mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+        function mul(a, b, o) { for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
 
         /* ---------- Mundo ---------- */
         const chunks = new Map();
@@ -3025,6 +3118,42 @@ void main(){
                 arr.push(ox + 0.5 + (wd ? wd[0] * k : 0) + lx, oy + yo + ly, oz + 0.5 + (wd ? wd[1] * k : 0) + lz, u, v, sh, sk, bk);
             }, seed);
         }
+        /* ---------- Espinhos do cacto (29): bumps sutis de 1 pixel que saem para fora do bloco ---------- */
+        const TH_S = 0.03125, TH_P = 0.0625; // meia-largura da base (1/2 pixel) e altura (1 pixel), em blocos
+        const TH_U = (24 + 2.5 / 16) / NT, TH_V = 1.5 / 16; // pixel claro do espinho no proprio atlas (tile 24, px 2, py 1)
+        const TH_C = [[-1, -1], [1, -1], [1, 1], [-1, 1]]; // cantos da base quadrada (x TH_S)
+        const TH_AB = [[0, 1], [0, 0], [0, 1], [0, 0], [1, 1], [0, 1]]; // (tu,tv) da textura -> (a,b) no plano da face, casado com os pontos claros pintados
+        const TH_PT = [ // ponto no plano da face: a/b ao longo dela, d para fora (o = saida [x,y,z])
+            (a, b, d, o) => { o[0] = a; o[1] = 1 + d; o[2] = b; },
+            (a, b, d, o) => { o[0] = a; o[1] = -d; o[2] = b; },
+            (a, b, d, o) => { o[0] = 1 + d; o[1] = a; o[2] = b; },
+            (a, b, d, o) => { o[0] = -d; o[1] = a; o[2] = b; },
+            (a, b, d, o) => { o[0] = a; o[1] = b; o[2] = 1 + d; },
+            (a, b, d, o) => { o[0] = a; o[1] = b; o[2] = -d; }
+        ];
+        const TH_SH = [[0.65, 0.8, 0.65, 0.8], [0.65, 0.8, 0.65, 0.8], [0.5, 0.65, 1, 0.65], [0.5, 0.65, 1, 0.65], [0.5, 0.8, 1, 0.8], [0.5, 0.8, 1, 0.8]]; // sombra dos 4 lados (tons das faces do terreno na mesma direcao)
+        const TH_SIDES = []; // 16 espinhos por face lateral: os 4x4 pontos claros pintados no tile viram bumps
+        for (const tv of [0.09375, 0.34375, 0.59375, 0.84375]) for (const tu of [0.15625, 0.40625, 0.65625, 0.90625]) TH_SIDES.push([tu, tv]);
+        const TH_POS = [
+            [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]], // topo: 4 para cima
+            TH_SIDES, TH_SIDES, TH_SIDES, TH_SIDES, TH_SIDES // fundo e lados (fundo so nasce se a face aparecer)
+        ];
+        const TH_O = [0, 0, 0]; // saida reutilizada: zero alocacao por espinho
+        function pushThorns(arr, f, ox, oy, oz, sk, bk) {
+            const P = TH_PT[f], AB = TH_AB[f], SH = TH_SH[f], lista = TH_POS[f];
+            for (let s = 0; s < lista.length; s++) {
+                const a0 = AB[0] ? 1 - lista[s][0] : lista[s][0], b0 = AB[1] ? 1 - lista[s][1] : lista[s][1];
+                for (let i = 0; i < 4; i++) { // piramide de 4 lados: canto i -> canto seguinte -> ponta
+                    const c0 = TH_C[i], c1 = TH_C[(i + 1) & 3], sh = SH[i];
+                    P(a0 + c0[0] * TH_S, b0 + c0[1] * TH_S, 0, TH_O);
+                    arr.push(ox + TH_O[0], oy + TH_O[1], oz + TH_O[2], TH_U, TH_V, sh, sk, bk);
+                    P(a0 + c1[0] * TH_S, b0 + c1[1] * TH_S, 0, TH_O);
+                    arr.push(ox + TH_O[0], oy + TH_O[1], oz + TH_O[2], TH_U, TH_V, sh, sk, bk);
+                    P(a0, b0, TH_P, TH_O);
+                    arr.push(ox + TH_O[0], oy + TH_O[1], oz + TH_O[2], TH_U, TH_V, sh, sk, bk);
+                }
+            }
+        }
         const SNOW_H = 0.125, SNOW_BOX = [0, 0, 0, 1, SNOW_H, 1]; // neve fina: 1/8 de bloco
         const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b) || b === SNOWL;
         function buildMesh(ch) {
@@ -3103,6 +3232,7 @@ void main(){
                         dn++;
                     }
                     pushFace(o, F, X0 + x, y, Z0 + z, tl[F.k], b === SNOWL ? SNOW_H : 1, (lv >> 4) / 15 + fg, (lv & 15) / 15);
+                    if (b === 29) pushThorns(o, f, X0 + x, y, Z0 + z, (lv >> 4) / 15 + fg, (lv & 15) / 15); // cacto: espinhos 3D nas faces visiveis
                 }
             }
             freeMesh(ch.mo); freeMesh(ch.mw);
@@ -3283,6 +3413,15 @@ void main(){
             for (const [k, ch] of chunks) {
                 if (Math.abs(ch.cx - pcx) > R + 2 || Math.abs(ch.cz - pcz) > R + 2) {
                     freeMesh(ch.mo); freeMesh(ch.mw);
+                    if (ch.decors) {
+                        for (let i = 0; i < ch.decors.length; i++) {
+                            const d = ch.decors[i];
+                            const idx = d.sp.list.indexOf(d.item);
+                            if (idx >= 0) d.sp.list.splice(idx, 1);
+                        }
+                        ch.decors.length = 0;
+                        ch.decorGen = false;
+                    }
                     if (ch.modified) { saved.set(k, ch.data); if (ch.sd) savedDirty.add(k); }
                     chunks.delete(k); _lcx = 1e9;
                 }
@@ -3308,7 +3447,7 @@ void main(){
         }
 
         /* ---------- Jogador e fisica ---------- */
-        const P = { x: 8.5, y: 70, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: -0.2, ground: false, fly: false, sneak: false, sprint: false, eh: 1.62, fk: 0 };
+        const P = { x: 8.5, y: 100, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: -0.2, ground: false, fly: false, sneak: false, sprint: false, eh: 1.62, fk: 0 };
         let sprintLatch = false, lastW = 0, lastSpace = 0, spdMul = 1; // spdMul: cheat /veloz (1 = normal)
         const GAMEMODE = 'creative'; // no futuro modo sobrevivencia: voo desligado
         function toggleFly(keepVy) { if (GAMEMODE !== 'creative') return; P.fly = !P.fly; if (!keepVy) P.vy = 0; }
@@ -3388,7 +3527,7 @@ void main(){
             if (inW && !P.fly && wall && (ix || iz)) {
                 if (!hits(P.x + wx * 0.45, P.y + 1.5, P.z + wz * 0.45)) P.vy = Math.max(P.vy, 9.8);
             }
-            if (P.y < -30) { P.y = 80; P.vy = 0; }
+            if (P.y < -30) { P.y = 90; P.vy = 0; }
         }
         function surfaceY(x, z) {
             for (let y = CH - 1; y > 0; y--) { const b = getBlock(x, y, z, 0); if (b !== 0 && !isWater(b)) return y + 1; }
@@ -3400,6 +3539,8 @@ void main(){
         }
 
         /* ---------- Raycast ---------- */
+        const brokenDecors = new Set();
+        const decorMap = new Map();
         // caixa de selecao da tocha (relativa a celula): [x0,y0,z0,x1,y1,z1]
         function torchBox(b) {
             if (b === TORCH) return [0.4375, 0, 0.4375, 0.5625, 0.625, 0.5625];
@@ -3431,6 +3572,13 @@ void main(){
             for (let i = 0; i < 200; i++) {
                 const b = getBlock(x, y, z, 0);
                 if (src && b === WSRC) return { x, y, z, px, py, pz, b };
+                if (isWater(b) && !src) {
+                    const dec = decorMap.get(x + ',' + y + ',' + z);
+                    if (dec) {
+                        const B = dec.box || [0.15, 0, 0.15, 0.85, 0.95, 0.85];
+                        if (rayBox(o, d, x, y, z, B, maxD) >= 0) return { x, y, z, px, py, pz, b: 0, isDecor: true, decor: dec, box: B };
+                    }
+                }
                 if (b !== 0 && !isWater(b)) {
                     if (!isSoft(b)) return { x, y, z, px, py, pz, b };
                     const B = b === SNOWL ? SNOW_BOX : torchBox(b); // tocha e neve fina: so contam se o raio realmente tocar na caixa
@@ -3655,13 +3803,23 @@ void main(){
         /* ---------- Ciclo de vida do mundo ---------- */
         function resetWorld() {
             for (const c of chunks.values()) { freeMesh(c.mo); freeMesh(c.mw); }
-            chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear();
+            chunks.clear(); _lcx = 1e9; saved.clear(); savedDirty.clear(); dbKeys.clear(); pending.clear(); active.clear(); wq.clear(); brokenDecors.clear(); decorMap.clear();
             tnts.length = 0; bN = 0; history.length = 0; spawned = false; thumb = null; flashAmt = 0; shake = 0;
             timeLock = -1; // volta ao ciclo normal; openWorld restaura a trava salva do mundo, se houver
             raining = false; rainAmt = 0; wxTimer = 60 + Math.random() * 140;
             mobsReset(); // (declaração içada — seguro)
             P.vx = P.vy = P.vz = 0; P.fly = false; pendingSave = wantThumb = false;
             readyAt = 0; autoEnterDone = true; // estado da tela de carregamento
+        }
+        // Mundo antigo (CH=64): os dados sobem 32 blocos para casar com o novo terreno (SEA 22 -> 54).
+        // O espaco liberado embaixo vira ardosia (44) e o fundo do mundo fica rocha matriz (56).
+        function migrateChunk(v) {
+            if (!v || v.length === CS * CS * CH) return v;
+            const d = new Uint8Array(CS * CS * CH);
+            d.set(v, 32 << 8); // coluna antiga inteira sobe para y 32..95
+            for (let y = 0; y < 32; y++) for (let i = y << 8, e = i + 256; i < e; i++) d[i] = 44; // ardosia no porao novo
+            for (let y = 0; y < 3; y++) for (let i = y << 8, e = i + 256; i < e; i++) d[i] = 56; // rocha matriz no fundo
+            return d;
         }
         async function openWorld(m) {
             epoch++; pano = false; resetWorld(); cur = m; state = 'loading';
@@ -3672,12 +3830,15 @@ void main(){
             show('load');
             const rows = await kv.range('chunks', m.id + '/');
             if (cur !== m) return;
-            for (const [k, v] of rows) { const ck = k.slice(m.id.length + 1); saved.set(ck, v); dbKeys.add(ck); }
+            for (const [k, v] of rows) { const ck = k.slice(m.id.length + 1), mv = migrateChunk(v); saved.set(ck, mv); dbKeys.add(ck); if (mv !== v) savedDirty.add(ck); }
             if (!m.snowV) { // mundo criado antes da neve fina/gelo: decora os chunks ja editados (so uma vez; os demais nascem prontos)
                 for (const [ck, v] of saved) { const q = ck.split(',').map(Number); BIO.decorate(v, chunkBio(q[0], q[1])); savedDirty.add(ck); }
                 m.snowV = 1;
             }
             const pl = m.player;
+            if (!m.dv && pl) { // mundo antigo: o jogador sobe junto com o terreno (+32 blocos)
+                pl.y += 32; m.dv = 1; kv.batch([['worlds', m.id, m]]);
+            }
             if (pl) { P.x = pl.x; P.y = pl.y; P.z = pl.z; P.yaw = pl.yaw; P.pitch = pl.pitch; spawnAt = [Math.floor(pl.x), Math.floor(pl.z)]; }
             else { P.x = 8.5; P.z = 8.5; P.yaw = 0; P.pitch = -0.2; spawnAt = [8, 8]; }
             time = m.time ?? 0.2; raining = !!m.raining; rainAmt = raining ? 0.6 : 0; rainInt = rainIntT = 0.6; wxIdx = 1; wxTimer = 60 + Math.random() * 140; applyHot(m.hot, m.hotTiles); sel = (m.sel || 0) % 10; refreshHotbar(); streamT = 0;
@@ -3700,7 +3861,7 @@ void main(){
             choosePanoramaSpots(epoch, cur.seed, spots => {
                 panoSpots = spots; panoIdx = 0; panoSpot = spots[0]; spawnAt = spots[0];
             });
-            P.x = P.z = 8.5; P.y = 46; P.yaw = panoA; P.pitch = -0.07; P.vx = P.vy = P.vz = 0; P.fly = false; P.fk = 0;
+            P.x = P.z = 8.5; P.y = 78; P.yaw = panoA; P.pitch = -0.07; P.vx = P.vy = P.vz = 0; P.fly = false; P.fk = 0;
             applyHot(DEFHOT); sel = 0; refreshHotbar(); streamT = 0;
         }
         /* Escolhe varios mirantes do panorama: um worker temporario faz uma varredura leve (somente ruido
@@ -3881,7 +4042,7 @@ void main(){
             menu.style.display = 'flex';
         }
         const fmtDur = s => { s = Math.floor(s || 0); if (s < 60) return '< 1 min'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'min' : m + ' min'; };
-        const fmtSize = n => { const kb = n * 16; return kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'; };
+        const fmtSize = n => { const kb = n * 24; return kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'; }; // chunk agora tem 16x16x96 blocos
         const fmtDate = t => new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
         const seedLabel = m => m.seedText ? m.seedText : String(m.seed);
         function metaLine(m) { return 'Semente ' + seedLabel(m) + ' · ' + fmtDur(m.playTime) + ' jogados · ' + (m.chunkCount ? fmtSize(m.chunkCount) + ' salvos' : 'sem edições'); }
@@ -3926,7 +4087,7 @@ void main(){
         $('newW').onclick = () => { $('cName').value = 'Mundo ' + (+$('wl').dataset.n + 1); $('cSeed').value = ''; show('create'); };
         $('cDo').onclick = async () => {
             const name = ($('cName').value.trim() || 'Novo mundo').slice(0, 32), st = $('cSeed').value.trim();
-            const m = { v: 1, id: newId(), name, seedText: st, seed: seedNum(st), created: Date.now(), played: Date.now(), playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null };
+            const m = { v: 1, dv: 1, id: newId(), name, seedText: st, seed: seedNum(st), created: Date.now(), played: Date.now(), playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null };
             await kv.batch([['worlds', m.id, m]]);
             openWorld(m);
         };
@@ -4175,10 +4336,12 @@ void main(){
                     const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
                     const temp = raining ? precipWord().toLowerCase() + ' ' + wxName(rainIntT) : 'claro';
                     return { keep: true, msg:
-                        'FPS ' + fps + ' · chunks ' + chunks.size + ' · visão ' + renderDist + '\n' +
+                        'FPS ' + fps + ' · 1% ' + Math.round(PERF.fps1) + ' · quadro médio/pior ' + PERF.avgMs.toFixed(1) + '/' + PERF.worstMs.toFixed(1) + ' ms\n' +
+                        'Governador: qualidade ' + (PERF.lvl + 1) + '/' + LADDER.length + ' · res ' + Math.round(LADDER[PERF.lvl].rs * 100) + '% · teto ' + PERF.capLabel() + (PERF.freeze > 0 ? ' · alívio temporário ativo' : '') + '\n' +
+                        'chunks ' + chunks.size + ' · visão ' + renderDist + ' · fila malha ' + _dirty.length + ' · fila luz ' + _unlit.length + ' · peixes alvo ' + Math.round(MOB.target * PERF.mobScale) + '\n' +
                         'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
                         'Hora ' + hhmm(time) + (timeLock >= 0 ? ' [travada]' : '') + ' · clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + '\n' +
-                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + '/' + MOB.target + ' · velocidade x' + spdMul };
+                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + ' · velocidade x' + spdMul };
                 }
                 case 'tp': case 'teleportar': {
                     const a = parts.slice(1).map(Number);
@@ -4330,6 +4493,132 @@ void main(){
             if (el && sugList.length) chatApply(sugList[+el.dataset.i]);
         });
 
+        /* ---------- Governador de desempenho (PERF): constancia de FPS ----------
+           Objetivo: acabar com a oscilacao (pico alto seguido de queda) trocando reacao a 1 quadro
+           ruim por decisao estatistica em 4 fases:
+           1) MEDICAO — janela rolante de 160 quadros (~2,5 s). A cada avaliacao comparamos a media,
+              o p95 (equivalente a "1% low") e o pior quadro com o orcamento do limitador.
+              Um pico isolado nunca decide sozinho.
+           2) ESCADA (LADDER) — 9 patamares unificados de qualidade: escala de resolucao, ceu (SK.q),
+              mobs, chuva e efeitos (folhas + raios de sol). Baixar varios ajustes juntos evita
+              "desligar uma coisa por vez" e alongar o sofrimento.
+           3) HISTERESE — degrada quando o p95 passa 12% do orcamento por 0,75 s seguidos (ou de uma
+              vez se passar 2,2x). Para subir, exige folga comprovada por um tempo de permanencia
+              (dwellUp) que comeca em 5 s, dobra ate 24 s a cada sondagem que falha em menos de 8 s
+              e volta a 5 s apos 12 s estavel — assim o jogo para de tentar subir e cair de novo.
+           4) APLICACAO — troca de patamar abre uma "graca" sem medicao (o resize do canvas gera
+              picos falsos). Se mesmo no piso continuar 2,2x acima do orcamento, congela por 0,6 s
+              os trabalhos de malha/luz no fio principal (freeze) para respirar. */
+        const LADDER = [ // rs = escala de resolucao | sky = ceu | mobs | rain | fx (folhas/raios)
+            { rs: 1.00, sky: 1, mobs: 1.00, rain: 1.00, fx: 1.00 },
+            { rs: 0.90, sky: 1, mobs: 1.00, rain: 1.00, fx: 1.00 },
+            { rs: 0.85, sky: 1, mobs: 0.80, rain: 1.00, fx: 1.00 },
+            { rs: 0.80, sky: 1, mobs: 0.60, rain: 0.85, fx: 0.85 },
+            { rs: 0.75, sky: 0, mobs: 0.60, rain: 0.85, fx: 0.85 },
+            { rs: 0.70, sky: 0, mobs: 0.45, rain: 0.70, fx: 0.70 },
+            { rs: 0.60, sky: 0, mobs: 0.35, rain: 0.55, fx: 0.55 },
+            { rs: 0.50, sky: 0, mobs: 0.25, rain: 0.40, fx: 0.35 },
+            { rs: 0.42, sky: 0, mobs: 0.15, rain: 0.30, fx: 0.20 }
+        ];
+        const PERF = {
+            lvl: 0,                          // patamar atual (0 = qualidade maxima)
+            mobScale: 1, rainScale: 1, fxScale: 1, // conteudo do patamar, aplicado nos sistemas
+            jobMesh: 6, jobLight: 5,         // orcamento de malha/luz por quadro (ms) no fio principal
+            capMode: 'auto', cap: 0, capInt: 0, capAcc: 0, budgetMs: 16.7, // limitador de quadros
+            evalT: 0, badT: 0, goodT: 0, grace: 0, freeze: 0, // temporizadores de decisao
+            dwellUp: 5, upT: -99,            // permanencia p/ subir; sondagem em curso (upT >= 0)
+            lastState: '',
+            win: new Float32Array(160), wi: 0, wn: 0, // janela rolante de tempos de quadro (ms)
+            avgMs: 16.7, p95Ms: 16.7, worstMs: 16.7, fps1: 60, // estatisticas da janela
+            _s: [],
+            setCap(m) { // 'auto' (segue o governador) | 'off' (ilimitado) | 60 | 45 | 30
+                if (m !== 'auto' && m !== 'off' && m !== 30 && m !== 45 && m !== 60) return;
+                this.capMode = m;
+                this.cap = m === 'auto' || m === 'off' ? 0 : m;
+                this.capInt = this.cap ? 1 / this.cap : 0;
+                this.capAcc = 0;
+                // Com teto manual, o ritmo do rAF em telas de alta taxa gera intervalos esticados mesmo
+                // com o jogo rapido (padrao de pulos). O orcamento da margem de folga (1,8x) para o
+                // governador nao degradar qualidade por causa do ritmo; sem teto, orcamento de 60 fps.
+                this.budgetMs = this.cap ? this.capInt * 1000 * 1.8 : 16.7;
+            },
+            capLabel() { return this.capMode === 'auto' ? 'Automático' : this.capMode === 'off' ? 'Ilimitado' : String(this.capMode); },
+            pace(dt) { // ritmo: com teto ativo, pula este quadro ate chegar a hora do proximo (sem rajadas apos travadas)
+                if (!this.capInt) return false;
+                this.capAcc += dt;
+                if (this.capAcc < this.capInt * 0.985) return true;
+                this.capAcc = Math.min(this.capInt, this.capAcc - this.capInt);
+                return false;
+            },
+            sample(dt) { this.win[this.wi] = dt * 1000; this.wi = (this.wi + 1) % this.win.length; if (this.wn < this.win.length) this.wn++; },
+            reset() { this.wi = 0; this.wn = 0; this.evalT = 0; this.badT = 0; this.goodT = 0; }, // descarta dados velhos
+            tick(dt, active) {
+                if (state !== this.lastState) { // troca de estado: janela nova + graca para o primeiro quadro pesado
+                    this.lastState = state;
+                    if (state === 'playing' || state === 'pano') { this.reset(); this.grace = 0.8; }
+                    if (state === 'loading') { this.jobMesh = 6; this.jobLight = 5; } // carregamento: montar o mundo rapido, sem orcamento apertado herdado
+                }
+                if (!active) return; // estados estaticos (pausa/inventario) nao alimentam estatisticas
+                if (this.freeze > 0) { this.freeze -= dt; if (this.freeze <= 0) this.freeze = 0; }
+                if (this.grace > 0) { this.grace -= dt; return; } // silencio pos-mudanca: picos do resize do canvas nao contaminam a janela
+                this.sample(dt);
+                const budget = this.budgetMs;
+                // sobrecarga p95 > 12% do orcamento: aperta os orcamentos de trabalho do fio principal
+                const over = this.wn >= 32 && this.p95Ms > budget * 1.12;
+                this.jobMesh = this.freeze > 0 ? 0 : over ? 2 : 6;
+                this.jobLight = this.freeze > 0 ? 0 : over ? 2 : 5;
+                if (this.upT >= 0) { this.upT += dt; if (this.upT > 12) { this.dwellUp = 5; this.upT = -99; } } // sondagem estabilizou
+                if (this.wn < 32 || this.freeze > 0) return; // janela minima antes de decidir
+                this.evalT += dt;
+                if (this.evalT < 0.25) return; // avalia no maximo 4x por segundo
+                this.evalT = 0;
+                this.stats();
+                // DEGRADAR: p95 sustentado acima do orcamento (0,75 s) OU pico unico brutal (2,2x)
+                if (this.p95Ms > budget * 1.12) {
+                    this.badT += 0.25;
+                    if ((this.badT >= 0.75 || this.p95Ms > budget * 2.2) && this.step(1)) return; // no piso step() nao muda nada: segue p/ emergencia
+                } else this.badT = 0;
+                // SUBIR: folga comprovada na media, no p95 e no pior quadro, pelo tempo de permanencia
+                if (this.p95Ms < budget * 1.02 && this.avgMs < budget * 0.97 && this.worstMs < budget * 1.6) {
+                    this.goodT += 0.25;
+                    if (this.lvl > 0 && this.goodT >= this.dwellUp) this.step(-1);
+                } else this.goodT = 0;
+                // EMERGENCIA: ja no piso e ainda assim muito acima do orcamento -> congela trabalhos
+                if (this.lvl === LADDER.length - 1 && this.p95Ms > budget * 2.2 && this.freeze <= 0) this.freeze = 0.6;
+            },
+            stats() { // recalcula media, p95 e pior quadro da janela (sem alocar; ordena em _s)
+                const n = this.wn; if (!n) return;
+                const s = this._s; s.length = 0;
+                for (let i = 0; i < n; i++) s.push(this.win[i]);
+                s.sort((a, b) => a - b);
+                let sum = 0; for (let i = 0; i < n; i++) sum += s[i];
+                this.avgMs = sum / n;
+                this.p95Ms = s[Math.min(n - 1, Math.ceil(n * 0.95) - 1)];
+                this.worstMs = s[n - 1];
+                this.fps1 = this.p95Ms > 0 ? 1000 / this.p95Ms : 60;
+            },
+            step(dir) { // +1 = degradar | -1 = subir. Abre graca: o resize do canvas gera picos falsos
+                const novo = Math.max(0, Math.min(LADDER.length - 1, this.lvl + dir));
+                if (novo === this.lvl) return false;
+                this.lvl = novo;
+                this.badT = 0; this.goodT = 0;
+                this.grace = dir > 0 ? 1.6 : 2.2;
+                this.reset();
+                if (dir > 0) { // degradou: sondagem em curso falhou? exige mais folga na proxima
+                    if (this.upT >= 0 && this.upT < 8) this.dwellUp = Math.min(24, this.dwellUp * 2);
+                    this.upT = -99;
+                } else this.upT = 0; // sondagem iniciada
+                this.apply();
+                return true;
+            },
+            apply() { // aplica o patamar: resolucao, ceu, mobs, chuva e efeitos
+                const T = LADDER[this.lvl];
+                if (rs !== T.rs) { rs = T.rs; resize(); }
+                if (SK.q !== T.sky) SK.q = T.sky;
+                this.mobScale = T.mobs; this.rainScale = T.rain; this.fxScale = T.fx;
+            }
+        };
+
         /* ---------- Teclas configuráveis (computador) ----------
            O jogo continua lendo os codigos originais (KeyW, Space, ControlLeft...).
            Aqui so traduzimos a tecla fisica apertada para a tecla "logica" da acao. */
@@ -4370,8 +4659,8 @@ void main(){
             binds = nb;
         }
         rebuildKeyMap();
-        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); if (s.fov) FOVDEG = Math.max(40, Math.min(110, s.fov | 0)); if (s.sens) SENS = Math.max(0.1, Math.min(3, s.sens)); if (s.inv) INVERT_Y = !!s.inv; if (s.fog === false) FOG_ON = false; if (s.dbg === false) DEBUG_HUD = false; } catch (e) { }
-        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2, fov: FOVDEG, sens: SENS, inv: INVERT_Y, fog: FOG_ON, dbg: DEBUG_HUD })); } catch (e) { } }
+        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); if (s.fov) FOVDEG = Math.max(40, Math.min(110, s.fov | 0)); if (s.sens) SENS = Math.max(0.1, Math.min(3, s.sens)); if (s.inv) INVERT_Y = !!s.inv; if (s.fog === false) FOG_ON = false; if (s.dbg === false) DEBUG_HUD = false; if (s.cap !== undefined) PERF.setCap(s.cap); } catch (e) { }
+        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2, fov: FOVDEG, sens: SENS, inv: INVERT_Y, fog: FOG_ON, dbg: DEBUG_HUD, cap: PERF.capMode })); } catch (e) { } }
         function updDist() { const r = $('dRng'); if (r) r.value = renderDist; $('dVal').textContent = renderDist; saveSettings(); }
         updDist();
         const KNAMES = { Space: 'Espaço', ControlLeft: 'Ctrl', ShiftLeft: 'Shift', AltLeft: 'Alt', AltRight: 'Alt Dir.', CapsLock: 'Caps Lock', Enter: 'Enter', Backspace: 'Backspace', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Backquote: '`', Minus: '-', Equal: '=', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', NumpadEnter: 'Num Enter' };
@@ -4429,6 +4718,11 @@ void main(){
         $('tFog').onclick = function () { FOG_ON = !FOG_ON; this.textContent = FOG_ON ? 'Ligada' : 'Desligada'; saveSettings(); };
         $('tInv').onclick = function () { INVERT_Y = !INVERT_Y; this.textContent = INVERT_Y ? 'Ligado' : 'Desligado'; saveSettings(); };
         $('tDebug').onclick = function () { DEBUG_HUD = !DEBUG_HUD; this.textContent = DEBUG_HUD ? 'Ligado' : 'Desligado'; applyDebugHUD(); saveSettings(); };
+        const CAP_CYCLE = ['auto', 'off', 60, 45, 30]; // limitador de quadros: auto segue o governador, off e ilimitado
+        $('tCap').onclick = function () {
+            PERF.setCap(CAP_CYCLE[(CAP_CYCLE.indexOf(PERF.capMode) + 1) % CAP_CYCLE.length]);
+            this.textContent = PERF.capLabel(); saveSettings();
+        };
         function syncSettingsUI() {
             $('dRng').value = renderDist; $('dVal').textContent = renderDist;
             $('fRng').value = FOVDEG; $('fVal').textContent = FOVDEG;
@@ -4436,6 +4730,7 @@ void main(){
             $('tFog').textContent = FOG_ON ? 'Ligada' : 'Desligada';
             $('tInv').textContent = INVERT_Y ? 'Ligado' : 'Desligado';
             $('tDebug').textContent = DEBUG_HUD ? 'Ligado' : 'Desligado';
+            $('tCap').textContent = PERF.capLabel();
         }
         function applyDebugHUD() { $('info').style.display = DEBUG_HUD ? '' : 'none'; } // HUD de depuracao some/aparece sem parar o contador de FPS
         applyDebugHUD();
@@ -4571,11 +4866,12 @@ void main(){
             const nx = (aim.x / w * 2 - 1) * th * (w / h), ny = (1 - aim.y / h * 2) * th;
             const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw); // direita (horizontal)
             const ux = -rz * f[1], uy = rz * f[0] - rx * f[2], uz = rx * f[1]; // cima = direita x frente
-            const d = [f[0] + rx * nx + ux * ny, f[1] + uy * ny, f[2] + rz * nx + uz * ny], l = Math.hypot(d[0], d[1], d[2]);
-            return [d[0] / l, d[1] / l, d[2] / l];
+            const d = _aim, dx = f[0] + rx * nx + ux * ny, dy = f[1] + uy * ny, dz = f[2] + rz * nx + uz * ny, l = Math.hypot(dx, dy, dz);
+            d[0] = dx / l; d[1] = dy / l; d[2] = dz / l;
+            return d;
         }
-        function eyePos() { return [P.x, P.y + P.eh, P.z]; }
-        function lookDir() { return [-Math.sin(P.yaw) * Math.cos(P.pitch), Math.sin(P.pitch), -Math.cos(P.yaw) * Math.cos(P.pitch)]; }
+        function eyePos() { const e = _eye; e[0] = P.x; e[1] = P.y + P.eh; e[2] = P.z; return e; }
+        function lookDir() { const d = _dir, cp = Math.cos(P.pitch); d[0] = -Math.sin(P.yaw) * cp; d[1] = Math.sin(P.pitch); d[2] = -Math.cos(P.yaw) * cp; return d; }
         function useBucket() {
             // Modo criativo: as duas variantes sao "infinitas" — o Balde de agua nunca esvazia e o
             // Balde vazio nunca enche (nem mesmo ao pegar agua). Cada um repete sempre a mesma acao.
@@ -4592,10 +4888,38 @@ void main(){
             if (btn === 2 && HOT[sel][0] === BUCKET) { if (!rep) useBucket(); return; } // balde: um clique por uso
             const hit = raycast(eyePos(), aimDir(), 6); if (!hit) return;
             if (btn === 0) {
+                if (hit.isDecor) {
+                    const dec = hit.decor;
+                    const idx = dec.sp.list.indexOf(dec.f);
+                    if (idx >= 0) dec.sp.list.splice(idx, 1);
+                    const bx = dec.f.bx !== undefined ? dec.f.bx : (dec.f.x | 0);
+                    const bz = dec.f.bz !== undefined ? dec.f.bz : (dec.f.z | 0);
+                    brokenDecors.add(bx + ',' + dec.f.by + ',' + bz);
+                    const h = Math.ceil((DECOR[dec.key] ? DECOR[dec.key].h : 1) * (dec.f.scale || 1));
+                    for (let dy = 0; dy < h; dy++) decorMap.delete(bx + ',' + (dec.by0 + dy) + ',' + bz);
+                    const ch = chunks.get((bx >> 4) + ',' + (bz >> 4));
+                    if (ch && ch.decors) { const ci = ch.decors.findIndex(d => d.item === dec.f); if (ci >= 0) ch.decors.splice(ci, 1); }
+                    return;
+                }
                 if (hit.y <= 0 || (hit.b === 56 && hit.y <= 2)) return; // fundo do mundo (rocha matriz) nao quebra
                 setBlock(hit.x, hit.y, hit.z, 0);
                 if (hit.b === 8) spawnTnt(hit.x + 0.5, hit.y, hit.z + 0.5, 3);
             } else if (btn === 2) {
+                if (hit.isDecor) {
+                    const id = HOT[sel][0];
+                    const dec = hit.decor;
+                    const idx = dec.sp.list.indexOf(dec.f);
+                    if (idx >= 0) dec.sp.list.splice(idx, 1);
+                    const bx = dec.f.bx !== undefined ? dec.f.bx : (dec.f.x | 0);
+                    const bz = dec.f.bz !== undefined ? dec.f.bz : (dec.f.z | 0);
+                    brokenDecors.add(bx + ',' + dec.f.by + ',' + bz);
+                    const h = Math.ceil((DECOR[dec.key] ? DECOR[dec.key].h : 1) * (dec.f.scale || 1));
+                    for (let dy = 0; dy < h; dy++) decorMap.delete(bx + ',' + (dec.by0 + dy) + ',' + bz);
+                    const ch = chunks.get((bx >> 4) + ',' + (bz >> 4));
+                    if (ch && ch.decors) { const ci = ch.decors.findIndex(d => d.item === dec.f); if (ci >= 0) ch.decors.splice(ci, 1); }
+                    setBlock(hit.x, hit.y, hit.z, id);
+                    return;
+                }
                 const id = HOT[sel][0]; let x = hit.px, y = hit.py, z = hit.pz;
                 if (hit.b === SNOWL && id !== SNOWL && id !== TORCH) { x = hit.x; y = hit.y; z = hit.z; } // bloco toma o lugar da neve fina
                 const c = getBlock(x, y, z, 3);
@@ -4699,11 +5023,12 @@ void main(){
 
         /* ---------- Loop principal ---------- */
         const info = $('info'), flashEl = $('flash'), waterEl = $('water'), rewEl = $('rew');
-        let time = 0.2, last = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0, lowT = 0;
+        let time = 0.2, last = performance.now(), lastP = performance.now(), acc = 0, streamT = 0, fpsT = 0, frames = 0, fps = 0;
         const DAY = 240;
-        let rs = 1, rsLow = 0, rsHi = 0, fpsPk = 0; // escala de resolucao dinamica
+        let rs = LADDER[PERF.lvl].rs; // escala de resolucao do patamar atual do governador
         function resize() { const d = Math.min(devicePixelRatio || 1, isTouch ? 1.5 : 2) * rs; canvas.width = innerWidth * d; canvas.height = innerHeight * d; gl.viewport(0, 0, canvas.width, canvas.height); }
         addEventListener('resize', resize); resize();
+        PERF.apply(); // sintoniza ceu/mobs/chuva/efeitos com o patamar inicial (rs ja coincide)
 
         function update(dt) {
             if (pano) { // camera do panorama: gira devagar e troca de mirante de tempos em tempos
@@ -4750,22 +5075,25 @@ void main(){
             streamT -= dt;
             if (streamT <= 0) {
                 // durante a tela de carregamento (ou troca de mirante do menu) pede chunks assim que um
-                // worker fica livre; no jogo o intervalo maior evita trabalho desnecessario
-                streamT = (spawned && !(pano && panoSwitch)) ? 0.25 : 0.06;
+                // worker fica livre; no jogo o intervalo maior evita trabalho desnecessario — e nos
+                // patamares baixos do governador, maior ainda: streamar competindo com o quadro derruba a constancia
+                streamT = (spawned && !(pano && panoSwitch)) ? (PERF.lvl >= 6 ? 0.5 : 0.25) : 0.06;
                 streamChunks();
             }
             const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
-            // luz dos chunks recem-chegados: mais proximos primeiro, com orcamento de tempo
+            // luz dos chunks recem-chegados: mais proximos primeiro, com orcamento de tempo do governador
             const unlit = _unlit; unlit.length = 0; for (const ch of chunks.values()) if (!ch.lit) unlit.push(ch);
-            if (unlit.length) {
+            if (unlit.length && PERF.jobLight > 0) {
                 unlit.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
                 const tl = performance.now();
-                for (const ch of unlit) { initLight(ch); if (performance.now() - tl > 5) break; }
+                for (const ch of unlit) { initLight(ch); if (performance.now() - tl > PERF.jobLight) break; }
             }
-            const t0 = performance.now(); let n = 0;
-            const dirty = _dirty; dirty.length = 0; for (const ch of chunks.values()) if (ch.dirty && canMesh(ch)) dirty.push(ch);
-            dirty.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
-            for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > 6 && n >= 1) break; }
+            if (PERF.jobMesh > 0) {
+                const t0 = performance.now(); let n = 0;
+                const dirty = _dirty; dirty.length = 0; for (const ch of chunks.values()) if (ch.dirty && canMesh(ch)) dirty.push(ch);
+                dirty.sort((a, b) => ((a.cx - pcx) ** 2 + (a.cz - pcz) ** 2) - ((b.cx - pcx) ** 2 + (b.cz - pcz) ** 2));
+                for (const ch of dirty) { buildMesh(ch); n++; if (performance.now() - t0 > PERF.jobMesh && n >= 1) break; }
+            }
             if (!spawned) {
                 const scx = spawnAt[0] >> 4, scz = spawnAt[1] >> 4;
                 if (pano) { // panorama dos menus: basta o chunk central para tirar o fundo de terra
@@ -5044,7 +5372,7 @@ void main(){
                 gl.uniform1f(L.fogN, fogN); gl.uniform1f(L.fogF, fogF);
                 if (pass === 0) { gl.uniform2f(L.wind, rnWx, rnWz); gl.uniform2f(L.drift, rnDr[0], rnDr[1]); gl.uniform1f(L.amt, amt); }
                 if (pass === 2) { gl.uniform2f(L.drift, rnDr[0] * 0.5, rnDr[1] * 0.5); gl.uniform1f(L.ts, rnTime); }
-                gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, Math.ceil((pass === 0 ? RN_N : pass === 1 ? RN_S : RN_SN) * amt));
+                gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, Math.ceil((pass === 0 ? RN_N : pass === 1 ? RN_S : RN_SN) * amt * PERF.rainScale)); // governador reduz particulas de chuva/neve nos patamares baixos
             }
             gl.depthMask(true); gl.disable(gl.BLEND);
         }
@@ -5093,7 +5421,7 @@ void main(){
             lpR[i] = (yl ? 190 : c[0]) * v / 255; lpG[i] = (yl ? 160 : c[1]) * v / 255; lpB[i] = (yl ? 50 : c[2]) * v / 255;
         }
         function updateLeaves(dt) {
-            lpAcc += dt * 9; while (lpAcc >= 1) { lpAcc -= 1; spawnLeaf(); }
+            lpAcc += dt * 9 * PERF.fxScale; while (lpAcc >= 1) { lpAcc -= 1; spawnLeaf(); } // governador reduz o ritmo de folhas novas
             const tt = performance.now() / 1000, wx = 0.35 * Math.sin(tt * 0.21), wz = 0.22 * Math.cos(tt * 0.17);
             for (let i = lpN - 1; i >= 0; i--) {
                 lpAge[i] += dt; let dead = lpAge[i] > lpLife[i];
@@ -5170,7 +5498,7 @@ void main(){
                 bAge[i] += dt;
                 if (bAge[i] > bLife[i]) { const l = --bN; if (i !== l) { bX[i] = bX[l]; bY[i] = bY[l]; bZ[i] = bZ[l]; bL[i] = bL[l]; bW[i] = bW[l]; bAge[i] = bAge[l]; bLife[i] = bLife[l]; bPh[i] = bPh[l]; } }
             }
-            if (bN < NB && Math.random() < dt * 2.5) spawnBeam();
+            if (bN < NB && PERF.fxScale > 0.1 && Math.random() < dt * 2.5 * PERF.fxScale) spawnBeam(); // governador reduz os raios de sol
         }
         function buildBeams(ex, ey, ez) {
             let o = 0;
@@ -5222,7 +5550,7 @@ void main(){
            ============================================================ */
         const MOB_V = 1 / 16;                 // lado de um voxel do corpo, em blocos
         const MOB_MAX = 4000;                 // teto de instâncias por quadro
-        const MOB = { species: new Map(), schools: [], target: isTouch ? 260 : 680, t: 0, maint: 0 };
+        const MOB = { species: new Map(), schools: [], target: isTouch ? 87 : 227, t: 0, maint: 0 }; // população reduzida a 1/3 (antes: 260 no celular / 680 no PC)
         const SC_T = { cc: null };            // peixe temporario: so traz o campo de cache de chunk usado por mobGet()
         const mobProg = mkProg(`#version 300 es
 layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in float w; layout(location=3) in float sh;
@@ -5392,7 +5720,7 @@ void main(){
                 tiles: { skin: 51, belly: 52, fin: 53 },
                 eye: { cx: 3.5, cy: 6.5, hw: 0.5, hh: 0.5 }, gill: { cx: 4.5, cy: 5.5, hw: 0.5, hh: 1.5 },
                 mouth: { yA: -1.6, yB: 0.6, zA: -0.7, zB: 0.7 },
-                kind: { w: 38, sc: [0.55, 1.05], tint: 0.22, spF: 1, fr: 1, orb: 1, curP: 0.25 }
+                kind: { w: 38, sc: [0.55, 1.05], tint: 0.22, spF: 1, fr: 1, orb: 1, curP: 0.25, minD: 5, prefZ: [0.35, 0.85] }
             },
             sardinha: { // slim e rápida, linha lateral escura, cardumes apertados
                 NX: 16, NY: 9, NZ: 7, C: 3,
@@ -5406,7 +5734,7 @@ void main(){
                 tiles: { skin: 64, belly: 65, fin: 53 },
                 eye: { cx: 2.5, cy: 5.5, hw: 0.45, hh: 0.45 }, gill: { cx: 3.5, cy: 4.8, hw: 0.45, hh: 1.4 },
                 mouth: { yA: -1, yB: 0.4, zA: -0.5, zB: 0.5 },
-                kind: { w: 24, sc: [0.4, 0.62], tint: 0.12, spF: 1.18, fr: 1.15, orb: 0.55, curP: 0.05 }
+                kind: { w: 24, sc: [0.4, 0.62], tint: 0.12, spF: 1.18, fr: 1.15, orb: 0.55, curP: 0.05, minD: 3, prefZ: [0.25, 0.65] }
             },
             palhaco: { // corpo redondo, faixas brancas com contorno preto, cauda em leque
                 NX: 14, NY: 10, NZ: 8, C: 4,
@@ -5421,7 +5749,7 @@ void main(){
                 bands: x => x === 3 || x === 4 || x === 8 || x === 9,
                 eye: { cx: 2.5, cy: 5.9, hw: 0.45, hh: 0.45 }, gill: { cx: 3.5, cy: 5, hw: 0.45, hh: 1.3 },
                 mouth: { yA: -0.9, yB: 0.5, zA: -0.55, zB: 0.55 },
-                kind: { w: 16, sc: [0.42, 0.6], tint: 0.62, spF: 0.92, fr: 0.9, orb: 0.85, curP: 0.35 }
+                kind: { w: 16, sc: [0.42, 0.6], tint: 0.62, spF: 0.92, fr: 0.9, orb: 0.85, curP: 0.35, minD: 4, prefZ: [0.65, 0.95] }
             },
             baiacu: { // bola de espinhos: amarelo-oliva, infla quando assustado
                 NX: 12, NY: 11, NZ: 11, C: 5,
@@ -5440,7 +5768,7 @@ void main(){
                 tiles: { skin: 61, belly: 62, fin: 63 },
                 eye: { cx: 3.3, cy: 5.3, hw: 0.75, hh: 0.75 }, gill: { cx: 4.4, cy: 4.9, hw: 0.5, hh: 1.3 },
                 mouth: { yA: -1.2, yB: 0.8, zA: -1, zB: 1 },
-                kind: { w: 12, sc: [0.6, 0.85], tint: 0.72, spF: 0.62, fr: 0.65, orb: 1.35, curP: 0.4, puff: 1 }
+                kind: { w: 12, sc: [0.6, 0.85], tint: 0.72, spF: 0.62, fr: 0.65, orb: 1.35, curP: 0.4, puff: 1, minD: 5, prefZ: [0.75, 0.98] }
             },
             dourado: { // raro e valioso: ouro brilhante, dorsal alta, corpo esguio
                 NX: 18, NY: 11, NZ: 9, C: 4,
@@ -5454,7 +5782,7 @@ void main(){
                 tiles: { skin: 66, belly: 67, fin: 68 },
                 eye: { cx: 3.5, cy: 6.5, hw: 0.5, hh: 0.5 }, gill: { cx: 4.5, cy: 5.5, hw: 0.5, hh: 1.5 },
                 mouth: { yA: -1.6, yB: 0.6, zA: -0.7, zB: 0.7 },
-                kind: { w: 10, sc: [0.7, 1.0], tint: 0.8, spF: 1.08, fr: 1.05, orb: 1, curP: 0.2 }
+                kind: { w: 10, sc: [0.7, 1.0], tint: 0.8, spF: 1.08, fr: 1.05, orb: 1, curP: 0.2, minD: 7, prefZ: [0.45, 0.90] }
             }
         };
 
@@ -5487,6 +5815,29 @@ void main(){
            Espécies "mudas" no mesmo pipeline dos peixes: drawMobs instancia a malha de cada uma
            (luz, névoa e ondulação de graça) e o decorTick espalha/mantém as instâncias no chão
            submerso perto do jogador, removendo as que ficarem longe ou perderem o apoio. */
+        function decorHash(x, z, s) { // hash determinístico baseado na semente do mundo
+            let h = (Math.imul(x ^ (BIO.seed || 1337), 0x27d4eb2d) ^ Math.imul(z, 0x165667b1) ^ Math.imul(s, 0xd4e2c577)) >>> 0;
+            h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
+            h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+            return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+        }
+        function getWaterCol(wx, wz) { // varre coluna d'água: topY, botY (chão), profundidade e bloco de apoio
+            const ch = chunks.get((wx >> 4) + ',' + (wz >> 4));
+            if (!ch) return null;
+            const lx = wx & 15, lz = wz & 15;
+            const colOff = (lz << 4) | lx;
+            let topY = -1;
+            for (let y = Math.min(CH - 2, SEA + 6); y > 2; y--) {
+                if (isWater(ch.data[(y << 8) | colOff])) { topY = y; break; }
+            }
+            if (topY <= 2) return null;
+            let botY = topY;
+            while (botY > 2 && isWater(ch.data[(botY << 8) | colOff])) botY--;
+            if (botY < 2) return null;
+            const depth = topY - botY;
+            if (depth <= 0) return null;
+            return { topY, botY, depth, floorBlock: ch.data[(botY << 8) | colOff] };
+        }
         function buildAlga() { // tufo de 4 fitas de alturas diferentes; mesh "deitada" ao longo de +x (a instância levanta com pitch -90°)
             const arr = [], V = MOB_V, N = 6, H = 15 * V;
             const BL = [[0.10, 0.06, 0.5, 1], [-0.08, -0.11, 2.1, 0.85], [0.05, -0.12, 4.0, 0.7], [-0.12, 0.07, 5.5, 0.55]]; // [oy, oz, ângulo, altura relativa]
@@ -5527,6 +5878,70 @@ void main(){
             }
             return mkMobMesh(arr);
         }
+        function buildAlgaAlta() { // kelp longo: fitas altas que sobem de 3 a 5 blocos ondulando na correnteza
+            const arr = [], V = MOB_V, N = 10, H = 46 * V;
+            const BL = [[0.06, 0.04, 0.4, 1.0], [-0.06, -0.07, 1.9, 0.92], [0.05, -0.08, 3.5, 0.82], [-0.08, 0.05, 5.0, 0.75]];
+            for (const [oy, oz, an, hm] of BL) {
+                const hb = H * hm, lean = 0.22 * (1 - hm * 0.3);
+                const dby = Math.cos(an) * lean, dbz = Math.sin(an) * lean;
+                for (let cr = 0; cr < 2; cr++) {
+                    const wy = cr ? -Math.sin(an) : Math.cos(an), wz = cr ? Math.cos(an) : Math.sin(an);
+                    for (let i = 0; i < N; i++) {
+                        const t0 = i / N, t1 = (i + 1) / N, x0 = t0 * hb, x1 = t1 * hb;
+                        const w0 = (1 - 0.65 * t0) * 0.065, w1 = (1 - 0.65 * t1) * 0.065;
+                        const c0y = oy + dby * t0 * t0 * 2.4, c0z = oz + dbz * t0 * t0 * 2.4;
+                        const c1y = oy + dby * t1 * t1 * 2.4, c1z = oz + dbz * t1 * t1 * 2.4;
+                        const sh = 0.68 + 0.32 * t0, w = t0 * t0 * (3 - 2 * t0);
+                        const P = [[x0, c0y - wy * w0, c0z - wz * w0], [x0, c0y + wy * w0, c0z + wz * w0], [x1, c1y + wy * w1, c1z + wz * w1], [x1, c1y - wy * w1, c1z - wz * w1]];
+                        const u0 = 69 / NT, u1 = 70 / NT, U = [[u0, t0], [u1, t0], [u1, t1], [u0, t1]];
+                        for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = U[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], w, sh); }
+                    }
+                }
+            }
+            return mkMobMesh(arr);
+        }
+        function buildGramaMar() { // erva marinha (seagrass): tufos baixos e densos cobrindo a areia
+            const arr = [], V = MOB_V, N = 4, H = 11 * V;
+            const BL = [[0.05, 0.04, 0.8, 1.0], [-0.05, -0.06, 2.5, 0.85], [0.06, -0.05, 4.2, 0.95], [-0.06, 0.06, 5.6, 0.75], [0.01, 0.07, 1.5, 0.9]];
+            for (const [oy, oz, an, hm] of BL) {
+                const hb = H * hm, lean = 0.38;
+                const dby = Math.cos(an) * lean, dbz = Math.sin(an) * lean;
+                for (let cr = 0; cr < 2; cr++) {
+                    const wy = cr ? -Math.sin(an) : Math.cos(an), wz = cr ? Math.cos(an) : Math.sin(an);
+                    for (let i = 0; i < N; i++) {
+                        const t0 = i / N, t1 = (i + 1) / N, x0 = t0 * hb, x1 = t1 * hb;
+                        const w0 = (1 - 0.6 * t0) * 0.055, w1 = (1 - 0.6 * t1) * 0.055;
+                        const c0y = oy + dby * t0 * 1.8, c0z = oz + dbz * t0 * 1.8;
+                        const c1y = oy + dby * t1 * 1.8, c1z = oz + dbz * t1 * 1.8;
+                        const sh = 0.78 + 0.22 * t0, w = t0 * (2 - t0);
+                        const P = [[x0, c0y - wy * w0, c0z - wz * w0], [x0, c0y + wy * w0, c0z + wz * w0], [x1, c1y + wy * w1, c1z + wz * w1], [x1, c1y - wy * w1, c1z - wz * w1]];
+                        const u0 = 69 / NT, u1 = 70 / NT, U = [[u0, t0], [u1, t0], [u1, t1], [u0, t1]];
+                        for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = U[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], w, sh); }
+                    }
+                }
+            }
+            return mkMobMesh(arr);
+        }
+        function buildAnemona() { // anêmona marinha: grupo de 5 pequenos tubos com centro claro
+            const HH = [[1, 1, 3], [3, 1, 4], [2, 3, 4], [1, 3, 2], [3, 3, 3]];
+            const hAt = (x, z) => { for (const c of HH) if (c[0] === x && c[1] === z) return c[2]; return 0; };
+            const V2 = MOB_V, CX = 5 * V2 / 2, arr = [];
+            for (let x = 0; x < 5; x++) for (let z = 0; z < 5; z++) {
+                const h = hAt(x, z); if (!h) continue;
+                for (let y = 0; y < h; y++) {
+                    const x0 = x * V2 - CX, x1 = x0 + V2, y0 = y * V2, y1 = y0 + V2, z0 = z * V2 - CX, z1 = z0 + V2;
+                    const uf = f => (75 + f) / NT, uX = uf(x / 5), uX2 = uf((x + 1) / 5), uZ = uf(z / 5), uZ2 = uf((z + 1) / 5), vY = y / 5, vY2 = (y + 1) / 5;
+                    const qd = (P, U, sh) => { for (const q of [0, 1, 2, 0, 2, 3]) { const p2 = P[q], u = U[q]; arr.push(p2[0], p2[1], p2[2], u[0], u[1], 0, sh); } };
+                    qd([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], [[uX, uZ2], [uX2, uZ2], [uX2, uZ], [uX, uZ]], 1.0);
+                    qd([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [[uX, uZ2], [uX2, uZ2], [uX2, uZ], [uX, uZ]], 0.55);
+                    if (hAt(x, z - 1) <= y) qd([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], [[uX, vY], [uX2, vY], [uX2, vY2], [uX, vY2]], 0.8);
+                    if (hAt(x, z + 1) <= y) qd([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [[uX, vY], [uX2, vY], [uX2, vY2], [uX, vY2]], 0.88);
+                    if (hAt(x - 1, z) <= y) qd([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], [[uZ, vY], [uZ2, vY], [uZ2, vY2], [uZ, vY2]], 0.75);
+                    if (hAt(x + 1, z) <= y) qd([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]], [[uZ, vY], [uZ2, vY], [uZ2, vY2], [uZ, vY2]], 0.92);
+                }
+            }
+            return mkMobMesh(arr);
+        }
         function buildCoral(T) { // moita de coral: pilares de voxels 5x5x5 com alturas variadas
             const HH = [[2, 2, 5], [1, 2, 3], [3, 2, 3], [2, 1, 3], [2, 3, 3], [1, 1, 2], [3, 3, 2], [0, 2, 2], [4, 2, 2]];
             const hAt = (x, z) => { for (const c of HH) if (c[0] === x && c[1] === z) return c[2]; return 0; };
@@ -5549,51 +5964,141 @@ void main(){
             return mkMobMesh(arr);
         }
         const DECOR = {
-            alga: { tgt: 90, sc: [0.75, 1.5], h: 2, pitch: -1.5707963267948966, ix: 0.42, tint: 0.25 },
-            estrela: { tgt: 30, sc: [0.7, 1.1], h: 1, ix: 0, tint: 0.8 },
-            coralA: { tgt: 18, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.55 },
-            coralV: { tgt: 14, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.4 }
+            alga: { tgt: 160, sc: [0.85, 1.45], h: 2, pitch: -1.5707963267948966, ix: 0.42, tint: 0.25, box: [0.15, 0, 0.15, 0.85, 1.8, 0.85], build: buildAlga },
+            algaAlta: { tgt: 90, sc: [0.9, 1.4], h: 4, pitch: -1.5707963267948966, ix: 0.45, tint: 0.2, box: [0.15, 0, 0.15, 0.85, 3.8, 0.85], build: buildAlgaAlta },
+            gramaMar: { tgt: 220, sc: [0.75, 1.3], h: 1, pitch: -1.5707963267948966, ix: 0.35, tint: 0.15, box: [0.15, 0, 0.15, 0.85, 0.85, 0.85], build: buildGramaMar },
+            estrela: { tgt: 40, sc: [0.7, 1.1], h: 1, ix: 0, tint: 0.8, box: [0.15, 0, 0.15, 0.85, 0.25, 0.85], build: buildEstrela },
+            coralA: { tgt: 30, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.55, box: [0.1, 0, 0.1, 0.9, 0.95, 0.9], build: () => buildCoral(71) },
+            coralV: { tgt: 26, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.4, box: [0.1, 0, 0.1, 0.9, 0.95, 0.9], build: () => buildCoral(72) },
+            coralAm: { tgt: 26, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.85, box: [0.1, 0, 0.1, 0.9, 0.95, 0.9], build: () => buildCoral(73) },
+            coralVm: { tgt: 26, sc: [0.8, 1.35], h: 1, ix: 0, tint: 0.35, box: [0.1, 0, 0.1, 0.9, 0.95, 0.9], build: () => buildCoral(74) },
+            anemona: { tgt: 35, sc: [0.75, 1.25], h: 1, ix: 0, tint: 0.6, box: [0.15, 0, 0.15, 0.85, 0.85, 0.85], build: buildAnemona }
         };
-        let decorT = 0.4;
+        let decorT = 0.2;
         const decorFloor = b => b === 2 || b === 3 || b === 4 || b === 31 || b === 44 || b === 54 || b === 55; // areia, pedra, terra, arenito, ardósia, cascalho, calcita
-        function decorTick(dt) { // espalha e mantém as decorações no chão submerso perto do jogador
-            decorT -= dt; if (decorT > 0) return; decorT = 0.6;
-            const px = P.x, pz = P.z;
+        function genChunkDecors(ch) { // gera decorações determinísticas para o chunk baseado em semente e profundidade
+            if (!ch || ch.decorGen) return;
+            ch.decorGen = true;
+            if (!ch.decors) ch.decors = [];
+            const baseWx = ch.cx << 4, baseWz = ch.cz << 4;
+            for (let lz = 0; lz < 16; lz++) {
+                for (let lx = 0; lx < 16; lx++) {
+                    const wx = baseWx + lx, wz = baseWz + lz;
+                    const col = getWaterCol(wx, wz);
+                    if (!col || col.depth < 1) continue;
+                    if (col.botY < 3 || col.botY > SEA - 2) continue; // solo precisa estar afogado
+                    if (!decorFloor(col.floorBlock)) continue;
+                    if (brokenDecors.has(wx + ',' + col.botY + ',' + wz)) continue; // quebrado pelo jogador: constância
+
+                    const roll = decorHash(wx, wz, 1);
+                    let key = null;
+
+                    if (col.depth <= 2) {
+                        // Água rasa / margem / poça: pouquíssima grama rasteira ou nada (carga quase zero)
+                        if (roll < 0.035) key = 'gramaMar';
+                    } else if (col.depth <= 5) {
+                        // Média profundidade: grama marinha, tufos de alga normais e raras anêmonas/estrelas
+                        if (roll < 0.12) {
+                            if (roll < 0.065) key = 'gramaMar';
+                            else if (roll < 0.10) key = 'alga';
+                            else if (roll < 0.112) key = 'estrela';
+                            else key = 'anemona';
+                        }
+                    } else {
+                        // Fundo do mar profundo (depth >= 6): carga maior com kelp gigante e recifes de corais
+                        if (roll < 0.28) {
+                            const reefNoise = decorHash(wx >> 2, wz >> 2, 77);
+                            if (reefNoise > 0.60 && roll < 0.22) {
+                                // Recife de coral em colônias
+                                const cType = decorHash(wx, wz, 9);
+                                if (cType < 0.25) key = 'coralA';
+                                else if (cType < 0.50) key = 'coralV';
+                                else if (cType < 0.75) key = 'coralAm';
+                                else if (cType < 0.90) key = 'coralVm';
+                                else key = 'anemona';
+                            } else {
+                                // Floresta marinha profunda: kelp gigante, alga, grama e estrelas
+                                const vType = decorHash(wx, wz, 15);
+                                if (vType < 0.38 && col.depth >= 5) key = 'algaAlta';
+                                else if (vType < 0.68) key = 'alga';
+                                else if (vType < 0.88) key = 'gramaMar';
+                                else if (vType < 0.95) key = 'estrela';
+                                else key = 'anemona';
+                            }
+                        }
+                    }
+
+                    if (!key) continue;
+                    const D = DECOR[key];
+                    if (!D || col.depth < D.h) continue; // não cabe na coluna d'água
+                    const S = MOB.species.get(key);
+                    if (!S) continue;
+
+                    const scRoll = decorHash(wx, wz, 21);
+                    const scale = D.sc[0] + scRoll * (D.sc[1] - D.sc[0]);
+                    const yaw = decorHash(wx, wz, 33) * 6.28318530718;
+                    const ph = decorHash(wx, wz, 45);
+                    const tint = Math.max(0, Math.min(1, D.tint + (decorHash(wx, wz, 57) - 0.5) * 0.16));
+
+                    const item = {
+                        x: wx + 0.5, y: col.botY + 1.002, z: wz + 0.5,
+                        bx: wx, by: col.botY, bz: wz,
+                        scale, yaw, pitch: D.pitch || 0, roll: 0,
+                        ph, tint, ix: D.ix
+                    };
+                    S.list.push(item);
+                    ch.decors.push({ sp: S, item, bx: wx, by: col.botY, bz: wz, key });
+                }
+            }
+        }
+        function decorTick(dt) { // espalha e mantém as decorações nos chunks próximos com constância determinística
+            decorT -= dt; if (decorT > 0) return; decorT = 0.4;
+            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
+            const R = 3;
+            let chunksGen = 0;
+            for (let dz = -R; dz <= R; dz++) {
+                for (let dx = -R; dx <= R; dx++) {
+                    if (dx * dx + dz * dz > R * R + 1) continue;
+                    const ch = chunks.get((pcx + dx) + ',' + (pcz + dz));
+                    if (ch && !ch.decorGen) {
+                        genChunkDecors(ch);
+                        chunksGen++;
+                        if (chunksGen >= 2) break;
+                    }
+                }
+                if (chunksGen >= 2) break;
+            }
+            // Limpa decorações cujo apoio sumiu (quebrou chão ou drenou água)
+            for (const key in DECOR) {
+                const S = MOB.species.get(key); if (!S) continue;
+                const L = S.list;
+                for (let i = L.length - 1; i >= 0; i--) {
+                    const f = L[i];
+                    const floorB = getBlock(f.bx, f.by, f.bz, 3);
+                    const waterB = getBlock(f.bx, f.by + 1, f.bz, 3);
+                    if (!decorFloor(floorB) || !isWater(waterB)) {
+                        L.splice(i, 1);
+                    }
+                }
+            }
+            // Sincroniza o mapa de raycast para interação e quebra
+            decorMap.clear();
             for (const key in DECOR) {
                 const D = DECOR[key], S = MOB.species.get(key); if (!S) continue;
                 const L = S.list;
-                for (let i = L.length - 1; i >= 0; i--) { // longe demais ou apoio sumiu (quebrou o chão / drenou): some
-                    const f = L[i], dx = f.x - px, dz = f.z - pz;
-                    let ok = dx * dx + dz * dz < 6400;
-                    if (ok) ok = decorFloor(getBlock(f.x | 0, f.by, f.z | 0, 3)) && isWater(getBlock(f.x | 0, f.by + 1, f.z | 0, 3));
-                    if (!ok) L.splice(i, 1);
-                }
-                let need = D.tgt - L.length, tries = need * 4;
-                while (need > 0 && tries-- > 0) {
-                    const a = Math.random() * 6.28318530718, r = 5 + Math.sqrt(Math.random()) * 42;
-                    const bx = (px + Math.cos(a) * r) | 0, bz = (pz + Math.sin(a) * r) | 0;
-                    if (!chunks.get((bx >> 4) + ',' + (bz >> 4))) continue;
-                    let y = SEA + 4;
-                    while (y > 2 && isWater(getBlock(bx, y, bz, 0))) y--; // desce até o fundo
-                    if (y < 3 || y > SEA - 2) continue;                   // fundo precisa estar afogado
-                    if (!decorFloor(getBlock(bx, y, bz, 0))) continue;
-                    let wd = 0; while (wd < D.h && isWater(getBlock(bx, y + 1 + wd, bz, 0))) wd++;
-                    if (wd < D.h) continue;
-                    L.push({
-                        x: bx + 0.5, y: y + 1.002, z: bz + 0.5, by: y,
-                        scale: D.sc[0] + Math.random() * (D.sc[1] - D.sc[0]),
-                        yaw: Math.random() * 6.28318530718, pitch: D.pitch || 0, roll: 0,
-                        ph: Math.random(), tint: Math.max(0, Math.min(1, D.tint + (Math.random() - 0.5) * 0.16)),
-                        ix: D.ix
-                    });
-                    need--;
+                for (let i = 0; i < L.length; i++) {
+                    const f = L[i], bx = f.bx !== undefined ? f.bx : (f.x | 0), bz = f.bz !== undefined ? f.bz : (f.z | 0);
+                    const by0 = f.by + 1, h = Math.ceil(D.h * (f.scale || 1));
+                    for (let dy = 0; dy < h; dy++) {
+                        decorMap.set(bx + ',' + (by0 + dy) + ',' + bz, { sp: S, f, key, box: D.box, by0 });
+                    }
                 }
             }
         }
         for (const key in DECOR) {
             const D = DECOR[key];
             mobReg(key, {
-                build: key === 'alga' ? buildAlga : (key === 'estrela' ? buildEstrela : () => buildCoral(key === 'coralA' ? 71 : 72)),
+                build: D.build,
                 tick: key === 'alga' ? decorTick : undefined
             });
         }
@@ -5607,24 +6112,32 @@ void main(){
             return c ? c.data[idx(x & 15, y, z & 15)] : -1;
         }
         function fishWaterSpot(x, z, yFrom) { // topo de uma coluna d'água com pelo menos 3 de fundo
-            const ch = chunks.get((x >> 4) + ',' + (z >> 4)); if (!ch) return null;
-            for (let y = Math.min(CH - 2, yFrom); y > 3; y--) {
-                const i = (y << 8) | ((z & 15) << 4) | (x & 15);
-                if (!isWater(ch.data[i])) continue;
-                if (y < CH - 1 && isWater(ch.data[i + 256])) continue;                 // não é o topo
-                if (!isWater(ch.data[i - 256]) || !isWater(ch.data[i - 512])) return null; // raso demais
-                return y;
-            }
-            return null;
+            const col = getWaterCol(x, z);
+            return (col && col.depth >= 3) ? col.topY : null;
         }
-        function fishSpotNear(px, pz, r0, r1) { // sorteia um ponto d'água carregado perto de (px, pz)
-            for (let t = 0; t < 22; t++) {
+        function fishSpotNear(px, pz, r0, r1, K) { // sorteia ponto d'água com profundidade e cota vertical balanceadas
+            const minD = (K && K.minD) || 3;
+            const prefZ = (K && K.prefZ) || [0.3, 0.8];
+            let bestSpot = null, bestScore = -1;
+            for (let t = 0; t < 28; t++) {
                 const a = Math.random() * 6.28318530718, r = r0 + Math.sqrt(Math.random()) * (r1 - r0);
                 const wx = (px + Math.cos(a) * r) | 0, wz = (pz + Math.sin(a) * r) | 0;
-                const wy = fishWaterSpot(wx, wz, SEA + 8);
-                if (wy) return { x: wx + 0.5, y: wy + 0.55 - Math.random() * 1.7, z: wz + 0.5 };
+                const col = getWaterCol(wx, wz);
+                if (!col || col.depth < minD) continue;
+                const score = col.depth + Math.random() * 4; // prioriza mar aberto e fundo
+                if (score > bestScore) {
+                    bestScore = score;
+                    const zFrac = prefZ[0] + Math.random() * (prefZ[1] - prefZ[0]);
+                    const targetY = col.topY - col.depth * zFrac;
+                    bestSpot = {
+                        x: wx + 0.5,
+                        y: Math.max(col.botY + 0.6, Math.min(col.topY - 0.4, targetY)),
+                        z: wz + 0.5
+                    };
+                    if (col.depth >= 8 && Math.random() < 0.65) break;
+                }
             }
-            return null;
+            return bestSpot;
         }
         function fishNew(inSchool, K) {
             K = K || FISH_CFG.peixe.kind;
@@ -5635,7 +6148,8 @@ void main(){
                 tint: Math.max(0, Math.min(1, K.tint + (Math.random() - 0.5) * 0.14)),
                 s: null, orba: 0, orbR: 0, orbV: 0, orbY: 0, puff: 0,
                 wx: 0, wy: 0, wz: 0, wT: Math.random() * 2, ft: 0,
-                cur: Math.random() < K.curP, orbS: Math.random() < 0.5 ? 1 : -1, flopT: 0, tbv: 0, cc: null
+                cur: Math.random() < K.curP, orbS: Math.random() < 0.5 ? 1 : -1, flopT: 0, tbv: 0, cc: null,
+                kind: K
             };
             f.sc0 = f.scale;
             const l = Math.hypot(f.dx, f.dy, f.dz) || 1; f.dx /= l; f.dy /= l; f.dz /= l;
@@ -5647,18 +6161,25 @@ void main(){
             if (f.s) f.s.n = Math.max(0, f.s.n - 1);
             L.splice(i, 1);
         }
-        function fishSchoolNew(x, y, z, kind) {
-            const s = { x, y, z, tx: 0, ty: 0, tz: 0, hasT: false, tT: 0, n: 0, cap: 16 + ((Math.random() * 30) | 0), scT: 0, okT: 0, dead: false, kind: kind || 'peixe' };
+        function fishSchoolNew(x, y, z) { // cardume pequeno e misto: sem espécie fixa, peixes variados convivem no mesmo grupo
+            const s = { x, y, z, tx: 0, ty: 0, tz: 0, hasT: false, tT: 0, n: 0, cap: 4 + ((Math.random() * 8) | 0), scT: 0, okT: 0, dead: false, kind: null };
             MOB.schools.push(s);
             return s;
         }
-        function fishPickTarget(f) { // ponto de passeio à frente, sempre em água
-            for (let t = 0; t < 4; t++) {
-                const d = 5 + Math.random() * 10, a = Math.random() * 6.28318530718;
+        function fishPickTarget(f, K) { // ponto de passeio à frente, respeitando zona de profundidade da espécie
+            K = K || f.kind || FISH_CFG.peixe.kind;
+            const prefZ = K.prefZ || [0.3, 0.8];
+            for (let t = 0; t < 6; t++) {
+                const d = 5 + Math.random() * 11, a = Math.random() * 6.28318530718;
                 const x = (f.x + Math.cos(a) * d) | 0, z = (f.z + Math.sin(a) * d) | 0;
-                const y = Math.max(2, Math.min(CH - 2, (f.y + (Math.random() - 0.5) * 4) | 0));
-                const b = mobGet(f, x, y, z);
-                if (b > -1 && isWater(b)) { f.wx = x + 0.5; f.wy = y + 0.5; f.wz = z + 0.5; return; }
+                const col = getWaterCol(x, z);
+                if (!col || col.depth < Math.max(2, (K.minD || 3) - 1)) continue;
+                const zFrac = prefZ[0] + Math.random() * (prefZ[1] - prefZ[0]);
+                const idealY = col.topY - col.depth * zFrac;
+                let ty = Math.round(f.y * 0.4 + idealY * 0.6 + (Math.random() - 0.5) * 2);
+                ty = Math.max(col.botY + 1, Math.min(col.topY - 1, ty));
+                const b = mobGet(f, x, ty, z);
+                if (b > -1 && isWater(b)) { f.wx = x + 0.5; f.wy = ty + 0.5; f.wz = z + 0.5; return; }
             }
             f.wy = Math.max(3, f.y); // segue onde está; sorteia de novo em breve
         }
@@ -5705,9 +6226,10 @@ void main(){
         function mobsMaintain() { // mantém a população perto do jogador, repartida entre as espécies
             if (!MOB.species.size) return;
             let W = 0; for (const key in FISH_CFG) W += FISH_CFG[key].kind.w;
+            const eff = Math.max(0, Math.round(MOB.target * PERF.mobScale)); // alvo do governador (patamar reduz a populacao)
             for (const key in FISH_CFG) {
                 const K = FISH_CFG[key].kind, S = MOB.species.get(key); if (!S) continue;
-                const L = S.list, tgt = Math.round(MOB.target * K.w / W);
+                const L = S.list, tgt = Math.round(eff * K.w / W);
                 if (L.length > tgt + 20) { // alvo diminuído: joga fora os mais longe primeiro
                     L.sort((a, b) => ((b.x - P.x) * (b.x - P.x) + (b.z - P.z) * (b.z - P.z)) - ((a.x - P.x) * (a.x - P.x) + (a.z - P.z) * (a.z - P.z)));
                     while (L.length > tgt) fishDrop(L, L.length - 1);
@@ -5716,11 +6238,11 @@ void main(){
                 let qtd = Math.min(need, Math.round(need * 0.16 + 6));
                 while (qtd-- > 0 && L.length < tgt) {
                     let s = null, nova = false; // nova=true: cardume acabou de nascer, pode ser descartado se nao achar agua
-                    if (Math.random() < 0.6) {
-                        s = MOB.schools.find(ss => !ss.dead && (!ss.kind || ss.kind === key) && ss.n < ss.cap && ((ss.x - P.x) * (ss.x - P.x) + (ss.z - P.z) * (ss.z - P.z)) < 2500);
-                        if (!s) { s = fishSchoolNew(0, 0, 0, key); nova = true; }
+                    if (Math.random() < 0.35) { // só 1/3 vai para cardume; a maioria nasce solta e espalhada pela água
+                        s = MOB.schools.find(ss => !ss.dead && ss.n < ss.cap && ((ss.x - P.x) * (ss.x - P.x) + (ss.z - P.z) * (ss.z - P.z)) < 2500);
+                        if (!s) { s = fishSchoolNew(0, 0, 0); nova = true; }
                         if (nova && !s.hasT) { // só cardume novo busca lugar; os existentes ficam onde estão
-                            const spot = fishSpotNear(P.x, P.z, 10, 34);
+                            const spot = fishSpotNear(P.x, P.z, 10, 34, K);
                             if (!spot) { // sem agua: so joga fora o cardume novo
                                 if (!s.n) MOB.schools.pop();
                                 s = null;
@@ -5730,11 +6252,11 @@ void main(){
                     } else s = 'solo';
                     if (!s) continue;
                     if (s === 'solo') {
-                        const spot = fishSpotNear(P.x, P.z, 10, 36);
+                        const spot = fishSpotNear(P.x, P.z, 10, 36, K);
                         if (!spot) continue;
                         const f = fishNew(false, K);
                         f.x = spot.x; f.y = spot.y; f.z = spot.z;
-                        fishPickTarget(f);
+                        fishPickTarget(f, K);
                         L.push(f);
                         continue;
                     }
@@ -5779,8 +6301,14 @@ void main(){
                     if (s.tT <= 0) {
                         s.tT = 3 + Math.random() * 6;
                         const a = Math.random() * 6.28318530718, r2 = 8 + Math.random() * 12;
-                        const wy = fishWaterSpot((s.x + Math.cos(a) * r2) | 0, (s.z + Math.sin(a) * r2) | 0, SEA + 8);
-                        if (wy) { s.tx = (s.x + Math.cos(a) * r2 | 0) + 0.5; s.ty = wy + 0.4 - Math.random() * 2.2; s.tz = (s.z + Math.sin(a) * r2 | 0) + 0.5; s.hasT = true; }
+                        const tx = (s.x + Math.cos(a) * r2) | 0, tz = (s.z + Math.sin(a) * r2) | 0;
+                        const col = getWaterCol(tx, tz);
+                        const skind = (s.kind && FISH_CFG[s.kind] && FISH_CFG[s.kind].kind) || FISH_CFG.peixe.kind;
+                        if (col && col.depth >= Math.max(2, (skind.minD || 3) - 1)) {
+                            const zFrac = skind.prefZ ? (skind.prefZ[0] + Math.random() * (skind.prefZ[1] - skind.prefZ[0])) : 0.6;
+                            const ty = Math.max(col.botY + 1.2, Math.min(col.topY - 0.8, col.topY - col.depth * zFrac));
+                            s.tx = tx + 0.5; s.ty = ty; s.tz = tz + 0.5; s.hasT = true;
+                        }
                     }
                     if (s.hasT) { s.x += (s.tx - s.x) * Math.min(1, dt * 0.55); s.y += (s.ty - s.y) * Math.min(1, dt * 0.7); s.z += (s.tz - s.z) * Math.min(1, dt * 0.55); }
                 }
@@ -5788,7 +6316,8 @@ void main(){
                     s.okT = 1;
                     const ab = mobGet(SC_T, s.x | 0, Math.min(CH - 2, Math.max(1, s.y | 0)), s.z | 0);
                     if (ab === -1 || !isWater(ab)) {
-                        const sp2 = fishSpotNear(px, pz, 10, 34);
+                        const skind = (s.kind && FISH_CFG[s.kind] && FISH_CFG[s.kind].kind) || FISH_CFG.peixe.kind;
+                        const sp2 = fishSpotNear(px, pz, 10, 34, skind);
                         if (sp2) { s.x = sp2.x; s.y = sp2.y; s.z = sp2.z; s.hasT = false; s.tT = 0.6; }
                         else s.dead = true;
                     }
@@ -5826,7 +6355,7 @@ void main(){
                 } else {
                     f.wT -= dt;
                     if (f.wT <= 0) {
-                        f.wT = 2 + Math.random() * 4; fishPickTarget(f);
+                        f.wT = 2 + Math.random() * 4; fishPickTarget(f, K);
                         if (Math.random() < 0.14) { f.wT = 0.5 + Math.random() * 0.6; f.spd = (2.7 + Math.random() * 0.9) * K.spF; } // arrancada curta
                     }
                     desx = f.wx - f.x; desy = f.wy - f.y; desz = f.wz - f.z;
@@ -5981,30 +6510,34 @@ void main(){
             const eye = eyePos();
             const sh = shake > 0 ? shake : 0;
             const dir = lookDir();
-            const e2 = [eye[0] + (Math.random() - 0.5) * sh * 0.3, eye[1] + (Math.random() - 0.5) * sh * 0.3, eye[2] + (Math.random() - 0.5) * sh * 0.3];
-            const view = lookAt(e2, [e2[0] + dir[0], e2[1] + dir[1], e2[2] + dir[2]], [0, 1, 0]);
+            const e2 = _e2; // olho com o tremor aplicado (vetor reutilizado)
+            e2[0] = eye[0] + (Math.random() - 0.5) * sh * 0.3; e2[1] = eye[1] + (Math.random() - 0.5) * sh * 0.3; e2[2] = eye[2] + (Math.random() - 0.5) * sh * 0.3;
+            const ctr = _ctr; ctr[0] = e2[0] + dir[0]; ctr[1] = e2[1] + dir[1]; ctr[2] = e2[2] + dir[2];
+            const view = lookAt(e2, ctr, UPV, _view);
             zoomT += ((zoomW ? 0.32 : 1) - zoomT) * 0.3; // animacao suave do zoom da mira ao entrar e sair
-            const mvp = mul(persp((FOVDEG * Math.PI / 180) * zoomT + P.fk, asp, 0.08, 400), view);
+            const mvp = mul(persp((FOVDEG * Math.PI / 180) * zoomT + P.fk, asp, 0.08, 400, _proj), view, _mvpM);
             const sunH = Math.sin(time * Math.PI * 2);
             const day = Math.max(0, Math.min(1, 0.5 + sunH * 1.2));
             const dusk = Math.max(0, 1 - Math.abs(sunH) * 5) * 0.5;
-            let sky = [0.02 + 0.51 * day, 0.03 + 0.78 * day, 0.08 + 0.84 * day];
-            sky = sky.map((v, i) => v + ([1.0, 0.56, 0.36][i] - v) * Math.min(0.7, dusk * 1.4));
+            const sky = _sky; // cor do ceu calculada no proprio vetor (sem reatribuir arrays por quadro)
+            sky[0] = 0.02 + 0.51 * day; sky[1] = 0.03 + 0.78 * day; sky[2] = 0.08 + 0.84 * day;
+            { const k = Math.min(0.7, dusk * 1.4); sky[0] += (1.0 - sky[0]) * k; sky[1] += (0.56 - sky[1]) * k; sky[2] += (0.36 - sky[2]) * k; } // entardecer
             let light = 0.15 + 0.85 * day; // brilho do ceu (dia/noite); a luz de bloco nao depende dele
             const headW = isWater(getBlock(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2]), 0));
             const rd = pano ? (isTouch ? 4 : 5) : renderDist; // nevoa acompanha o raio do panorama leve
             let fogN = rd * 16 * 0.55, fogF = rd * 16 * 0.95;
-            if (headW) { sky = [0.08 * light + 0.04, 0.22 * light + 0.05, 0.5 * light + 0.05]; fogN = 1; fogF = 24; }
+            if (headW) { sky[0] = 0.08 * light + 0.04; sky[1] = 0.22 * light + 0.05; sky[2] = 0.5 * light + 0.05; fogN = 1; fogF = 24; }
             if (rainAmt > 0 && !headW) {
                 const stormDim = 1 - 0.42 * rainAmt;
-                sky = [sky[0] * stormDim, sky[1] * stormDim, Math.min(1, sky[2] * (1 - 0.32 * rainAmt))];
+                sky[0] *= stormDim; sky[1] *= stormDim; sky[2] = Math.min(1, sky[2] * (1 - 0.32 * rainAmt));
                 fogN *= 1 - 0.45 * rainAmt;
                 fogF *= 1 - 0.45 * rainAmt;
                 light *= 1 - 0.35 * rainAmt;
                 const sf = rnSnowK * rainAmt; // nevando: nevoa mais fechada e ceu claro acinzentado (sem escurecer como na tempestade)
                 if (sf > 0.01) {
                     fogN *= 1 - 0.45 * sf; fogF *= 1 - 0.4 * sf;
-                    const kk = 0.3 + 0.7 * day; sky = sky.map((v, i) => v + ([0.72, 0.76, 0.82][i] * kk - v) * 0.5 * sf);
+                    const kk = 0.3 + 0.7 * day, ks = 0.5 * sf;
+                    sky[0] += (0.72 * kk - sky[0]) * ks; sky[1] += (0.76 * kk - sky[1]) * ks; sky[2] += (0.82 * kk - sky[2]) * ks;
                     light += 0.2 * sf * (1 - light);
                 }
             }
@@ -6154,37 +6687,37 @@ void main(){
 
         function frame(now) {
             const dt = Math.min(0.05, (now - last) / 1000); last = now;
-            if (cur) {
-                if (state === 'playing' || state === 'loading' || (state === 'pano' && cur)) update(dt);
-                flashAmt = Math.max(0, flashAmt - dt * 1.4); shake = Math.max(0, shake - dt * 1.2);
-                if (flashAmt !== _fO) flashEl.style.opacity = _fO = flashAmt;
-                { const v = rewinding ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
-                if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
-                render(); rainSound(dt);
-                if (state === 'loading') mcAnim(dt); // blocos montando na tela de carregamento
-                if (spawned) {
-                    if (wantThumb) { wantThumb = false; grabThumb(); }
-                    if (pendingSave) { pendingSave = false; saveWorld(); }
-                }
-                frames++; fpsT += dt;
-                if (fpsT >= 0.5) {
-                    fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
-                    if (state === 'playing') { // resolucao dinamica: baixa a escala se o FPS cai de forma sustentada, sobe devagar quando sobra folga
-                        fpsPk = Math.max(fpsPk * 0.998, fps);
-                        if (fps < 42 && fpsPk >= 55) { rsLow += 0.5; rsHi = 0; if (rsLow >= 2 && rs > 0.5) { rs = Math.max(0.5, rs - 0.1); rsLow = 0; resize(); } }
-                        else if (fps >= 57) { rsLow = 0; rsHi += 0.5; if (rsHi >= 15 && rs < 1) { rs = Math.min(1, rs + 0.1); rsHi = 0; resize(); } }
-                        else { rsLow = 0; rsHi = 0; }
-                    }
-                    if (state === 'playing' && SK.q > 0.5) { lowT = fps < 30 ? lowT + 0.5 : 0; if (lowT >= 8) SK.q = 0; } // governador: FPS baixo sustentado -> desliga via lactea, paredes das nuvens e reflexos de nuvem/estrela na agua
-                    document.body.classList.toggle('flying', P.fly);
-                    if (DEBUG_HUD && state === 'playing') {
-                        const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
-                        info.textContent = cur.name + '\nFPS ' + fps + '   chunks ' + chunks.size + '   visao ' + renderDist + '\n' +
-                            'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
-                            'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + (timeLock >= 0 ? ' (travada)' : '') + '   TNT ativas ' + tnts.length + '   peixes ' + mobCount() +
-                            (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
-                    } else info.textContent = '';
-                }
+            if (!cur) { PERF.tick(dt, false); requestAnimationFrame(frame); return; }
+            const live = state === 'playing' || state === 'loading' || state === 'pano';
+            if (live && PERF.pace(dt)) { requestAnimationFrame(frame); return; } // limitador de quadros: pula este ciclo ate a hora do proximo
+            const dtP = Math.min(0.05, (now - lastP) / 1000); lastP = now; // tempo REAL desde o ultimo quadro processado (dt puro ignoraria os ciclos pulados)
+            if (live) update(dtP); // pausa/inventario: cena estatica — sem update nem render (menos calor = clocks estaveis)
+            flashAmt = Math.max(0, flashAmt - dtP * 1.4); shake = Math.max(0, shake - dtP * 1.2);
+            if (flashAmt !== _fO) flashEl.style.opacity = _fO = flashAmt;
+            { const v = rewinding ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
+            if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
+            if (live) { render(); rainSound(dtP); PERF.tick(dtP, state === 'playing' || state === 'pano'); } // mede o quadro acabado de processar (carregamento nao amostra: picos esperados)
+            else PERF.tick(dtP, false); // so detecta trocas de estado; estados estaticos nao alimentam estatisticas
+            if (state === 'loading') mcAnim(dtP); // blocos montando na tela de carregamento
+            if (spawned) {
+                if (wantThumb) { wantThumb = false; grabThumb(); }
+                if (pendingSave) { pendingSave = false; saveWorld(); }
+            }
+            frames++; fpsT += dtP; // contagem apenas dos quadros de fato processados
+            if (fpsT >= 0.5) {
+                fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
+                document.body.classList.toggle('flying', P.fly);
+                if (DEBUG_HUD && state === 'playing') {
+                    const hh = Math.floor(((time % 1) * 24 + 6) % 24), mm = Math.floor((((time % 1) * 24 * 60) % 60));
+                    const T = LADDER[PERF.lvl];
+                    info.textContent = cur.name + '\n' +
+                        'FPS ' + fps + '   1% ' + Math.round(PERF.fps1) + '   quadro ' + PERF.avgMs.toFixed(1) + '/' + PERF.worstMs.toFixed(1) + ' ms\n' +
+                        'qualidade ' + (PERF.lvl + 1) + '/' + LADDER.length + '   res ' + Math.round(T.rs * 100) + '%   peixes alvo ' + Math.round(MOB.target * PERF.mobScale) + '   teto ' + PERF.capLabel() + '\n' +
+                        'chunks ' + chunks.size + '   visao ' + renderDist + '   fila malha ' + _dirty.length + '   fila luz ' + _unlit.length + '\n' +
+                        'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? '  [voando]' : '') + '\n' +
+                        'hora ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + (timeLock >= 0 ? ' (travada)' : '') + '   TNT ativas ' + tnts.length +
+                        (() => { const v = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z)); return '\nluz ceu ' + (v >> 4) + '  bloco ' + (v & 15); })();
+                } else info.textContent = '';
             }
             requestAnimationFrame(frame);
         }
