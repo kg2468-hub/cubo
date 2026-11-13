@@ -7,6 +7,10 @@
     <title>Cubo</title>
     <!-- favicon embutido (SVG inline = data URI): bloco de terra com capim; evita o 404 do /favicon.ico -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%237a4f2d'/%3E%3Crect width='16' height='5' fill='%236b8f3c'/%3E%3Crect y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='5' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3Crect x='9' y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='14' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3C/svg%3E">
+    <!-- PeerJS para multiplayer P2P (WebRTC sem necessidade de servidor dedicado) -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- MQTT para descoberta em tempo real da lista de salas públicas disponíveis -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         html,
         body {
@@ -113,11 +117,17 @@
            a tela para ficar bem maior sem estourar: limitado pela altura (6 fileiras de slot cabem) e pela
            largura (9 colunas + molduras), por isso nada rola na horizontal nem no portrait. */
         :root {
-            --sw: 44px
+            --sw: 44px;
+            --iside: 112px
+            /* largura da coluna de secoes a esquerda do inventario */
         }
 
         body.touch {
-            --sw: clamp(38px, min(calc((100vh - 120px) / 6), calc((100vw - 50px) / 9)), 54px)
+            /* o limite de largura e a hotbar (10 slots) dentro do modal; a grade usa auto-fill,
+               entao se faltar espaco ela vira 8 colunas em vez de estourar */
+            --sw: clamp(24px, min(calc((100vh - 150px) / 6), calc((100vw - 48px) / 10)), 54px);
+            --iside: 46px
+            /* celular: so icones nas secoes */
         }
 
         #inv {
@@ -140,22 +150,27 @@
         }
 
         #invBox {
-            width: min(calc(var(--sw) * 9 + 24px), 100%);
+            /* cabe a hotbar (10 slots) e a linha de abas + grade (9 colunas); a rolagem e interna */
+            width: min(calc(max(var(--sw) * 10, var(--sw) * 9 + var(--iside) + 24px) + 24px), 100%);
             max-height: 100%;
-            overflow: auto;
             box-sizing: border-box;
             padding: 10px 10px 8px;
             background: #c6c6c6;
             border: 2px solid #000;
             box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #555, inset -4px -4px 0 #373737, 0 16px 48px rgba(0, 0, 0, .6);
-            text-align: left
+            text-align: left;
+            /* modal de altura fixa: cabecalho e hotbar nao rolam; so a lista de itens rola por dentro */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
         }
 
         #invHead {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 6px
+            margin-bottom: 6px;
+            flex: none
         }
 
         #invHead h2 {
@@ -167,15 +182,45 @@
             white-space: nowrap
         }
 
+        #invSearchBox {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-sizing: border-box;
+            background: #000;
+            border: 2px solid;
+            border-color: #373737 #fff #fff #373737;
+            padding: 0 8px
+        }
+
+        #invLupa {
+            width: 15px;
+            height: 15px;
+            flex: none;
+            fill: none;
+            stroke: #909090;
+            stroke-width: 2;
+            stroke-linecap: square
+        }
+
+        #invSearchBox:focus-within {
+            border-color: #4a6 #fff #fff #4a6
+        }
+
+        #invSearchBox:focus-within #invLupa {
+            stroke: #4a6
+        }
+
         #invSearch {
             flex: 1;
             min-width: 0;
             box-sizing: border-box;
-            background: #000;
+            background: none;
             color: #fff;
-            border: 2px solid;
-            border-color: #373737 #fff #fff #373737;
-            padding: 6px 8px;
+            border: none;
+            padding: 6px 0;
             font: 14px/1.2 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
             outline: none
         }
@@ -184,34 +229,110 @@
             color: #909090
         }
 
-        #invSearch:focus {
-            border-color: #4a6 #fff #fff #4a6
+        #invEmpty {
+            display: none;
+            margin: 8px 0;
+            font-size: 13px;
+            color: #555
         }
 
         #invTip {
             min-height: 18px;
             margin: 0 0 4px;
             font-size: 13px;
-            color: #404040
+            color: #404040;
+            flex: none
+        }
+
+        /* corpo do modal: secoes a esquerda + lista de itens com rolagem interna a direita */
+        #invBody {
+            display: flex;
+            gap: 8px;
+            flex: 1 1 auto;
+            min-height: 0
+        }
+
+        #invTabs {
+            width: var(--iside);
+            flex: none;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 2px;
+            scrollbar-width: thin
+        }
+
+        #invTabs .tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-sizing: border-box;
+            padding: 5px 6px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: #8b8b8b;
+            border: 2px solid;
+            border-color: #373737 #fff #fff #373737;
+            color: #3f3f3f;
+            font: 13px/1.1 "Minecraft", "Minecraftia", "Silkscreen", "Segoe UI", system-ui, sans-serif;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation
+        }
+
+        #invTabs .tab.on {
+            background: #a8a8a8;
+            border-color: #fff #373737 #373737 #fff;
+            color: #fff;
+            text-shadow: 1px 1px 0 #3f3f3f
+        }
+
+        #invTabs .tab img {
+            width: calc(var(--sw) * .55);
+            height: calc(var(--sw) * .55);
+            image-rendering: pixelated;
+            flex: none
+        }
+
+        #invTabs .tab b {
+            font-weight: 400;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        #invScroll {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            padding-right: 3px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch
         }
 
         #invGrid {
             display: grid;
-            grid-template-columns: repeat(9, var(--sw));
+            grid-template-columns: repeat(auto-fill, var(--sw));
+            justify-content: start;
             gap: 0;
             padding: 0;
             background: none;
             border: none;
-            margin-bottom: 8px;
             min-height: calc(var(--sw) * 2);
             align-content: start
         }
 
         #invSep {
             height: 0;
-            margin: 2px 0 6px;
+            margin: 6px 0 6px;
             border-top: 2px solid #555;
-            border-bottom: 2px solid #fff
+            border-bottom: 2px solid #fff;
+            flex: none
         }
 
         #invHot {
@@ -220,7 +341,8 @@
             padding: 0;
             background: none;
             border: none;
-            justify-content: flex-start
+            justify-content: flex-start;
+            flex: none
         }
 
         #inv .slot {
@@ -233,10 +355,10 @@
             border-radius: 0;
             position: relative;
             cursor: default;
-            /* celular: toque comecado num slot e sempre arraste do item. O #invBox tem overflow:auto (costuma
-               transbordar no celular) e roubaria o gesto como rolagem, cancelando o ponteiro (pointercancel) no
-               meio do arraste. O touch-action efetivo vai ate o primeiro ancestor com scroll, entao o none do
-               body nao protegia -- o none aqui no slot e o que impede o sequestro do gesto. */
+            /* celular: toque comecado num slot e sempre arraste do item. A rolagem do modal mora em
+               #invScroll (costuma transbordar no celular) e roubaria o gesto como rolagem, cancelando o
+               ponteiro (pointercancel) no meio do arraste. O touch-action efetivo vai ate o primeiro
+               ancestor com scroll, entao o none aqui no slot e o que impede o sequestro do gesto. */
             touch-action: none
         }
 
@@ -289,7 +411,8 @@
             margin: 6px 0 0;
             font-size: 11px;
             line-height: 1.4;
-            color: #555
+            color: #555;
+            flex: none
         }
 
         /* canto superior esquerdo: FPS/hora (#info) e, logo abaixo, os avisos de comando e de salvamento, no mesmo estilo discreto */
@@ -1149,8 +1272,22 @@
             padding: 8px 8px 6px
         }
 
+        /* celular: as secoes viram pilha de so-icones (o rotulo some para caber) */
+        body.touch #invTabs .tab {
+            justify-content: center;
+            padding: 5px 3px
+        }
+
+        body.touch #invTabs .tab b {
+            display: none
+        }
+
         body.touch #invSearch {
-            padding: 4px 7px
+            padding: 4px 0
+        }
+
+        body.touch #invSearchBox {
+            padding: 0 6px
         }
 
         body.touch #invTip {
@@ -1306,10 +1443,111 @@
         #cmdMsg.on {
             opacity: 1
         }
+
+        /* Multiplayer P2P */
+        #mpNametags {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 85;
+        }
+        .mp-tag {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -100%);
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+            text-shadow: 1px 1px 0 #000;
+            will-change: transform;
+            pointer-events: none;
+        }
+        #mpHud {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(10, 16, 26, 0.75);
+            color: #a8e6cf;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: none;
+            z-index: 80;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+        #mpHud.on { display: block; }
+
+        .mp-room-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 10px;
+            text-align: left;
+            box-sizing: border-box;
+            transition: background .15s, border-color .15s;
+        }
+        .mp-room-item:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+        .mp-room-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-align: left;
+        }
+        .mp-room-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .mp-room-meta {
+            font-size: 12px;
+            line-height: 1.35;
+            color: #a8e6cf;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .mp-room-meta b {
+            color: #ffd24a;
+        }
+        .mp-room-item .btn {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            min-width: 90px !important;
+            height: 36px !important;
+            padding: 0 16px !important;
+            font-size: 13px !important;
+            margin: 0 !important;
+        }
     </style>
 </head>
 
 <body>
+    <div id="mpNametags"></div>
+    <div id="mpHud"></div>
     <canvas id="c"></canvas>
     <div id="water"></div>
     <div id="flash"></div>
@@ -1320,15 +1558,28 @@
         <div id="invBox">
             <div id="invHead">
                 <h2>Inventário</h2>
-                <input id="invSearch" type="text" placeholder="Pesquisar itens..." autocomplete="off"
-                    spellcheck="false">
+                <div id="invSearchBox">
+                    <svg id="invLupa" viewBox="0 0 16 16" aria-hidden="true">
+                        <circle cx="6.5" cy="6.5" r="4.5" />
+                        <line x1="10.2" y1="10.2" x2="14.5" y2="14.5" />
+                    </svg>
+                    <input id="invSearch" type="text" placeholder="Pesquisar itens..." autocomplete="off"
+                        spellcheck="false">
+                </div>
             </div>
             <p id="invTip">&nbsp;</p>
-            <div id="invGrid"></div>
+            <div id="invBody">
+                <div id="invTabs"></div>
+                <div id="invScroll">
+                    <div id="invGrid"></div>
+                    <p id="invEmpty">Nenhum item com esse nome.</p>
+                </div>
+            </div>
             <div id="invSep"></div>
             <div id="invHot"></div>
-            <p id="invHint">Arraste um item para a barra de baixo. Arraste na barra para trocar de lugar. 1-9 e 0
-                selecionam o slot · Esc fecha.</p>
+            <p id="invHint">Arraste um item para a barra de baixo. Arraste na barra para trocar de lugar. Solte um
+                item da barra fora do inventário para arremessá-lo no mundo; solte dentro do inventário para só
+                tirá-lo da barra. 1-9 e 0 selecionam o slot · Esc fecha.</p>
         </div>
     </div>
     <div id="invGhost"></div>
@@ -1433,6 +1684,7 @@
             <img id="logo" src="logo_menu.png" alt="Cubo">
             <div id="splash"></div>
             <button class="btn g" data-go="worlds">Jogar</button>
+            <button class="btn" id="btnTitleMp" data-go="multiplayer">Multiplayer (Mundos de Amigos)</button>
             <button class="btn" data-go="settings">Configurações</button>
             <p class="foot" id="dbNote">Desenvolvido por @erikhenriquesm · v0811.2356</p>
         </div>
@@ -1480,8 +1732,66 @@
             <h2>Jogo pausado</h2>
             <p id="saveInfo">O progresso é salvo automaticamente.</p>
             <button class="btn g" id="resume">Continuar</button>
+            <button class="btn" id="btnPauseMp" data-go="multiplayer">Abrir para Amigos (Multiplayer)</button>
             <button class="btn" data-go="settings">Configurações</button>
             <button class="btn" id="quit">Salvar e sair</button>
+        </div>
+
+        <div class="scr wide" id="s-multiplayer">
+            <h2 id="mpTitle">Multiplayer</h2>
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+                <label for="mpNick" style="font-size:13px;white-space:nowrap;font-weight:600">Seu Apelido:</label>
+                <input class="in" id="mpNick" maxlength="16" autocomplete="off" placeholder="Jogador" value="Jogador" style="flex:1">
+            </div>
+
+            <!-- VISTA DO MENU: LISTA DE MUNDOS + ENTRAR POR CHAVE/LINK -->
+            <div id="mpClientView">
+                <!-- Lista de Mundos Disponíveis (Salas Públicas) -->
+                <div style="text-align:left;background:rgba(0,0,0,0.32);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                        <b style="font-size:14px;color:#a8e6cf">🌐 Mundos Disponíveis</b>
+                        <button class="btn" id="mpBtnRefreshRooms" style="padding:4px 10px;font-size:11px" type="button">↻ Atualizar</button>
+                    </div>
+                    <div id="mpRoomList" style="max-height:160px;overflow-y:auto;padding-right:2px">
+                        <p id="mpNoRooms" style="font-size:12px;opacity:0.75;text-align:center;padding:14px 0;margin:0">Buscando mundos abertos na rede...</p>
+                    </div>
+                </div>
+
+                <!-- Conectar via Link ou Chave -->
+                <div style="text-align:left;background:rgba(0,0,0,0.22);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px">
+                    <b style="display:block;font-size:13px;margin-bottom:4px">Conectar via Chave ou Link Direto</b>
+                    <div style="display:flex;gap:6px">
+                        <input class="in" id="mpJoinCode" maxlength="64" autocomplete="off" placeholder="Cole a chave (código) ou link da sala" style="flex:1">
+                        <button class="btn g" id="mpBtnJoin" style="white-space:nowrap;padding:7px 14px">Conectar</button>
+                    </div>
+                    <p id="mpJoinMsg" style="font-size:12px;margin:6px 0 0;display:none"></p>
+                </div>
+
+                <button class="btn" id="mpClientBackBtn" type="button" style="width:100%">Voltar ao Menu</button>
+            </div>
+
+            <!-- VISTA IN-GAME: ABRIR MUNDO PARA AMIGOS (HOST) -->
+            <div id="mpHostView" style="display:none">
+                <div style="text-align:left;background:rgba(0,0,0,0.26);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);margin-bottom:10px">
+                    <b style="display:block;margin-bottom:6px;font-size:14px;color:#a8e6cf">Abrir Mundo para Amigos</b>
+                    <div id="mpHostOff">
+                        <p id="mpHostNote" style="font-size:12px;margin:2px 0 10px;opacity:0.85">Abra este mundo para que ele apareça na lista de mundos disponíveis e seus amigos possam entrar com você.</p>
+                        <button class="btn g" id="mpBtnStartHost" style="width:100%" type="button">Abrir Sala para Amigos</button>
+                    </div>
+                    <div id="mpHostOn" style="display:none">
+                        <p style="font-size:12px;margin:2px 0 6px;color:#a8e6cf;font-weight:bold">● Sala aberta e visível na lista pública!</p>
+                        <label style="font-size:11px;opacity:0.8">Chave da Sala:</label>
+                        <div style="display:flex;gap:6px;align-items:center;margin:4px 0 8px">
+                            <input class="in" id="mpRoomCode" readonly style="font-weight:bold;letter-spacing:1px;text-align:center;font-size:13px;background:rgba(0,0,0,0.4)">
+                            <button class="btn g" id="mpBtnCopy" style="white-space:nowrap;padding:7px 12px;font-size:13px" type="button">Copiar Link</button>
+                        </div>
+                        <p id="mpHostPeers" style="font-size:12px;margin:4px 0;opacity:0.85">Jogadores: 1 (Você)</p>
+                        <button class="btn r" id="mpBtnStopHost" style="width:100%;margin-top:6px" type="button">Fechar Sala</button>
+                    </div>
+                </div>
+
+                <button class="btn g" id="mpHostBackBtn" type="button" style="width:100%">Voltar ao Jogo</button>
+            </div>
         </div>
 
         <div class="scr wide" id="s-settings">
@@ -1569,17 +1879,21 @@
         const BIO = mkBiome(), BIOMES = BIO.BIOMES, ICE = BIO.ICE, SNOWL = BIO.SNOWL;
         // Iluminacao estilo Minecraft: cada celula guarda luz do ceu (4 bits altos) e luz de bloco (4 bits baixos), de 0 a 15.
         // OP = quanto o bloco atenua a luz (15 = opaco). EM = luz emitida pelo bloco.
-        const OP = new Uint8Array(64).fill(15), EM = new Uint8Array(64);
+        const OP = new Uint8Array(72).fill(15), EM = new Uint8Array(72);
         OP[0] = 0; OP[6] = 1; OP[9] = 0; for (let i = 10; i < 24; i++) OP[i] = 0;
         for (let i = 10; i < 15; i++) EM[i] = 11; // 10 = tocha em pe, 11-14 = tocha de parede (nivel 11: luz suave, alcance menor que o 14 padrao)
         OP[26] = OP[28] = 1; EM[34] = 15; // folhas de bétula/abeto, lâmpada
         EM[52] = 7; EM[53] = 11; // magma e cristal brilham
         OP[ICE] = 1; OP[SNOWL] = 0; // gelo deixa passar um pouco de luz; neve fina nao bloqueia luz
-        const LEAF = new Uint8Array(64); LEAF[6] = LEAF[26] = LEAF[28] = 1;
+        const LEAF = new Uint8Array(72); LEAF[6] = LEAF[26] = LEAF[28] = 1;
+        // Plantas do chao (57-68): transparentes (luz passa), sem colisao e substituiveis
+        const PLANT0 = 57, PLANT1 = 68;
+        for (let i = PLANT0; i <= PLANT1; i++) OP[i] = 0;
         // tochas de parede (ids 11-14): deslocamento ate o bloco de apoio
         const WDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
         const isTorch = b => b === TORCH || (b >= 11 && b <= 14);
-        const isSoft = b => isTorch(b) || b === SNOWL;                              // sem colisao e substituivel (agua/blocos tomam o lugar)
+        const isSoft = b => isTorch(b) || b === SNOWL || isPlant(b);          // sem colisao e substituivel (agua/blocos tomam o lugar)
+        const isPlant = b => b >= PLANT0 && b <= PLANT1;                       // plantas do chao: grama, flores, cogumelos, secas
         const snowSupport = b => b !== 0 && b !== SNOWL && !isWater(b) && !isTorch(b); // blocos que seguram neve fina por cima
 
         /* ---------- Worker: geracao de terreno (Perlin, com semente) ---------- */
@@ -1662,7 +1976,7 @@
                     let y = CH - 1; while (y > 0 && d[(y << 8) | i] === 0) y--;
                     const b = d[(y << 8) | i];
                     if (b >= 16 && b < 24) { d[(y << 8) | i] = ICE; continue; }
-                    if (b === 0 || b === ICE || b === SNOWL || b === 24 || b === 32 || (b >= 10 && b <= 14) || y + 1 >= CH) continue; // solo ja e branco; tocha nao segura neve
+                    if (b === 0 || b === ICE || b === SNOWL || b === 24 || b === 32 || (b >= 10 && b <= 14) || (b >= 57 && b <= 68) || y + 1 >= CH) continue; // solo ja e branco; tocha/planta nao seguram neve
                     d[((y + 1) << 8) | i] = SNOWL;
                 }
             }
@@ -1806,8 +2120,8 @@
                         if (h3(wx, y, wz, 33) < 0.0022 && h3(wx >> 3, y >> 3, wz >> 3, 36) < 0.5) { d[i] = CRYST; continue; }
                     }
                     if (cls[((y + 1) * 18 + lz + 1) * 18 + lx + 1] >= 2) { // chao de caverna media/grande
-                        if (y <= 42 && h3(wx >> 1, wz >> 1, y >> 2, 32) < 0.24) d[i] = MAGMA;
-                        else if (h3(wx >> 2, wz >> 2, 0, 31) < 0.2 && h3(wx, y, wz, 35) < 0.85) d[i] = GRAVEL;
+                        // magma desativado: o chao fica so com cascalho
+                        if (h3(wx >> 2, wz >> 2, 0, 31) < 0.2 && h3(wx, y, wz, 35) < 0.85) d[i] = GRAVEL;
                     }
                 }
                 // ---- estalactites e estalagmites (so em caverna media/grande, com folga de 5+ blocos) ----
@@ -2012,6 +2326,31 @@
                     else if (b === 1 && pk < 0.35) birch(wx, wz, h, a, s);
                     else oak(wx, wz, h, a, s, c);
                 }
+                /* plantas do chao: grama/flores/cogumelos nos biomas quentes e plantas secas no deserto.
+                   Escaneia o topo real da coluna depois das cavernas e das arvores; biomas frios ficam
+                   sem plantas (a neve fina do decorate cobriria). Deterministico pela semente (hash). */
+                for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
+                    const i = (z << 4) | x, wx = X0 + x, wz = Z0 + z, b = bio[i];
+                    if (b === 3 || b === 4 || b === 6) continue; // taiga, tundra e montanha: sem plantas
+                    let y = CH - 1; while (y > 2 && d[(y << 8) | i] === 0) y--;
+                    const sb = d[(y << 8) | i];
+                    if (y <= SEA + 1 || y + 1 >= CH) continue; // praia, submerso ou sem cabeca
+                    const r1 = hash(wx, wz), r2 = hash(wx + 101, wz - 57), r3 = hash(wx - 31, wz + 77);
+                    let id = 0;
+                    if (b === 5) { // deserto: plantas secas na areia
+                        if (sb === 4) { if (r2 < 0.010) id = 68; else if (r2 < 0.034) id = 67; }
+                    } else if (sb === 1 || sb === 2) { // so em cima de grama/terra
+                        const dens = b === 1 ? 1.5 : 1.0; // floresta mais recheada
+                        if (r3 < 0.006 * dens) id = r3 < 0.003 * dens ? 61 : 62; // cogumelos (raros)
+                        else if (r2 < 0.024 * dens) id = 63 + ((hash(wx + 9, wz + 3) * 4) | 0); // flores
+                        else if (r1 < 0.20 * dens) { // grama: curta/media/alta e samambaia na floresta
+                            const k = hash(wx + 13, wz - 5);
+                            if (b === 1 && k < 0.10) id = 60;
+                            else id = k < 0.55 ? 57 : (k < 0.82 ? 58 : 59);
+                        }
+                    }
+                    if (id) d[((y + 1) << 8) | i] = id;
+                }
                 BM.decorate(d, bio); // biomas frios: agua congela e neve fina cobre copas e blocos
                 return { data: d, bio };
             }
@@ -2043,7 +2382,7 @@
 
         /* ---------- Texturas pintadas so com codigo ---------- */
         function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-        const atlas = document.createElement('canvas'); const NT = 76; atlas.width = NT * 16; atlas.height = 16;
+        const atlas = document.createElement('canvas'); const NT = 99; atlas.width = NT * 16; atlas.height = 16; // 88 usados; 88-92 = galinha; 93-98 = Steve (rosto, roupa, cabelo, pele)
         const actx2 = atlas.getContext('2d');
         function tile(i, fn) {
             const r = rnd(i * 977 + 13);
@@ -2416,11 +2755,161 @@
             if ((x * 5 + y * 7) % 13 === 0) c = [10, 85, 105];
             return [c[0] + n, c[1] + n, c[2] + n];
         });
+        /* ---------- Plantas do chao: texturas 76-87 (pixels transparentes, viram quadro cruzado) ---------- */
+        function bladeTile(blades, cA, cB) { // tufo de laminas curvas: [xBase, altura, inclinacao], cor base->ponta
+            const m = new Map();
+            for (const [xb, h, sw] of blades) for (let i = 0; i < h; i++) {
+                const y = 15 - i, k = i / h, off = Math.round(sw * k * k);
+                for (const w of [0, -1]) {
+                    const x = xb + off + w;
+                    if (x < 0 || x > 15) continue;
+                    const c = [0, 1, 2].map(j => Math.round(cA[j] + (cB[j] - cA[j]) * k + (w ? -8 : 0)));
+                    m.set(x + ',' + y, c);
+                }
+            }
+            return (x, y, r) => { const c = m.get(x + ',' + y); return c ? [c[0] + nz(r, 14), c[1] + nz(r, 14), c[2] + nz(r, 14), 255] : [0, 0, 0, 0]; };
+        }
+        function twigTile(segs, c) { // galhos finos por segmentos (arbusto seco)
+            const m = new Set();
+            for (const [x0, y0, x1, y1] of segs) {
+                const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+                for (let i = 0; i <= n; i++) m.add(Math.round(x0 + (x1 - x0) * i / n) + ',' + Math.round(y0 + (y1 - y0) * i / n));
+            }
+            return (x, y, r) => m.has(x + ',' + y) ? [c[0] + nz(r, 22), c[1] + nz(r, 22), c[2] + nz(r, 22), 255] : [0, 0, 0, 0];
+        }
+        tile(76, bladeTile([[5, 6, -3], [7, 8, -1], [8, 7, 1], [10, 6, 3], [6, 5, -2], [9, 5, 2], [7, 6, 0], [8, 5, 1]], [52, 118, 38], [104, 178, 66]));
+        tile(77, bladeTile([[4, 8, -4], [6, 10, -2], [7, 9, 0], [9, 10, 2], [11, 8, 4], [5, 7, -3], [10, 7, 3], [8, 8, 1]], [48, 112, 36], [112, 186, 72]));
+        tile(78, bladeTile([[4, 12, -5], [6, 15, -3], [7, 13, -1], [8, 14, 1], [9, 13, 3], [11, 12, 5], [5, 10, -4], [10, 10, 4], [7, 11, 0], [8, 12, 2]], [44, 106, 34], [120, 196, 80]));
+        tile(79, bladeTile([[6, 13, -6], [9, 13, 6], [7, 10, -3], [8, 10, 3], [5, 7, -4], [10, 7, 4], [7, 8, 0], [8, 7, 1], [6, 6, -2], [9, 6, 2]], [38, 96, 40], [96, 168, 76])); // samambaia
+        tile(86, bladeTile([[5, 7, -3], [7, 9, -1], [8, 8, 1], [10, 7, 3], [6, 6, -2], [9, 6, 2], [7, 5, 0]], [148, 126, 70], [206, 190, 128])); // capim seco
+        tile(87, twigTile([[8, 15, 8, 10], [8, 13, 3, 8], [8, 13, 13, 8], [8, 11, 5, 6], [8, 11, 11, 6], [3, 8, 2, 6], [13, 8, 14, 6], [5, 6, 4, 4], [11, 6, 12, 4], [8, 10, 6, 7], [8, 10, 10, 7]], [134, 104, 58])); // arbusto seco
+        // haste e folhinhas verdes em comum das flores (82-85)
+        const stemPx = (x, y) => ((x === 7 || x === 8) && y >= 9 && y <= 14) || ((x >= 5 && x <= 6) && y === 11) || ((x >= 9 && x <= 10) && y === 12);
+        tile(82, (x, y, r) => { // papoula: pétalas vermelhas com centro escuro
+            const n = nz(r, 12);
+            const rows = { 4: [7, 8], 5: [6, 9], 6: [6, 9], 7: [5, 10], 8: [6, 9] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) return (y === 6 || y === 7) && x >= 7 && x <= 8 ? [46, 34, 34] : [198 + n, 44 + n, 38 + n];
+            if (stemPx(x, y)) return [56 + n, 122 + n, 44 + n];
+            return [0, 0, 0, 0];
+        });
+        tile(83, (x, y, r) => { // dente-de-leão: puf amarelo
+            const n = nz(r, 12);
+            const rows = { 3: [7, 8], 4: [6, 9], 5: [5, 10], 6: [5, 10], 7: [5, 10], 8: [6, 9] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) return (x === 5 || x === 10 || y === 3) ? [255, 236, 96] : [242 + n, 204 + n, 48 + n];
+            if (stemPx(x, y)) return [56 + n, 122 + n, 44 + n];
+            return [0, 0, 0, 0];
+        });
+        tile(84, (x, y, r) => { // flor azul com miolo amarelo
+            const n = nz(r, 12);
+            const rows = { 4: [7, 8], 5: [6, 9], 6: [6, 9], 7: [5, 10], 8: [6, 9] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) return (y === 6 || y === 7) && x >= 7 && x <= 8 ? [246, 214, 74] : [74 + n, 106 + n, 204 + n];
+            if (stemPx(x, y)) return [56 + n, 122 + n, 44 + n];
+            return [0, 0, 0, 0];
+        });
+        tile(85, (x, y, r) => { // margarida branca
+            const n = nz(r, 8);
+            const rows = { 4: [7, 8], 5: [6, 9], 6: [6, 9], 7: [5, 10], 8: [6, 9] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) return (y === 6 || y === 7) && x >= 7 && x <= 8 ? [248, 214, 74] : [242 + n, 244 + n, 240 + n];
+            if (stemPx(x, y)) return [56 + n, 122 + n, 44 + n];
+            return [0, 0, 0, 0];
+        });
+        tile(80, (x, y, r) => { // cogumelo vermelho: chapeu com pontos brancos e haste creme
+            const n = nz(r, 12);
+            const rows = { 3: [7, 8], 4: [6, 9], 5: [5, 10], 6: [4, 11], 7: [4, 11], 8: [5, 10] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) {
+                const dot = (x === 5 && y === 6) || (x === 10 && y === 6) || (x === 7 && y === 4) || (x === 6 && y === 7) || (x === 9 && y === 7);
+                return dot ? [248, 248, 244] : [186 + n, 44 + n, 34 + n];
+            }
+            if ((x === 7 || x === 8) && y >= 9 && y <= 14) return [234 + n, 220 + n, 194 + n];
+            if (y === 8 && x >= 6 && x <= 9) return [214, 198, 172]; // sombra sob o chapeu
+            return [0, 0, 0, 0];
+        });
+        tile(81, (x, y, r) => { // cogumelo marrom
+            const n = nz(r, 14);
+            const rows = { 4: [7, 8], 5: [6, 9], 6: [5, 10], 7: [5, 10], 8: [6, 9] };
+            if (rows[y] && x >= rows[y][0] && x <= rows[y][1]) return (y === 8) ? [124, 94, 62] : [148 + n, 108 + n, 70 + n];
+            if ((x === 7 || x === 8) && y >= 9 && y <= 14) return [228 + n, 214 + n, 188 + n];
+            return [0, 0, 0, 0];
+        });
         const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
         for (let k = 0; k < 7; k++) { TILES[37 + k] = [31 + k, 31 + k, 31 + k]; TILES[45 + k] = [39 + k, 39 + k, 39 + k]; }
         Object.assign(TILES, { 44: [38, 38, 38], 52: [46, 46, 46], 53: [47, 47, 47], 54: [48, 48, 48], 55: [49, 49, 49], 56: [50, 50, 50] });
         Object.assign(TILES, { 24: [16, 2, 17], 25: [19, 19, 18], 26: [20, 20, 20], 27: [22, 22, 21], 28: [23, 23, 23], 29: [25, 25, 24], 31: [26, 26, 26], 32: [16, 16, 16], 33: [27, 27, 27], 34: [28, 28, 28], 35: [29, 29, 29], 36: [16, 16, 16] });
+        // Plantas (57-68): todas com a mesma textura (quadro cruzado)
+        const PLANT_TILES = { 57: 76, 58: 77, 59: 78, 60: 79, 61: 80, 62: 81, 63: 82, 64: 83, 65: 84, 66: 85, 67: 86, 68: 87 };
+        for (const k in PLANT_TILES) TILES[k] = [PLANT_TILES[k], PLANT_TILES[k], PLANT_TILES[k]];
         const TILES_W = [12, 12, 12];
+        { // texturas da galinha (tiles 88-92): penas, crista/barbela, bico e patas, olho, asas
+            tile(88, (x, y, r) => { // penas brancas: fiadas suaves com ruido claro
+                const n = nz(r, 16), row = (y % 4 === 0 ? -10 : 0) + ((x + (y >> 2)) % 5 === 0 ? 6 : 0);
+                return [236 + n + row, 234 + n + row, 228 + n + row];
+            });
+            tile(89, (x, y, r) => { // crista e barbela: vermelho vivo escurecendo na base
+                const n = nz(r, 22), s = y > 11 ? -26 : 0;
+                return [206 + n + s, 44 + n + s, 38 + n + s];
+            });
+            tile(90, (x, y, r) => { // bico e patas: amarelo-alaranjado com pontas escuras
+                const n = nz(r, 18), k = (y === 15 || x === 0) ? -34 : 0;
+                return [236 + n + k, 168 + n + k, 48 + n + k];
+            });
+            tile(91, (x, y) => { // olho: iris escura com brilho, fundo transparente (a cabeca branca aparece em volta)
+                const d = Math.hypot(x - 7.5, y - 7.5);
+                if (d > 3.7) return [0, 0, 0, 0];
+                if (x < 7 && y < 7 && d > 1.4) return [244, 244, 244]; // brilho no canto superior
+                return d > 2.5 ? [58, 48, 44] : [12, 10, 10];
+            });
+            tile(92, (x, y, r) => { // asas e rabo: penas cinza-esbranquicadas em fiadas
+                const n = nz(r, 18), row = (y % 3 === 0 ? -16 : 0) + ((x * 3 + y) % 7 === 0 ? 8 : 0);
+                return [206 + n + row, 203 + n + row, 196 + n + row];
+            });
+            // Texturas do jogador multiplayer (tiles 93-98): rosto Steve na frente, roupa, cabelo e pele
+            tile(93, (x, y, r) => { // rosto Steve clássico (somente frente)
+                const n = nz(r, 8);
+                // Franja e cabelo no topo da cabeça
+                if (y < 3) return [74 + n, 44 + n, 22 + n];
+                if (y === 3 && (x <= 2 || x >= 13 || (x >= 6 && x <= 9))) return [74 + n, 44 + n, 22 + n];
+                if ((x === 0 || x === 15) && y < 10) return [74 + n, 44 + n, 22 + n]; // costeletas
+                // Olhos Steve expressivos (y = 6..8)
+                if (y >= 6 && y <= 8) {
+                    if (x === 2 || x === 3) return [245, 245, 250]; // esclera branca
+                    if (x === 4 || x === 5) return [45, 85, 185];   // íris azul Steve
+                    if (x === 10 || x === 11) return [45, 85, 185]; // íris azul Steve
+                    if (x === 12 || x === 13) return [245, 245, 250]; // esclera branca
+                }
+                // Nariz ligeiramente sombreado
+                if (y >= 9 && y <= 10 && x >= 7 && x <= 8) return [188 + n, 128 + n, 102 + n];
+                // Boca / cavanhaque Steve
+                if (y === 11 && x >= 5 && x <= 10) return [120 + n, 62 + n, 46 + n];
+                // Pele do rosto
+                return [218 + n, 166 + n, 134 + n];
+            });
+            tile(94, (x, y, r) => { // camiseta ciano
+                const n = nz(r, 12);
+                if (y < 3 && x >= 5 && x <= 10) return [214 + n, 161 + n, 128 + n]; // gola
+                return [0 + n, 162 + n, 178 + n];
+            });
+            tile(95, (x, y, r) => { // calça azul jeans e sapato
+                const n = nz(r, 14);
+                if (y >= 14) return [80 + n, 80 + n, 85 + n]; // sapato
+                return [42 + n, 56 + n, 128 + n]; // calça jeans
+            });
+            tile(96, (x, y, r) => { // cabelo Steve completo (costas e topo da cabeça)
+                const n = nz(r, 12);
+                const wave = ((x * 7 + y * 11) % 5 === 0 ? 10 : 0);
+                return [72 + n + wave, 43 + n + wave, 21 + n + wave];
+            });
+            tile(97, (x, y, r) => { // laterais da cabeça (cabelo atrás e em cima, costeleta e pele na frente)
+                const n = nz(r, 10);
+                if (y < 4) return [72 + n, 43 + n, 21 + n]; // topo
+                if (x < 8) return [72 + n, 43 + n, 21 + n]; // metade de trás é cabelo
+                if (x >= 8 && x <= 10 && y < 9) return [72 + n, 43 + n, 21 + n]; // costeleta
+                return [218 + n, 166 + n, 134 + n]; // pele da bochecha e orelha
+            });
+            tile(98, (x, y, r) => { // pele lisa (mãos e base do pescoço)
+                const n = nz(r, 8);
+                return [218 + n, 166 + n, 134 + n];
+            });
+        }
         const atlasURL = atlas.toDataURL();
         { // fundo do menu enquanto o mundo carrega: textura de terra do jogo em mosaico, escurecida (estilo Minecraft)
             const c = document.createElement('canvas'); c.width = c.height = 16;
@@ -2438,7 +2927,11 @@
         [24, 17, 'Terra com neve'], [32, 16, 'Neve'], [SNOWL, 30, 'Neve fina'], [ICE, 29, 'Gelo'], [5, 5, 'Tronco de carvalho'], [6, 7, 'Folhas de carvalho'], [25, 18, 'Tronco de bétula'],
         [26, 20, 'Folhas de bétula'], [27, 21, 'Tronco de abeto'], [28, 23, 'Folhas de abeto'], [7, 8, 'Tábuas'], [9, 11, 'Vidro'],
         [29, 24, 'Cacto'], [34, 28, 'Lâmpada'], [8, 9, 'TNT'], [TORCH, 13, 'Tocha'],
-        [BUCKET, 14, 'Balde vazio'], [BUCKET, 15, 'Balde de água']]; // dois baldes: o vazio coleta, o de agua solta (dividem o id, o tile distingue)
+        [BUCKET, 14, 'Balde vazio'], [BUCKET, 15, 'Balde de água'],
+        [57, 76, 'Grama'], [58, 77, 'Grama alta', 1], [59, 78, 'Grama comprida', 1], [60, 79, 'Samambaia'], // grama cresce apos plantar; 58/59 ocultos (4o elemento = 1)
+        [63, 82, 'Papoula'], [64, 83, 'Dente-de-leão'], [65, 84, 'Flor azul'], [66, 85, 'Margarida'],
+        [61, 80, 'Cogumelo vermelho'], [62, 81, 'Cogumelo marrom'],
+        [67, 86, 'Capim seco'], [68, 87, 'Arbusto seco']];
         { // blocos das cavernas, logo depois dos tijolos de pedra
             const on = ['carvão', 'cobre', 'ferro', 'ouro', 'redstone', 'lápis-lazúli', 'diamante'], ex = [[44, 38, 'Ardósia']];
             on.forEach((n, k) => ex.push([37 + k, 31 + k, 'Minério de ' + n]));
@@ -2448,10 +2941,11 @@
         }
         const DEFHOT = [1, 2, 3, 4, 5, 7, 8, 9, BUCKET, TORCH];
         const catOf = id => CAT.find(c => c[0] === id);
-        const catOfT = (id, t) => CAT.find(c => c[0] === id && c[1] === t) || catOf(id); // por id+tile: os dois baldes dividem o id
+        const catOfT = (id, t) => id === 0 ? [0, 0, ''] : (CAT.find(c => c[0] === id && c[1] === t) || catOf(id)); // por id+tile: os dois baldes dividem o id; id 0 = slot vazio
         const HOT = DEFHOT.map(id => { const c = catOf(id); return [c[0], c[1]]; });
         let sel = 0; // balde sem estado: quem decide e o tile do item selecionado (14 vazio / 15 agua)
         const slotEls = [], hotbar = $('hotbar'), invEl = $('inv'), invGrid = $('invGrid'), invHot = $('invHot'), invTip = $('invTip'), invGhost = $('invGhost'), invSearch = $('invSearch');
+        const invTabs = $('invTabs'), invScroll = $('invScroll'), invEmpty = $('invEmpty');
         /* ---------- Icones 3D (cubo isometrico) estilo Minecraft ----------
            Cada bloco vira um cubo desenhado pixel a pixel a partir das texturas do atlas (topo claro, lado esquerdo medio,
            lado direito escuro). Neve fina vira uma laje baixa. Tocha e balde (itens, nao blocos) ficam planos, como no Minecraft. */
@@ -2463,7 +2957,7 @@
             if (!atlasPx) atlasPx = actx2.getImageData(0, 0, NT * 16, 16).data;
             const S = ICON_S, cv = document.createElement('canvas'); cv.width = cv.height = S;
             const cx = cv.getContext('2d'), tl = TILES[id];
-            if (!tl || id === TORCH) { // item plano: textura 16x16 ampliada 2x, centralizada
+            if (!tl || id === TORCH || isPlant(id)) { // item plano: textura 16x16 ampliada 2x, centralizada (tocha e plantas)
                 const im = cx.createImageData(S, S), o0 = (S - 32) >> 1;
                 for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
                     const a = ((y >> 1) * NT * 16 + tile * 16 + (x >> 1)) * 4, o = ((y + o0) * S + x + o0) * 4;
@@ -2501,15 +2995,62 @@
         for (let i = 0; i < 10; i++) { const d = mkSlot(i + 1); hotbar.appendChild(d); slotEls.push(d); }
         const tilePos = t => (t / (NT - 1) * 100) + '% 0';
         const invHotEls = HOT.map((_, i) => { const d = mkSlot(i + 1); invHot.appendChild(d); return d; });
+        /* ---------- Secoes do inventario (coluna a esquerda, com icone) ----------
+           A primeira aba e "Todos": o catalogo inteiro, onde a busca da lupa vale por tudo.
+           As demais filtram por categoria. A ordem e definida por SECS; secOf devolve o indice
+           da secao de um item do catalogo. Itens com 4o elemento = 1 (tamanhos de grama que so
+           nascem do crescimento) ficam ocultos em todas as secoes. */
+        const SECS = [
+            ['Todos', [3, 3]], ['Blocos', [33, 27]], ['Naturais', [1, 0]], ['Minérios', [43, 37]],
+            ['Madeira', [7, 8]], ['Plantas', [63, 82]], ['Itens', [TORCH, 13]]];
+        const inSet = (id, a) => a.indexOf(id) >= 0;
+        const SEC_NAT = [1, 2, 4, 24, 32, SNOWL, ICE, 29, 31], SEC_MIN = [44, 54, 55, 52, 53],
+            SEC_WOOD = [5, 6, 25, 26, 27, 28, 7], SEC_ITEM = [TORCH, BUCKET];
+        function secOf(c) {
+            const id = c[0];
+            if (isPlant(id)) return 5;
+            if (inSet(id, SEC_ITEM)) return 6;
+            if (inSet(id, SEC_NAT)) return 2;
+            if (id >= 37 && id <= 51 || inSet(id, SEC_MIN)) return 3; // minerios: pedra (37-43), ardosia (45-51), cascalho/calcita/magma/cristal
+            if (inSet(id, SEC_WOOD)) return 4;
+            return 1; // blocos de construcao (tijolos, vidro, TNT, lampada...)
+        }
+        let curSec = 0;
         const catEls = CAT.map((c, i) => {
             const d = mkSlot(); d.title = c[2];
             d.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !drag) invTip.textContent = c[2]; });
-            invGrid.appendChild(d); return d;
+            if (!c[3]) invGrid.appendChild(d); // 4o elemento = oculto: tamanhos de grama que so nascem do crescimento
+            return d;
         });
-        invSearch.addEventListener('input', () => {
+        const tabEls = SECS.map((s, i) => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'tab' + (i === 0 ? ' on' : '');
+            const im = document.createElement('img'); im.src = iconOf(s[1][0], s[1][1]); im.alt = '';
+            const lb = document.createElement('b'); lb.textContent = s[0];
+            b.appendChild(im); b.appendChild(lb);
+            b.addEventListener('click', () => {
+                curSec = i;
+                invSearch.value = ''; // trocar de secao limpa a busca
+                invScroll.scrollTop = 0; // comeca a lista da secao no topo
+                applyFilter();
+            });
+            invTabs.appendChild(b); return b;
+        });
+        function applyFilter() {
             const q = invSearch.value.trim().toLowerCase();
-            for (let i = 0; i < CAT.length; i++) catEls[i].style.display = (!q || CAT[i][2].toLowerCase().includes(q)) ? '' : 'none';
-        });
+            // com busca ativa o catalogo vira "Todos": a lupa procura em todas as secoes de uma vez
+            const eff = q ? 0 : curSec;
+            tabEls.forEach((t, j) => t.classList.toggle('on', j === eff));
+            let n = 0;
+            for (let i = 0; i < CAT.length; i++) {
+                const c = CAT[i];
+                const ok = !c[3] && (eff === 0 || secOf(c) === eff) && (!q || c[2].toLowerCase().includes(q));
+                catEls[i].style.display = ok ? '' : 'none';
+                if (ok) n++;
+            }
+            invEmpty.style.display = n ? 'none' : 'block';
+        }
+        invSearch.addEventListener('input', applyFilter);
         /* Arrastar itens (estilo Minecraft): do catalogo para a barra, ou entre slots da barra */
         let drag = null; // { tile, cat, from, sx, sy, moved }
         function dragBegin(e, tile, cat, from) {
@@ -2520,7 +3061,12 @@
         function dragMove(e) {
             if (!drag || e.pointerId !== drag.id) return;
             if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) return;
-            if (!drag.moved) { drag.moved = true; setIcon(invGhost, drag.cat >= 0 ? CAT[drag.cat][0] : HOT[drag.from][0], drag.tile); invGhost.style.display = 'block'; drag.half = invGhost.offsetWidth / 2; }
+            if (!drag.moved) {
+                drag.moved = true;
+                const gid = drag.cat >= 0 ? CAT[drag.cat][0] : HOT[drag.from][0];
+                if (gid) setIcon(invGhost, gid, drag.tile); // slot vazio nao arrasta icone
+                invGhost.style.display = gid ? 'block' : 'none'; drag.half = invGhost.offsetWidth / 2;
+            }
             invGhost.style.left = (e.clientX - drag.half) + 'px'; invGhost.style.top = (e.clientY - drag.half) + 'px';
             invHotEls.forEach(el => el.classList.remove('drag-over'));
             const over = document.elementFromPoint(e.clientX, e.clientY);
@@ -2554,7 +3100,25 @@
                     refreshHotbar(); invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
                     if (cur) requestSave();
                 }
+            } else if (d.from >= 0 && HOT[d.from][0]) { // solto fora da barra...
+                const inPanel = over && over.closest ? over.closest('#invBox') : null;
+                if (inPanel) { // ...dentro do inventario: so sai da barra, sem dropar
+                    HOT[d.from] = [0, 0];
+                    refreshHotbar(); invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
+                    if (cur) requestSave();
+                } else tossHotItem(d.from); // ...fora do inventario (fundo escuro): arremessa no mundo
             }
+        }
+        /* Arremessar item da barra (estilo toss do criativo): nasce uma miniatura flutuante (drop) com
+           velocidade para frente, que cai, pousa, gira devagar e pode ser coletada ao passar por cima. */
+        function tossHotItem(i) {
+            const [id, tile] = HOT[i]; if (!id) return;
+            HOT[i] = [0, 0];
+            refreshHotbar(); invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
+            if (cur) requestSave();
+            if (!cur || cur.__pano) return;
+            const dx = -Math.sin(P.yaw), dz = -Math.cos(P.yaw);
+            spawnDrop(id, tile, P.x + dx * 0.4, P.y + P.eh - 0.1, P.z + dz * 0.4, dx * 3.4, 2.6, dz * 3.4);
         }
         for (let i = 0; i < CAT.length; i++) {
             catEls[i].addEventListener('pointerdown', e => dragBegin(e, CAT[i][1], i, -1));
@@ -2567,6 +3131,7 @@
         addEventListener('pointercancel', dragEnd);
         function applyHot(ids, tiles) { // restaura a barra salva no mundo (ou a padrao); tiles distingue a variante do balde
             for (let i = 0; i < 10; i++) {
+                if (Array.isArray(ids) && !ids[i]) { HOT[i] = [0, 0]; continue; } // 0 = slot vazio (mundo novo: barra limpa)
                 const c = catOf(Array.isArray(ids) ? ids[i] : DEFHOT[i]) || catOf(DEFHOT[i]);
                 const t = Array.isArray(tiles) ? tiles[i] : c[1];
                 HOT[i] = (c[0] === BUCKET && t === 15) ? [BUCKET, 15] : [c[0], c[1]];
@@ -2575,8 +3140,9 @@
         function refreshHotbar() {
             for (let i = 0; i < 10; i++) {
                 const on = i === sel;
-                setIcon(slotEls[i], HOT[i][0], HOT[i][1]); slotEls[i].classList.toggle('sel', on);
-                setIcon(invHotEls[i], HOT[i][0], HOT[i][1]); invHotEls[i].classList.toggle('sel', on);
+                const icon = HOT[i][0] ? 'url(' + iconOf(HOT[i][0], HOT[i][1]) + ')' : 'none'; // slot vazio: sem icone
+                slotEls[i].style.backgroundImage = icon; slotEls[i].classList.toggle('sel', on);
+                invHotEls[i].style.backgroundImage = icon; invHotEls[i].classList.toggle('sel', on);
             }
             for (let i = 0; i < CAT.length; i++) setIcon(catEls[i], CAT[i][0], CAT[i][1]);
         }
@@ -2630,7 +3196,7 @@
 
         /* ---------- WebGL ---------- */
         const canvas = $('c');
-        const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, stencil: false, powerPreference: 'high-performance' });
+        const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
         if (!gl) { $('status').textContent = 'Seu navegador nao suporta WebGL2.'; throw new Error('no webgl2'); }
         function mkProg(vs, fs) {
             const p = gl.createProgram();
@@ -3066,7 +3632,10 @@ void main(){
             if (old === id) return false;
             ch.data[i] = id; ch.modified = true; ch.sd = true; ch.dirty = true;
             if (ch.lit && (OP[old] !== OP[id] || EM[old] !== EM[id])) relight(x, y, z, old, id);
-            if (rec) { history.push(x, y, z, old, id); if (history.length > 2500000) history.splice(0, 500000); }
+            if (rec) {
+                history.push(x, y, z, old, id); if (history.length > 2500000) history.splice(0, 500000);
+                if (typeof MP !== 'undefined' && MP.active) MP.broadcastBlock(x, y, z, id);
+            }
             if (lx === 0) dirtyAt(cx - 1, cz); if (lx === 15) dirtyAt(cx + 1, cz);
             if (lz === 0) dirtyAt(cx, cz - 1); if (lz === 15) dirtyAt(cx, cz + 1);
             wake(x, y, z);
@@ -3118,6 +3687,21 @@ void main(){
                 arr.push(ox + 0.5 + (wd ? wd[0] * k : 0) + lx, oy + yo + ly, oz + 0.5 + (wd ? wd[1] * k : 0) + lz, u, v, sh, sk, bk);
             }, seed);
         }
+        /* ---------- Plantas (57-68): dois quadros cruzados (estilo Minecraft), deslocados de forma
+           deterministica por posicao e com a luz da propria celula; face dupla implicita (culling off) ---------- */
+        const PLANT_BOX = [0.12, 0, 0.12, 0.88, 1, 0.88]; // caixa de mira para acertar/quebrar
+        function pushPlant(arr, b, ox, oy, oz, lv) {
+            const t = TILES[b][2], u0 = t / NT, u1 = (t + 1) / NT;
+            const hsh = ((ox * 73856093) ^ (oz * 19349663)) >>> 0;
+            const cx = ox + 0.5 + (((hsh & 15) / 15) - 0.5) * 0.4, cz = oz + 0.5 + ((((hsh >> 4) & 15) / 15) - 0.5) * 0.4;
+            const W = 0.36, sk = (lv >> 4) / 15, bk = (lv & 15) / 15;
+            const uv = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+            const Q = [[[-W, 0, -W], [W, 0, W], [W, 1, W], [-W, 1, -W]], [[-W, 0, W], [W, 0, -W], [W, 1, -W], [-W, 1, W]]];
+            for (const P2 of Q) for (const i of ORDER) {
+                const v = P2[i];
+                arr.push(cx + v[0], oy + v[1], cz + v[2], uv[i][0], uv[i][1], 0.95, sk, bk);
+            }
+        }
         /* ---------- Espinhos do cacto (29): bumps sutis de 1 pixel que saem para fora do bloco ---------- */
         const TH_S = 0.03125, TH_P = 0.0625; // meia-largura da base (1/2 pixel) e altura (1 pixel), em blocos
         const TH_U = (24 + 2.5 / 16) / NT, TH_V = 1.5 / 16; // pixel claro do espinho no proprio atlas (tile 24, px 2, py 1)
@@ -3155,7 +3739,7 @@ void main(){
             }
         }
         const SNOW_H = 0.125, SNOW_BOX = [0, 0, 0, 1, SNOW_H, 1]; // neve fina: 1/8 de bloco
-        const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b) || b === SNOWL;
+        const transp = b => b === 0 || LEAF[b] === 1 || b === 9 || isTorch(b) || b === SNOWL || isPlant(b);
         function buildMesh(ch) {
             const o = [], w = [], d = ch.data, L = ch.light, X0 = ch.cx * 16, Z0 = ch.cz * 16;
             const lt = (x, y, z) => {
@@ -3217,6 +3801,7 @@ void main(){
             for (let y = 0; y < CH; y++) for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
                 const b = d[idx(x, y, z)]; if (!b) continue;
                 if (isTorch(b)) { pushTorch(o, X0 + x, y, Z0 + z, (L[idx(x, y, z)] >> 4) / 15, b); continue; }
+                if (isPlant(b)) { pushPlant(o, b, X0 + x, y, Z0 + z, L[idx(x, y, z)]); continue; } // quadro cruzado com luz propria
                 if (isWater(b)) { pushWater(x, y, z, b); continue; }
                 const tl = TILES[b], isL = LEAF[b] === 1, fg = isL ? 4 : (y < lTop[(z << 4) | x] ? 2 : 0);
                 for (let f = 0; f < 6; f++) {
@@ -3581,7 +4166,7 @@ void main(){
                 }
                 if (b !== 0 && !isWater(b)) {
                     if (!isSoft(b)) return { x, y, z, px, py, pz, b };
-                    const B = b === SNOWL ? SNOW_BOX : torchBox(b); // tocha e neve fina: so contam se o raio realmente tocar na caixa
+                    const B = b === SNOWL ? SNOW_BOX : (isPlant(b) ? PLANT_BOX : torchBox(b)); // tocha, neve e plantas: so contam se o raio tocar na caixa
                     if (rayBox(o, d, x, y, z, B, maxD) >= 0) return { x, y, z, px, py, pz, b, box: B };
                 }
                 px = x; py = y; pz = z;
@@ -3595,7 +4180,13 @@ void main(){
         /* ---------- TNT, explosoes, som ---------- */
         const tnts = [];
         let flashAmt = 0, shake = 0, audio;
-        function spawnTnt(x, y, z, fuse) { tnts.push({ x, y, z, vy: 0, fuse }); }
+        function spawnTnt(x, y, z, fuse, sync = true, id = null) {
+            const tId = id || (Math.random().toString(36).slice(2, 9) + '_' + Date.now());
+            tnts.push({ id: tId, x, y, z, vy: 0, fuse, owner: sync });
+            if (sync && typeof MP !== 'undefined' && MP.active) {
+                MP.broadcastTnt(x, y, z, fuse, tId);
+            }
+        }
         function boom() {
             try {
                 audio = audio || new AudioContext();
@@ -3607,16 +4198,18 @@ void main(){
                 s.connect(f); f.connect(g); g.connect(audio.destination); s.start();
             } catch (e) { }
         }
-        function explode(cx, cy, cz, r) {
+        function explode(cx, cy, cz, r, sync = true, tntId = null) {
             const R = Math.ceil(r), bx = Math.floor(cx), by = Math.floor(cy), bz = Math.floor(cz);
+            const destroyed = [];
             for (let dy = -R; dy <= R; dy++) for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
                 const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 if (d > r * (0.75 + 0.25 * Math.random())) continue;
                 const x = bx + dx, y = by + dy, z = bz + dz;
                 const b = getBlock(x, y, z, 0);
                 if (b === 0 || y <= 0 || (b === 56 && y <= 2)) continue;
-                setBlock(x, y, z, 0);
-                if (b === 8) spawnTnt(x + 0.5, y, z + 0.5, 0.25 + Math.random() * 0.8);
+                setBlock(x, y, z, 0, false);
+                destroyed.push(x, y, z);
+                if (b === 8) spawnTnt(x + 0.5, y, z + 0.5, 0.25 + Math.random() * 0.8, true);
             }
             const ex = P.x - cx, ey = P.y + 0.9 - cy, ez = P.z - cz, dist = Math.hypot(ex, ey, ez);
             if (dist < r * 2.5) {
@@ -3627,6 +4220,10 @@ void main(){
             flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
             boom();
             mobsScare(cx, cy, cz, r * 2); // Explosão espanta os peixes num raio maior (declaração içada — seguro)
+
+            if (sync && typeof MP !== 'undefined' && MP.active) {
+                MP.broadcastExplode(cx, cy, cz, r, destroyed, tntId);
+            }
         }
         function updateTnt(dt) {
             for (let i = tnts.length - 1; i >= 0; i--) {
@@ -3636,7 +4233,13 @@ void main(){
                 if (solidAt(Math.floor(t.x), Math.floor(ny), Math.floor(t.z))) { t.y = Math.floor(ny) + 1; t.vy = 0; } else t.y = ny;
                 if (t.y < -10) { tnts.splice(i, 1); continue; }
                 t.fuse -= dt;
-                if (t.fuse <= 0) { tnts.splice(i, 1); explode(t.x, t.y + 0.5, t.z, 4); }
+                if (t.fuse <= 0) {
+                    const id = t.id, ox = t.x, oy = t.y + 0.5, oz = t.z, isOwner = t.owner;
+                    tnts.splice(i, 1);
+                    if (isOwner || typeof MP === 'undefined' || !MP.active) {
+                        explode(ox, oy, oz, 4, true, id);
+                    }
+                }
             }
         }
 
@@ -3682,6 +4285,12 @@ void main(){
             if (active.size) tickBlocks();
             if (++wCnt >= 5) { wCnt = 0; if (wq.size) waterStep(); }
         }
+        /* Queda suave de areia/cascalho: cada passo desce 1 bloco a cada FALL_TICKS ticks (0.05s cada).
+           3 ticks = ~0.2s por bloco (5 blocos/s) — degrau a degrau, como areia deslizando. Na agua cai
+           ~2,4x mais devagar. fallD guarda o contador por celula enquanto a coluna desce. */
+        const FALL_TICKS = 2;
+        const fallD = new Map();
+        const growD = new Map(); // grama (57-58) aguardando crescer: contagem em ticks por celula (30-90s por etapa)
         function tickBlocks() {
             if (!active.size) return;
             const list = []; for (const k of active) { list.push(k); if (list.length >= 500) break; }
@@ -3694,10 +4303,26 @@ void main(){
                     const sb = wd ? getBlock(x + wd[0], y, z + wd[1], 3) : getBlock(x, y - 1, z, 3);
                     if (OP[sb] < 15) setBlock(x, y, z, 0); else wq.add(k);
                 }
-                else if (b === 4 || b === 54) { // areia e cascalho caem
+                else if (b === 4 || b === 54) { // areia e cascalho caem (suave: um passo a cada FALL_TICKS; mais devagar na agua)
                     const bl = getBlock(x, y - 1, z, 3);
-                    if (bl === 0 || isWater(bl) || bl === SNOWL) { setBlock(x, y, z, 0); setBlock(x, y - 1, z, b); }
-                } else if (b === 0 || isWater(b)) wq.add(k);
+                    if (bl === 0 || isWater(bl) || isSoft(bl)) { // soft = tocha/neve fina/planta: tambem cedem lugar
+                        const k = x + ',' + y + ',' + z;
+                        const t = fallD.get(k);
+                        if (t === undefined) { fallD.set(k, FALL_TICKS * (isWater(bl) ? 2.4 : 1)); active.add(k); } // comecou a cair: espera um instante, mas segue agendado
+                        else if (t <= 0) { fallD.delete(k); setBlock(x, y, z, 0); setBlock(x, y - 1, z, b); }
+                        else { fallD.set(k, t - 1); active.add(k); } // continua agendado ate completar o passo
+                    } else fallD.delete(x + ',' + y + ',' + z); // apoio voltou: cancela a queda pendente
+                }
+                else if (isPlant(b)) { // planta sem apoio some (sem queda animada: igual relva do Minecraft)
+                    const bl = getBlock(x, y - 1, z, 3);
+                    if (!(bl !== 0 && !isWater(bl) && !isSoft(bl))) { growD.delete(x + ',' + y + ',' + z); setBlock(x, y, z, 0); }
+                    else if (b <= 58) { // grama cresce aos poucos: 57 (pequena) -> 58 -> 59; plantada ou natural
+                        const k = x + ',' + y + ',' + z, t = growD.get(k);
+                        if (t === undefined) { growD.set(k, 600 + (Math.random() * 1200 | 0)); active.add(k); } // 30-90s por etapa
+                        else if (t <= 0) { growD.delete(k); setBlock(x, y, z, b + 1); }
+                        else { growD.set(k, t - 1); active.add(k); } // segue agendado ate completar a etapa
+                    } else growD.delete(x + ',' + y + ',' + z); // plantas que nao crescem: limpa contador
+                } else if (b === 0 || isWater(b)) { growD.delete(k); wq.add(k); } // limpa contador de grama quebrada
             }
         }
 
@@ -3758,14 +4383,15 @@ void main(){
             clearTimeout(indT); indT = setTimeout(() => el.style.opacity = 0, 1600);
         }
         function saveWorld() {
-            if (!cur || cur.__pano || !spawned) return saving;
+            if (!cur || cur.__pano || !spawned || cur.__mp || (typeof MP !== 'undefined' && MP.active && !MP.isHost)) return saving;
             const w = cur, ops = [];
             for (const [k, ch] of chunks) if (ch.sd) { ops.push(['chunks', w.id + '/' + k, ch.data.slice()]); dbKeys.add(k); ch.sd = false; }
             for (const k of savedDirty) { ops.push(['chunks', w.id + '/' + k, saved.get(k).slice()]); dbKeys.add(k); }
             savedDirty.clear();
             Object.assign(w, {
                 player: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, fly: P.fly },
-                time, timeLock, sel, hot: HOT.map(h => h[0]), hotTiles: HOT.map(h => h[1]), raining, played: Date.now(), chunkCount: dbKeys.size, thumb: thumb || w.thumb
+                time, timeLock, sel, hot: HOT.map(h => h[0]), hotTiles: HOT.map(h => h[1]), raining, played: Date.now(), chunkCount: dbKeys.size,
+                thumb: (thumb && thumb.length > 50) ? thumb : (w.thumb || null)
             });
             ops.push(['worlds', w.id, w]);
             indicate('Salvando...');
@@ -3793,10 +4419,25 @@ void main(){
         const tcv = document.createElement('canvas'); tcv.width = 160; tcv.height = 90;
         function grabThumb() {
             try {
+                if (!cur || cur.__pano || !spawned) return;
+                if (state === 'playing' || state === 'paused') {
+                    render();
+                }
                 let sw = canvas.width, sh = canvas.height, sx = 0, sy = 0; const a = 16 / 9;
                 if (sw / sh > a) { const nw = sh * a; sx = (sw - nw) / 2; sw = nw; } else { const nh = sw / a; sy = (sh - nh) / 2; sh = nh; }
-                tcv.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, 160, 90);
-                thumb = tcv.toDataURL('image/jpeg', 0.6);
+                const ctx = tcv.getContext('2d');
+                ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, 160, 90);
+                const data = ctx.getImageData(0, 0, 160, 90).data;
+                let nonBlack = 0;
+                for (let i = 0; i < data.length; i += 16) {
+                    if (data[i] > 18 || data[i + 1] > 18 || data[i + 2] > 18) {
+                        nonBlack++;
+                        if (nonBlack > 25) break;
+                    }
+                }
+                if (nonBlack > 25) {
+                    thumb = tcv.toDataURL('image/jpeg', 0.65);
+                }
             } catch (e) { }
         }
 
@@ -3823,6 +4464,7 @@ void main(){
         }
         async function openWorld(m) {
             epoch++; pano = false; resetWorld(); cur = m; state = 'loading';
+            thumb = m.thumb || null;
             $('bgFade').classList.remove('on', 'fade'); // saindo do panorama: limpa o fundo de terra
             $('lTitle').textContent = m.name; $('enter').disabled = true; $('enter').style.display = 'none'; $('enter').classList.remove('pulse');
             $('enter').textContent = 'Entrar no mundo'; $('status').textContent = 'Lendo salvamento...';
@@ -3954,9 +4596,25 @@ void main(){
             for (const k in keys) keys[k] = false;
             sprintLatch = false; $('bSneak').classList.remove('on');
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
-            requestSave(true); show('pause');
+            const isGuest = (typeof MP !== 'undefined' && MP.active && !MP.isHost);
+            const qBtn = $('quit'), sInfo = $('saveInfo');
+            if (qBtn) qBtn.textContent = isGuest ? 'Sair da Sala' : 'Salvar e sair';
+            if (sInfo) sInfo.textContent = isGuest ? 'Você está conectado à sala de um amigo.' : 'O progresso é salvo automaticamente.';
+            if (!isGuest) requestSave(true);
+            show('pause');
         }
         async function quitToTitle() {
+            if (typeof MP !== 'undefined' && MP.active) {
+                const wasHost = MP.isHost;
+                MP.disconnect(true);
+                if (!wasHost) {
+                    cur = null;
+                    state = 'menu';
+                    startPanorama();
+                    show('title');
+                    return;
+                }
+            }
             $('quit').disabled = true;
             grabThumb();
             await saveWorld();
@@ -4040,6 +4698,15 @@ void main(){
             menu.classList.toggle('ingame', state === 'paused');
             document.body.classList.remove('hud'); // menus nunca mostram o HUD
             menu.style.display = 'flex';
+            // Multiplayer: alterna vista conforme contexto (in-game = host, menu = client/lista)
+            if (name === 'multiplayer') {
+                const inGame = (state === 'paused');
+                const cView = $('mpClientView'), hView = $('mpHostView'), tEl = $('mpTitle');
+                if (cView) cView.style.display = inGame ? 'none' : 'block';
+                if (hView) hView.style.display = inGame ? 'block' : 'none';
+                if (tEl) tEl.textContent = inGame ? 'Abrir Mundo para Amigos' : 'Multiplayer — Mundos de Amigos';
+                if (!inGame && typeof MP !== 'undefined') { MP.cleanExpiredRooms(); MP.renderRoomList(); }
+            }
         }
         const fmtDur = s => { s = Math.floor(s || 0); if (s < 60) return '< 1 min'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'min' : m + ' min'; };
         const fmtSize = n => { const kb = n * 24; return kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'; }; // chunk agora tem 16x16x96 blocos
@@ -4049,7 +4716,13 @@ void main(){
         async function showWorlds() {
             if (!pano) startPanorama();
             show('worlds');
-            const list = (await kv.range('worlds', '')).map(r => r[1]).sort((a, b) => b.played - a.played);
+            const rawList = await kv.range('worlds', '');
+            const toPurge = [];
+            for (const [k, v] of rawList) {
+                if (String(k).startsWith('__mp') || (v && v.__mp)) toPurge.push(['worlds', k, undefined]);
+            }
+            if (toPurge.length) await kv.batch(toPurge);
+            const list = rawList.map(r => r[1]).filter(m => m && !m.__mp && !String(m.id).startsWith('__mp')).sort((a, b) => b.played - a.played);
             const wl = $('wl'); wl.textContent = '';
             if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nenhum mundo ainda. Crie o primeiro!'; wl.appendChild(e); }
             for (const m of list) {
@@ -4087,7 +4760,7 @@ void main(){
         $('newW').onclick = () => { $('cName').value = 'Mundo ' + (+$('wl').dataset.n + 1); $('cSeed').value = ''; show('create'); };
         $('cDo').onclick = async () => {
             const name = ($('cName').value.trim() || 'Novo mundo').slice(0, 32), st = $('cSeed').value.trim();
-            const m = { v: 1, dv: 1, id: newId(), name, seedText: st, seed: seedNum(st), created: Date.now(), played: Date.now(), playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null };
+            const m = { v: 1, dv: 1, id: newId(), name, seedText: st, seed: seedNum(st), created: Date.now(), played: Date.now(), playTime: 0, player: null, time: 0.2, sel: 0, chunkCount: 0, thumb: null, hot: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], hotTiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }; // hotbar nasce vazia: o jogador escolhe o que usar no criativo
             await kv.batch([['worlds', m.id, m]]);
             openWorld(m);
         };
@@ -4103,7 +4776,7 @@ void main(){
         };
         confirm2($('eReset'), async () => {
             const rows = await kv.range('chunks', editing.id + '/');
-            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2, timeLock: -1, raining: false });
+            Object.assign(editing, { player: null, chunkCount: 0, thumb: null, time: 0.2, timeLock: -1, raining: false, hot: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], hotTiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }); // reset: a barra volta vazia, como num mundo novo
             await kv.batch([...rows.map(([k]) => ['chunks', k, undefined]), ['worlds', editing.id, editing]]); showWorlds();
         });
         confirm2($('eDel'), async () => {
@@ -4141,12 +4814,17 @@ void main(){
         function setTime(f) { // muda a hora; se o ciclo estiver travado, a trava acompanha a nova hora
             time = (((f % 1) + 1) % 1);
             if (timeLock >= 0) timeLock = time;
+            if (typeof MP !== 'undefined' && MP.active && MP.isHost) MP.broadcastEnv();
         }
         function lockTime(f) { // congela o ciclo dia/noite nesta hora
             timeLock = (((f % 1) + 1) % 1);
             time = timeLock;
+            if (typeof MP !== 'undefined' && MP.active && MP.isHost) MP.broadcastEnv();
         }
-        function unlockTime() { timeLock = -1; }
+        function unlockTime() {
+            timeLock = -1;
+            if (typeof MP !== 'undefined' && MP.active && MP.isHost) MP.broadcastEnv();
+        }
         /* ajuda do chat: grupos com coluna alinhada (a fonte do hint e monoespacada e usa pre-wrap) */
         const CHAT_CMDS = [
             'Ajuda — escreva o comando e aperte Enter',
@@ -4285,6 +4963,7 @@ void main(){
                     const n = tnts.length;
                     if (!n) return { keep: true, msg: 'Nenhuma TNT ativa', err: true };
                     tnts.length = 0;
+                    if (typeof MP !== 'undefined' && MP.active) MP.broadcastTntClear();
                     return { msg: n + (n > 1 ? ' TNT desarmadas' : ' TNT desarmada') };
                 }
                 case 'hora': case 'horario': {
@@ -4341,7 +5020,7 @@ void main(){
                         'chunks ' + chunks.size + ' · visão ' + renderDist + ' · fila malha ' + _dirty.length + ' · fila luz ' + _unlit.length + ' · peixes alvo ' + Math.round(MOB.target * PERF.mobScale) + '\n' +
                         'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
                         'Hora ' + hhmm(time) + (timeLock >= 0 ? ' [travada]' : '') + ' · clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + '\n' +
-                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + ' · velocidade x' + spdMul };
+                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + ' · galinhas ' + galinhaCount() + ' · velocidade x' + spdMul };
                 }
                 case 'tp': case 'teleportar': {
                     const a = parts.slice(1).map(Number);
@@ -4437,7 +5116,20 @@ void main(){
         function submitChat() {
             const raw = chatInput.value.trim();
             if (!raw) { closeChat(); return; }
-            if (!raw.startsWith('/')) { setChatHint('Comandos começam com /', true); return; }
+            if (!raw.startsWith('/')) {
+                if (typeof MP !== 'undefined' && MP.active) {
+                    MP.sendChat(raw);
+                    showCmdMsg('<' + (MP.nick || 'Você') + '> ' + raw);
+                    closeChat();
+                    return;
+                }
+                setChatHint('Comandos começam com /', true);
+                return;
+            }
+            if (typeof MP !== 'undefined' && MP.active && !MP.isHost) {
+                setChatHint('Apenas o anfitrião pode executar comandos.', true);
+                return;
+            }
             const res = execCommand(raw.slice(1));
             if (!res) { setChatHint('Comando desconhecido. Digite /ajuda', true); return; }
             if (res.keep) { setChatHint(res.msg, res.err); return; }
@@ -4768,7 +5460,7 @@ void main(){
             keys[c] = true;
             if (c === 'KeyF' && !e.repeat) toggleFly();
             if (c === 'Space' && !e.repeat) spaceTap();
-            if (c === 'KeyR') rewinding = true;
+            if (c === 'KeyR' && !(typeof MP !== 'undefined' && MP.active)) rewinding = true;
             if (c === DEF.inventory && !e.repeat) openInv();
             if (c.startsWith('Digit')) { let n = +c.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
             if (c === 'BracketLeft') { renderDist = Math.max(2, renderDist - 1); updDist(); }
@@ -4812,7 +5504,9 @@ void main(){
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
             if (isTouch) locked = false; else document.exitPointerLock();
             document.body.classList.remove('hud'); // o inventario cobre a tela e ja tem hotbar propria
-            invSearch.value = ''; invSearch.dispatchEvent(new Event('input')); // limpa a busca
+            invSearch.value = ''; // limpa a busca e volta para a secao "Todos"
+            curSec = 0; invScroll.scrollTop = 0;
+            invSearch.dispatchEvent(new Event('input'));
             invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
             invEl.classList.add('on');
             if (!isTouch) invSearch.focus();
@@ -4886,6 +5580,7 @@ void main(){
         }
         function act(btn, rep) {
             if (btn === 2 && HOT[sel][0] === BUCKET) { if (!rep) useBucket(); return; } // balde: um clique por uso
+            if (btn === 2 && !HOT[sel][0]) return; // slot vazio: nao coloca nada (quebrar continua funcionando)
             const hit = raycast(eyePos(), aimDir(), 6); if (!hit) return;
             if (btn === 0) {
                 if (hit.isDecor) {
@@ -4923,7 +5618,7 @@ void main(){
                 const id = HOT[sel][0]; let x = hit.px, y = hit.py, z = hit.pz;
                 if (hit.b === SNOWL && id !== SNOWL && id !== TORCH) { x = hit.x; y = hit.y; z = hit.z; } // bloco toma o lugar da neve fina
                 const c = getBlock(x, y, z, 3);
-                if (c !== 0 && !isWater(c) && c !== SNOWL) return;
+                if (c !== 0 && !isWater(c) && !isSoft(c)) return; // entra so em ar/agua; soft (tocha, neve fina, planta) e substituido
                 if (id === SNOWL && !snowSupport(getBlock(x, y - 1, z, 3))) return; // neve fina precisa de um bloco embaixo
                 let pid = id;
                 if (id === TORCH) { // chao: tocha em pe; parede: tocha inclinada. Apoio precisa ser bloco opaco.
@@ -5012,7 +5707,7 @@ void main(){
         }
         holdBtn('bJump', () => { keys.Space = true; spaceTap(); }, () => { keys.Space = false; });
         holdBtn('bDown', () => { keys.ShiftLeft = true; }, () => { keys.ShiftLeft = false; });
-        holdBtn('bRew', () => { rewinding = true; }, () => { rewinding = false; rewHold = 0; });
+        holdBtn('bRew', () => { if (!(typeof MP !== 'undefined' && MP.active)) rewinding = true; }, () => { rewinding = false; rewHold = 0; });
         $('bSneak').addEventListener('touchstart', e => { e.preventDefault(); keys.ShiftLeft = !keys.ShiftLeft; e.currentTarget.classList.toggle('on', !!keys.ShiftLeft); }, { passive: false });
         $('bPause').addEventListener('touchstart', e => { e.preventDefault(); pause(); }, { passive: false });
         $('bCmd').addEventListener('touchstart', e => { // balao: abre/fecha o chat de comandos (o celular nao tem tecla T)
@@ -5118,7 +5813,7 @@ void main(){
                 return;
             }
             if (readyAt && !autoEnterDone && performance.now() >= readyAt) { autoEnterDone = true; readyAt = 0; autoEnter(); }
-            if (rewinding) {
+            if (rewinding && !(typeof MP !== 'undefined' && MP.active)) {
                 rewHold += dt;
                 let cnt = Math.ceil((300 + rewHold * 2500) * dt);
                 while (cnt-- > 0 && history.length >= 5) {
@@ -5134,7 +5829,8 @@ void main(){
                 updateTnt(dt);
             }
             if (!pano) updatePlayer(dt);
-            if (state === 'playing' || state === 'pano') { updateLeaves(dt); updateBeams(dt); mobsUpdate(dt); }
+            if (typeof MP !== 'undefined' && MP.active) MP.tick(dt);
+            if (state === 'playing' || state === 'pano' || (typeof MP !== 'undefined' && MP.active)) { updateLeaves(dt); updateBeams(dt); mobsUpdate(dt); }
             if (state === 'playing') cur.playTime = (cur.playTime || 0) + dt;
             if (locked) {
                 holdT += dt;
@@ -5184,11 +5880,18 @@ void main(){
            tempestade e rara, curta e nunca vem duas vezes seguidas. Tempo seco sempre longo. */
         const WX_LV = [0.28, 0.6, 1.0], WX_NAMES = { fraca: 0.28, leve: 0.28, garoa: 0.28, media: 0.6, moderada: 0.6, forte: 1, tempestade: 1 };
         const wxName = v => v < 0.4 ? 'fraca' : v < 0.8 ? 'média' : 'forte', wxR = (a, b) => a + Math.random() * (b - a);
-        function wxSet(v) { raining = true; wxIdx = v < 0.4 ? 0 : v < 0.8 ? 1 : 2; rainIntT = v; wxTimer = wxR(90, 220); wxShift = wxR(30, 70); }
-        function wxClear() { raining = false; wxTimer = wxR(180, 420); }
+        function wxSet(v) {
+            raining = true; wxIdx = v < 0.4 ? 0 : v < 0.8 ? 1 : 2; rainIntT = v; wxTimer = wxR(90, 220); wxShift = wxR(30, 70);
+            if (typeof MP !== 'undefined' && MP.active && MP.isHost) MP.broadcastEnv();
+        }
+        function wxClear() {
+            raining = false; wxTimer = wxR(180, 420);
+            if (typeof MP !== 'undefined' && MP.active && MP.isHost) MP.broadcastEnv();
+        }
         function weatherTick(dt) {
             rainInt += (rainIntT - rainInt) * Math.min(1, dt * 0.15);
-            if (!wxAuto || state !== 'playing') return;
+            if (typeof MP !== 'undefined' && MP.active && !MP.isHost) return; // convidados recebem clima do host
+            if (!wxAuto || (state !== 'playing' && !(typeof MP !== 'undefined' && MP.active))) return;
             wxTimer -= dt;
             if (raining) {
                 wxShift -= dt;
@@ -5554,18 +6257,37 @@ void main(){
         const SC_T = { cc: null };            // peixe temporario: so traz o campo de cache de chunk usado por mobGet()
         const mobProg = mkProg(`#version 300 es
 layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in float w; layout(location=3) in float sh;
-layout(location=4) in vec4 ia; layout(location=5) in vec4 ib; layout(location=6) in vec4 ic;
+layout(location=4) in vec4 ia; layout(location=5) in vec4 ib; layout(location=6) in vec4 ic; layout(location=7) in vec4 id;
 uniform mat4 mvp; uniform vec3 cam; uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
 uniform float light; uniform float fogN; uniform float fogF; uniform float tm;
 out vec2 vUv; out float vSh; out float vS; out float vB; out float vT; out float vD; out vec3 vFog;
 void main(){
   vec3 q=p*ia.w;
-  float ph=ib.w+tm*(4.0+8.5*min(ic.w,1.5));
-  float amp=(0.026+0.108*min(ic.w,1.5))*ia.w;
-  float k=w*w*amp;
-  q.z+=sin(ph-q.x*3.1)*k;
-  q.y+=sin(ph-q.x*3.1+1.15)*k*0.45;
-  q.z+=sin(ph)*amp*0.3*(w-0.2);
+  if(w>1.5){
+    // galinha articulada: w vira id de parte (10 corpo, 11 cabeca, 12/13 pernas, 14/15 asas, 16 rabo)
+    // e id = (cabeca, pernas, asas, rabo) sao angulos em radianos vindos da CPU, girados no pivo da junta.
+    const float MBV=0.0625; // MOB_V: voxel do modelo em blocos
+    float part=w-10.0, ang=0.0, eixoX=0.0; vec3 pv=vec3(0.0);
+    if(part<0.5){ /* corpo: nenhuma junta */ }
+    else if(part<1.5){ ang=id.x; pv=vec3(1.5,7.5,0.0); }        // cabeca balanca no pescoco (bicar/olhar)
+    else if(part<2.5){ ang=id.y; pv=vec3(-1.0,4.0,-1.0); }      // perna esquerda passa no quadril
+    else if(part<3.5){ ang=-id.y; pv=vec3(-1.0,4.0,1.0); }       // perna direita: fase oposta
+    else if(part<4.5){ ang=id.z; pv=vec3(-0.5,5.5,-1.5); eixoX=1.0; } // asa -z bate no ombro
+    else if(part<5.5){ ang=-id.z; pv=vec3(-0.5,5.5,1.5); eixoX=1.0; }  // asa +z: mesmo batimento, lado espelho
+    else if(part>5.5){ ang=id.w; pv=vec3(-5.5,6.0,0.0); }      // rabo balanca na base
+    pv*=MBV*ia.w;
+    vec3 r=q-pv; float cj=cos(ang), sj=sin(ang);
+    if(eixoX>0.5) r=vec3(r.x,cj*r.y-sj*r.z,sj*r.y+cj*r.z);
+    else r=vec3(cj*r.x-sj*r.y,sj*r.x+cj*r.y,r.z);
+    q=r+pv;
+  } else {
+    float ph=ib.w+tm*(4.0+8.5*min(ic.w,1.5));
+    float amp=(0.026+0.108*min(ic.w,1.5))*ia.w;
+    float k=w*w*amp;
+    q.z+=sin(ph-q.x*3.1)*k;
+    q.y+=sin(ph-q.x*3.1+1.15)*k*0.45;
+    q.z+=sin(ph)*amp*0.3*(w-0.2);
+  }
   float cr=cos(ib.z),sr=sin(ib.z);
   q=vec3(q.x,cr*q.y-sr*q.z,sr*q.y+cr*q.z);
   float cp=cos(ib.y),sp=sin(ib.y);
@@ -5786,9 +6508,9 @@ void main(){
             }
         };
 
-        function mobReg(key, def) { // VAO da espécie: malha (attrs 0-3) + instâncias (attrs 4-6, divisor 1)
+        function mobReg(key, def) { // VAO da espécie: malha (attrs 0-3) + instâncias (attrs 4-7, divisor 1)
             def.mesh = def.build();
-            def.inst = new Float32Array(MOB_MAX * 12);
+            def.inst = new Float32Array(MOB_MAX * 16);
             def.vboI = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, def.vboI);
             gl.bufferData(gl.ARRAY_BUFFER, def.inst.byteLength, gl.DYNAMIC_DRAW);
@@ -5799,7 +6521,7 @@ void main(){
             gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 28, 20);
             gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 28, 24);
             gl.bindBuffer(gl.ARRAY_BUFFER, def.vboI);
-            for (let a = 4; a <= 6; a++) { gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 4, gl.FLOAT, false, 48, (a - 4) * 16); gl.vertexAttribDivisor(a, 1); }
+            for (let a = 4; a <= 7; a++) { gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 4, gl.FLOAT, false, 64, (a - 4) * 16); gl.vertexAttribDivisor(a, 1); }
             gl.bindVertexArray(null);
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
             def.list = [];
@@ -5809,6 +6531,107 @@ void main(){
         for (const key in FISH_CFG) { // todas as espécies usam o mesmo tick (registrado na tainha)
             const def = FISH_CFG[key];
             mobReg(key, { build: () => buildFishBody(def), tick: key === 'peixe' ? peixeTick : undefined, kind: def.kind });
+        }
+
+        /* ---------- Itens dropados (estilo Minecraft): miniatura do bloco/item no chao, flutuando e
+           girando devagar; coletada quando o jogador passa por cima. Usa o mesmo pipeline dos peixes
+           (draw instanciado, luz do chunk e neblina de graca): uma "especie" por tipo de item, com
+           malha de cubo 0.25 (ou quad plano para itens como tocha/balde) criada sob demanda.
+           Sao transitorios como os peixes: nao vao no save. ---------- */
+        const DROP_S = 0.35, DROP_H = DROP_S / 2;   // lado da miniatura dos blocos
+        const DROP_FLAT = 0.52, DROP_FH = DROP_FLAT / 2; // itens planos (tocha/balde): quad maior, a textura tem margens vazias
+        const DROP_LIFE = 300, DROP_DELAY = 0.6;    // despawn (s) e espera antes de poder ser coletado
+        const dropSolid = b => b > 0 && !isWater(b) && !isSoft(b); // apoio para a miniatura pousar
+        function buildDropMesh(id, tile) {
+            const T = TILES[id], H = DROP_H, arr = [];
+            const uv4 = t => { const u0 = t / NT, u1 = (t + 0.999) / NT; return [[u0, 1], [u1, 1], [u1, 0], [u0, 0]]; }; // BL BR TR TL: v=1 embaixo (mesma convencao do terreno)
+            if (T && !isPlant(id)) { // cubo com o mesmo sombreamento das faces do terreno (topo claro, lados medios, base escura)
+                const [tt, tb, ts] = T, S = 0.8, Z = 0.65;
+                const F = [
+                    [[[-H, H, -H], [H, H, -H], [H, H, H], [-H, H, H]], tt, 1.0],
+                    [[[-H, -H, -H], [H, -H, -H], [H, -H, H], [-H, -H, H]], tb, 0.5],
+                    [[[H, -H, -H], [H, -H, H], [H, H, H], [H, H, -H]], ts, S],   // +x
+                    [[[-H, -H, H], [-H, -H, -H], [-H, H, -H], [-H, H, H]], ts, S], // -x
+                    [[[-H, -H, H], [H, -H, H], [H, H, H], [-H, H, H]], ts, Z],   // +z
+                    [[[H, -H, -H], [-H, -H, -H], [-H, H, -H], [H, H, -H]], ts, Z] // -z
+                ];
+                for (const [P2, t, sh] of F) { const U = uv4(t); for (const q of ORDER) arr.push(P2[q][0], P2[q][1], P2[q][2], U[q][0], U[q][1], 0, sh); }
+            } else { // item plano (tocha/balde): quad frontal e traseiro com a textura inteira do tile
+                const U = uv4(tile), F2 = DROP_FH;
+                for (const s of [1, -1]) {
+                    const P2 = s > 0 ? [[-F2, -F2, 0], [F2, -F2, 0], [F2, F2, 0], [-F2, F2, 0]] : [[F2, -F2, 0], [-F2, -F2, 0], [-F2, F2, 0], [F2, F2, 0]];
+                    for (const q of ORDER) arr.push(P2[q][0], P2[q][1], P2[q][2], U[q][0], U[q][1], 0, s > 0 ? 0.9 : 0.68);
+                }
+            }
+            return mkMobMesh(arr);
+        }
+        function dropSpecies(id, tile) { // especie por tipo de item, registrada na primeira queda
+            const key = 'drop:' + id + ':' + tile;
+            return MOB.species.get(key) || mobReg(key, { build: () => buildDropMesh(id, tile), tick: dropTick, kind: null });
+        }
+        function spawnDrop(id, tile, x, y, z, vx, vy, vz) {
+            if (state === 'pano' || !spawned) return;
+            const flat = !TILES[id] || isPlant(id); // itens planos e plantas nao giram (de perfil somem); a meia-altura segue o tamanho
+            dropSpecies(id, tile).list.push({
+                x, y, z, vx: vx || 0, vy: vy || 0, vz: vz || 0, yaw: Math.random() * 6.28318530718,
+                pitch: 0, roll: 0, ph: Math.random(), scale: 1, tint: 0, ix: 0, id, tile,
+                age: 0, rest: false, baseY: 0, cc: null, flat, hh: flat ? DROP_FH : DROP_H
+            });
+        }
+        function collectDrop(f) { // coleta ao passar por cima: volta para o primeiro slot vazio da barra
+            const j = HOT.findIndex(h => h[0] === 0);
+            if (j < 0) return false; // barra cheia: o item fica no chao
+            HOT[j] = [f.id, f.tile];
+            refreshHotbar();
+            if (cur && !cur.__pano) requestSave();
+            const c = catOfT(f.id, f.tile);
+            showCmdMsg('+ ' + (c ? c[2] : 'Item'));
+            return true;
+        }
+        function dropTick(dt) { // fisica simples (queda, agua, apoio) + flutuacao/giro + coleta
+            const L = this.list;
+            for (let i = L.length - 1; i >= 0; i--) {
+                const f = L[i];
+                f.age += dt;
+                const rp = (f.x - P.x) * (f.x - P.x) + (f.z - P.z) * (f.z - P.z);
+                if (f.age > DROP_LIFE || rp > 4225) { L.splice(i, 1); continue; } // longe demais ou velho: some
+                const bx = f.x | 0, bz = f.z | 0, by = Math.max(0, Math.min(CH - 1, f.y | 0));
+                if (mobGet(f, bx, by, bz) === -1) { L.splice(i, 1); continue; } // chunk descarregou
+                if (!f.rest) {
+                    const bHere = mobGet(f, bx, by, bz), inWater = bHere > -1 && isWater(bHere);
+                    f.vy = Math.max(-9, f.vy - (inWater ? 4 : 20) * dt);
+                    if (inWater) { // boia: sobe ate a superficie e se amortece
+                        f.vy = Math.min(1.4, f.vy + 15 * dt);
+                        const k = Math.max(0, 1 - dt * 3.5); f.vx *= k; f.vz *= k; f.vy *= Math.max(0, 1 - dt * 1.2);
+                        if (mobGet(f, bx, by + 1, bz) > -1 && !isWater(mobGet(f, bx, by + 1, bz))) f.vy = Math.min(f.vy, 0.35); // ja esta na superficie
+                    }
+                    const ny = f.y + f.vy * dt, foot = ny - f.hh;
+                    const bBelow = mobGet(f, bx, Math.max(0, Math.floor(foot)), bz);
+                    if (bBelow > -1 && dropSolid(bBelow) && f.vy <= 0) { // pousou
+                        f.y = Math.floor(foot) + 1 + f.hh + 0.001;
+                        f.vx = f.vy = f.vz = 0;
+                        if (!inWater) { f.rest = true; f.baseY = f.y; }
+                    } else {
+                        f.y = ny;
+                        const ox = f.x, oz = f.z;
+                        f.x += f.vx * dt; f.z += f.vz * dt;
+                        const wall = mobGet(f, f.x | 0, by, f.z | 0);
+                        if (wall > -1 && dropSolid(wall)) { f.x = ox; f.z = oz; f.vx = f.vz = 0; } // encostou: para
+                    }
+                } else {
+                    const bBelow = mobGet(f, f.x | 0, Math.max(0, Math.floor(f.baseY - f.hh - 0.01)), f.z | 0);
+                    if (bBelow === -1) { L.splice(i, 1); continue; }
+                    if (!dropSolid(bBelow)) { f.rest = false; f.vy = 0; } // apoio sumiu: cai de novo
+                    else {
+                        f.y = f.baseY + 0.05 + Math.sin(MOB.t * 1.7 + f.ph * 6.283) * 0.035; // flutuacao suave
+                        if (f.age > DROP_DELAY) { // coleta ao passar por cima
+                            const ry = f.y - (P.y + 0.9);
+                            if (rp < 1.0 && Math.abs(ry) < 1.1 && collectDrop(f)) { L.splice(i, 1); continue; }
+                        }
+                    }
+                }
+                if (!f.flat) f.yaw += dt * 1.15; // giro lento (so blocos; itens planos ficam de frente)
+            }
         }
 
         /* ---------- Decoração do fundo do mar: alga, estrela-do-mar e corais ----------
@@ -6103,7 +6926,377 @@ void main(){
             });
         }
 
-        function mobCount() { let n = 0; for (const sp of MOB.species.values()) if (sp.kind) n += sp.list.length; return n; }
+        /* ---------- Galinha: o primeiro mob terrestre ----------
+           Mesmo pipeline dos peixes (1 draw call instanciado por espécie, luz/névoa/ondulação de
+           graça), mas a IA é de chão: gravidade, passo de 1 bloco, contorno de beirada, fuga do
+           jogador e bater de asa (o peso da ondulação das asas/rabo cresce com o ix da instância).
+           Corpo de caixas de voxels com a origem nos pés: f.y = topo do bloco em que pisa, mais
+           0.002 para as patas não z-fightarem com o chão. Nasce em bandos de 2 a 4 num chão
+           carregado perto do jogador e some quando fica longe — transiente como os peixes. */
+        const GAL = { target: 9, t: 0 }; // alvo de população perto do jogador
+        const galFree = b => b === 0 || isSoft(b); // ar ou planta/la/tocha: o que a galinha atravessa
+        function buildGalinha() {
+            const V = MOB_V, arr = [];
+            const face = (P, t, w, sh) => {
+                const u0 = t / NT, u1 = (t + 1) / NT, U = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+                for (const q of [0, 1, 2, 0, 2, 3]) { const p = P[q], u = U[q]; arr.push(p[0], p[1], p[2], u[0], u[1], w, sh); }
+            };
+            // caixa de voxels [x0,x1)x[y0,y1)x[z0,z1); sombreamento estilo Minecraft (topo claro, base escura).
+            // Caixas vizinhas se sobrepõem 1 voxel de propósito: as faces internas ficam ocultas e nao z-fightam.
+            const box = (x0, y0, z0, x1, y1, z1, t, w) => {
+                const A = x0 * V, B = x1 * V, C = y0 * V, D = y1 * V, E = z0 * V, F = z1 * V;
+                face([[A, D, E], [B, D, E], [B, D, F], [A, D, F]], t, w, 1.0);   // topo
+                face([[A, C, E], [B, C, E], [B, C, F], [A, C, F]], t, w, 0.5);    // base
+                face([[B, C, E], [B, C, F], [B, D, F], [B, D, E]], t, w, 0.88);   // +x (frente)
+                face([[A, C, E], [A, C, F], [A, D, F], [A, D, E]], t, w, 0.66);   // -x (costas)
+                face([[A, C, F], [B, C, F], [B, D, F], [A, D, F]], t, w, 0.84);   // +z
+                face([[B, C, E], [A, C, E], [A, D, E], [B, D, E]], t, w, 0.72);   // -z
+            };
+            const PEN = 88, CRIST = 89, AM = 90, OLHO = 91, ASAS = 92;
+            // w na malha da galinha = id da parte articulada (10+part no shader): 10 corpo, 11 cabeca,
+            // 12/13 pernas, 14/15 asas, 16 rabo — o shader gira cada uma no proprio pivo.
+            // modelo centrado: XZ deslocado (-4.5, 0, -3.5) voxels para alinhar colisão com visual
+            box(-3.5, 3, -2.5, 3.5, 8, 2.5, PEN, 10);     // corpo (7x5x5, part 0)
+            box(-1.5, 0, -1.5, -0.5, 4, -0.5, AM, 12);     // perna esquerda
+            box(-1.5, 0, 0.5, -0.5, 4, 1.5, AM, 13);       // perna direita
+            box(-5.5, 6, -1.5, -2.5, 9, 1.5, ASAS, 16);    // rabo (base)
+            box(-6.5, 8, -0.5, -3.5, 10, 0.5, ASAS, 16);   // rabo (pena alta)
+            box(1.5, 7, -1.5, 5.5, 11, 1.5, PEN, 11);      // cabeca
+            box(4.5, 9, -0.5, 7.5, 10, 0.5, AM, 11);       // bico
+            box(0.5, 10, -0.5, 4.5, 13, 0.5, CRIST, 11);   // crista
+            box(4.5, 6, -0.5, 6.5, 8, 0.5, CRIST, 11);     // barbela
+            box(-2.5, 4, -3.5, 1.5, 7, -1.5, ASAS, 14);    // asa -z
+            box(-2.5, 4, 1.5, 1.5, 7, 3.5, ASAS, 15);      // asa +z
+            const ex0 = 3.5 * V, ex1 = 4.5 * V, ey0 = 9 * V, ey1 = 10 * V;
+            face([[ex1, ey0, -1.5 * V - 0.003], [ex0, ey0, -1.5 * V - 0.003], [ex0, ey1, -1.5 * V - 0.003], [ex1, ey1, -1.5 * V - 0.003]], OLHO, 11, 0.9);
+            face([[ex0, ey0, 1.5 * V + 0.003], [ex1, ey0, 1.5 * V + 0.003], [ex1, ey1, 1.5 * V + 0.003], [ex0, ey1, 1.5 * V + 0.003]], OLHO, 11, 0.9);
+            return mkMobMesh(arr);
+        }
+        function galinhaNew(x, y, z) {
+            return {
+                x, y, z, vy: 0, yaw: Math.random() * 6.28318530718, pitch: 0, roll: 0,
+                hdg: Math.random() * 6.28318530718, spd: 0, idle: 0,
+                st: 'anda', stT: 3 + Math.random() * 5, turnT: 0, walkT: Math.random() * 2,
+                wtx: 0, wtz: 0, wcol: null, banh: 0,
+                ft: 0, grounded: true, ph: Math.random(), scale: 0.92 + Math.random() * 0.2,
+                tint: Math.max(0, Math.min(1, 0.5 + (Math.random() - 0.5) * 0.25)),
+                ix: 0.15, walkPh: Math.random() * 6.28, jH: 0, jL: 0, jW: 0, jT: 0.1,
+                cc: null, s: null // s: sem cardume (o mobsScare confere)
+            };
+        }
+        function galinhaMaintain(L) { // mantém a população perto do jogador, nascendo em bandos
+            const eff = Math.max(0, Math.round(GAL.target * PERF.mobScale));
+            if (L.length > eff) { // acima do alvo: joga fora as mais longes
+                L.sort((a, b) => ((b.x - P.x) * (b.x - P.x) + (b.z - P.z) * (b.z - P.z)) - ((a.x - P.x) * (a.x - P.x) + (a.z - P.z) * (a.z - P.z)));
+                L.length = eff;
+                return;
+            }
+            if (L.length >= eff || !spawned) return;
+            const T = { cc: null };
+            for (let t = 0; t < 5 && L.length < eff; t++) {
+                const a = Math.random() * 6.28318530718, r = 9 + Math.random() * 22;
+                const wx = Math.floor(P.x + Math.cos(a) * r), wz = Math.floor(P.z + Math.sin(a) * r);
+                const y0 = Math.min(CH - 5, Math.max(4, Math.floor(P.y) + 9));
+                let gy = -1;
+                for (let y = y0; y > 2; y--) { // desce do céu até o primeiro chão com ar em cima
+                    const b = mobGet(T, wx, y, wz);
+                    if (b === -1) break; // chunk fora do alcance
+                    if (!dropSolid(b)) continue;
+                    if (galFree(mobGet(T, wx, y + 1, wz)) && galFree(mobGet(T, wx, y + 2, wz))) gy = y;
+                    break;
+                }
+                if (gy < 0) continue;
+                const n = 2 + ((Math.random() * 3) | 0); // bando de 2 a 4
+                for (let k = 0; k < n && L.length < eff; k++) {
+                    const gx = wx + (Math.random() - 0.5) * 3, gz = wz + (Math.random() - 0.5) * 3;
+                    const ix2 = Math.floor(gx), iz2 = Math.floor(gz);
+                    let actualY = -1;
+                    for (let sy = Math.min(CH - 5, gy + 4); sy >= Math.max(2, gy - 4); sy--) {
+                        if (solidAt(ix2, sy, iz2) && !solidAt(ix2, sy + 1, iz2) && !solidAt(ix2, sy + 2, iz2)) {
+                            actualY = sy;
+                            break;
+                        }
+                    }
+                    if (actualY < 0) continue;
+                    L.push(galinhaNew(gx, actualY + 1.001, gz));
+                }
+            }
+        }
+        /* ---------- vontades da galinha: ela faz as coisas porque quer ----------
+           Escolha calma por peso entre intenções longas. O rumo só muda quando a vontade
+           troca (ou quando um obstáculo obriga) — ela não fica rodando à toa. */
+        const GAL_WILL = [['anda', 30], ['par', 15], ['bica', 24], ['asa', 9], ['pula', 7], ['banho', 15]]; // [nome, peso %]
+        function galBanhoSpot(f) { // acha água rasa por perto (raio ~16) para o banho
+            for (let k = 0; k < 28; k++) {
+                const a = Math.random() * 6.28318530718, r = 3 + Math.random() * 13;
+                const wx = Math.floor(f.x + Math.cos(a) * r), wz = Math.floor(f.z + Math.sin(a) * r);
+                const col = getWaterCol(wx, wz);
+                if (col && col.depth >= 1 && col.depth <= 5 && dropSolid(col.floorBlock)) return { x: wx + 0.5, z: wz + 0.5 };
+            }
+            return null;
+        }
+        function galNextWill(f) { // próxima vontade: sorteio ponderado, sem repetir sempre a mesma
+            const prev = f.st;
+            let r = Math.random() * 100, w = 'anda';
+            for (const wl of GAL_WILL) { r -= wl[1]; if (r <= 0) { w = wl[0]; break; } }
+            if (w === prev && Math.random() < 0.5) w = prev === 'anda' ? 'par' : 'anda';
+            f.st = w; f.idle = 0; f.wcol = null;
+            if (w === 'anda') { f.stT = 4 + Math.random() * 7; f.hdg = Math.random() * 6.28318530718; }
+            else if (w === 'par') f.stT = 2 + Math.random() * 4;
+            else if (w === 'bica') { f.stT = 2.5 + Math.random() * 4; f.idle = 1; }
+            else if (w === 'asa') { f.stT = 1.5 + Math.random() * 2.5; if (f.grounded && Math.random() < 0.4) f.vy = 3 + Math.random(); }
+            else if (w === 'pula') { f.stT = 1 + Math.random() * 0.8; f.hdg += (Math.random() - 0.5) * 1.4; if (f.grounded) f.vy = 3.6 + Math.random() * 1.2; }
+            else if (w === 'banho') {
+                const sp = galBanhoSpot(f);
+                if (sp) { f.wtx = sp.x; f.wtz = sp.z; f.banh = 0.3; f.stT = 16; } // vai até a água e flutua
+                else { f.st = 'anda'; f.stT = 4; f.hdg = Math.random() * 6.28318530718; } // sem água por perto: só passeia
+            }
+        }
+        function galinhaTick(dt) {
+            const S = MOB.species.get('galinha'); if (!S) return;
+            const L = S.list;
+            GAL.t -= dt;
+            if (GAL.t <= 0) { GAL.t = 0.5; galinhaMaintain(L); }
+            const px = P.x, py = P.y, pz = P.z;
+            const pSpd = Math.hypot(P.vx, P.vz);
+            for (let i = L.length - 1; i >= 0; i--) {
+                const f = L[i];
+                const rx = f.x - px, ry = f.y - (py + 0.9), rz = f.z - pz;
+                const d2 = rx * rx + ry * ry + rz * rz;
+                if (d2 > 4225 || f.y < -8) { L.splice(i, 1); continue; } // longe demais ou caiu do mundo
+                const at = Math.max(0, Math.min(CH - 1, Math.floor(f.y + 0.1)));
+                if (getBlock(Math.floor(f.x), at, Math.floor(f.z), -1) === -1) continue; // chunk descarregado: espera o despawn por distância
+                /* ---------- fuga do jogador (explosões chegam prontas pelo mobsScare) ---------- */
+                if (f.ft > 0) f.ft -= dt;
+                const far = pSpd > 4.2 ? 20 : 9; // correndo, o jogador assusta de mais longe
+                if (d2 < far) f.ft = Math.max(f.ft, pSpd > 4.2 ? 1.7 : 1.2);
+                if (f.ft > 0 && f.st !== 'fuga') { f.st = 'fuga'; f.stT = 99; f.idle = 0; } // a fuga sequestra a vontade
+                if (f.ft <= 0 && f.st === 'fuga') galNextWill(f);                            // passou o susto: volta a querer coisas
+                /* ---------- vontade vigente: duração longa e rumo fixo (vira só na virada) ---------- */
+                f.turnT -= dt;
+                if (f.ft <= 0) { f.stT -= dt; if (f.stT <= 0) galNextWill(f); }
+                let want = 1.15;
+                if (f.ft > 0) {
+                    want = 3.2;
+                    f.walkT -= dt;
+                    if (f.walkT <= 0) { f.walkT = 0.35; f.hdg = Math.atan2(-rz, rx); } // corre sempre para longe
+                } else switch (f.st) {
+                    case 'anda': want = 1.15; break;                                   // rumo já escolhido: segue reto e tranquila
+                    case 'par': want = 0; break;                                       // fica parada olhando o mundo
+                    case 'bica': want = 0; break;                                      // para e come com vontade
+                    case 'asa': want = 0.25; break;                                    // bate as asas no lugar
+                    case 'pula': want = 0.8; break;                                    // pulinho seguindo em frente
+                    case 'banho': {
+                        const col = getWaterCol(Math.floor(f.x), Math.floor(f.z));
+                        f.wcol = (col && col.depth <= 5) ? col : null;
+                        if (f.wcol) want = 0;                                          // flutuando: só boia e curte
+                        else {
+                            const dwx = f.wtx - f.x, dwz = f.wtz - f.z;
+                            if (dwx * dwx + dwz * dwz > 2.2) { f.hdg = Math.atan2(-dwz, dwx); want = 1.2; } // caminha até a água
+                            else galNextWill(f);                                        // desistiu do banho: outra vontade
+                        }
+                        f.banh = 0.3; // deixa a água atravessável até o banho terminar
+                        break;
+                    }
+                    default: f.st = 'anda'; f.stT = 4;
+                }
+                f.spd += (want - f.spd) * Math.min(1, dt * 7);
+
+                /* ---------- colisão sólida e robusta AABB ---------- */
+                const galHits = (px, py, pz) => {
+                    const r = 0.28;
+                    const x0 = Math.floor(px - r), x1 = Math.floor(px + r);
+                    const y0 = Math.floor(py + 0.05), y1 = Math.floor(py + 0.70);
+                    const z0 = Math.floor(pz - r), z1 = Math.floor(pz + r);
+                    for (let x = x0; x <= x1; x++) {
+                        for (let y = y0; y <= y1; y++) {
+                            for (let z = z0; z <= z1; z++) {
+                                if (solidAt(x, y, z)) return true;
+                            }
+                        }
+                    }
+                    return false;
+                };
+
+                if (f.banh > 0) f.banh -= dt;
+                if (f.spd > 0.01) {
+                    const dirX = Math.cos(f.hdg), dirZ = -Math.sin(f.hdg);
+                    let mx = dirX * f.spd * dt;
+                    let mz = dirZ * f.spd * dt;
+
+                    // Se calma, não anda em direção a penhascos (> 2 blocos de queda)
+                    if (f.ft <= 0) {
+                        let hasGroundAhead = false;
+                        const testX = Math.floor(f.x + dirX * 0.45), testZ = Math.floor(f.z + dirZ * 0.45);
+                        const baseFloor = Math.floor(f.y);
+                        for (let dy = 0; dy <= 2; dy++) {
+                            if (solidAt(testX, baseFloor - dy, testZ)) { hasGroundAhead = true; break; }
+                        }
+                        if (!hasGroundAhead) {
+                            mx = 0; mz = 0;
+                            if (f.turnT <= 0) {
+                                f.turnT = 0.6;
+                                f.hdg += (Math.random() < 0.5 ? 1 : -1) * (1.3 + Math.random() * 0.8);
+                            }
+                        }
+                    }
+
+                    // Movimento no eixo X (com subida suave de 1 degrau se houver)
+                    if (mx !== 0) {
+                        if (!galHits(f.x + mx, f.y, f.z)) {
+                            f.x += mx;
+                        } else if (f.grounded && !galHits(f.x + mx, f.y + 1.02, f.z) && !galHits(f.x, f.y + 1.02, f.z)) {
+                            f.x += mx;
+                            f.y += 1.001;
+                        } else {
+                            mx = 0;
+                            if (f.turnT <= 0) {
+                                f.turnT = 0.5;
+                                f.hdg += (Math.random() < 0.5 ? 1 : -1) * (1.1 + Math.random() * 0.8);
+                            }
+                        }
+                    }
+
+                    // Movimento no eixo Z (com subida suave de 1 degrau se houver)
+                    if (mz !== 0) {
+                        if (!galHits(f.x, f.y, f.z + mz)) {
+                            f.z += mz;
+                        } else if (f.grounded && !galHits(f.x, f.y + 1.02, f.z + mz) && !galHits(f.x, f.y + 1.02, f.z)) {
+                            f.z += mz;
+                            f.y += 1.001;
+                        } else {
+                            mz = 0;
+                            if (f.turnT <= 0) {
+                                f.turnT = 0.5;
+                                f.hdg += (Math.random() < 0.5 ? 1 : -1) * (1.1 + Math.random() * 0.8);
+                            }
+                        }
+                    }
+                }
+
+                /* ---------- gravidade, água, pouso e rede anti-afundamento ---------- */
+                const feetX = Math.floor(f.x), feetY = Math.floor(f.y + 0.1), feetZ = Math.floor(f.z);
+                const inWater = isWater(getBlock(feetX, feetY, feetZ, 0));
+
+                if (inWater) {
+                    f.vy = Math.min(1.8, f.vy + 24 * dt);
+                    f.y += f.vy * dt;
+                    f.grounded = false;
+                } else {
+                    if (f.grounded && f.st === 'pula') { f.vy = 4.2; f.grounded = false; }
+                    else if (f.grounded && f.st === 'bica' && f.ft <= 0 && Math.random() < dt * 0.12) { f.vy = 3.6; f.grounded = false; }
+
+                    f.vy -= 22 * dt;
+                    if (!f.grounded && f.vy < -2.6) f.vy = -2.6; // bater de asas suaviza queda (flutter)
+
+                    // Integração vertical sub-dividida para não atravessar chão
+                    const totalDy = f.vy * dt;
+                    const steps = Math.max(1, Math.ceil(Math.abs(totalDy) / 0.12));
+                    const stepDy = totalDy / steps;
+                    for (let s = 0; s < steps; s++) {
+                        f.y += stepDy;
+                        if (galHits(f.x, f.y, f.z)) {
+                            f.y -= stepDy;
+                            if (f.vy < 0) {
+                                f.grounded = true;
+                                f.y = Math.floor(f.y - 0.02) + 1.001; // apoia precisamente na superfície superior do bloco
+                            }
+                            f.vy = 0;
+                            break;
+                        } else {
+                            if (f.vy < 0) f.grounded = false;
+                        }
+                    }
+                }
+
+                // Segurança anti-penetração: desatola se penetrar bloco sólido por qualquer motivo
+                if (galHits(f.x, f.y, f.z)) {
+                    let freed = false;
+                    for (let dy = 1; dy <= 4; dy++) {
+                        if (!galHits(f.x, f.y + dy, f.z)) {
+                            f.y += dy;
+                            f.vy = 0;
+                            f.grounded = true;
+                            freed = true;
+                            break;
+                        }
+                    }
+                    if (!freed) {
+                        const dirs = [[0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4], [0.8, 0], [-0.8, 0], [0, 0.8], [0, -0.8]];
+                        for (const [dx, dz] of dirs) {
+                            if (!galHits(f.x + dx, f.y, f.z + dz)) {
+                                f.x += dx; f.z += dz;
+                                freed = true;
+                                break;
+                            } else if (!galHits(f.x + dx, f.y + 1, f.z + dz)) {
+                                f.x += dx; f.y += 1; f.z += dz;
+                                freed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                /* ---------- animações orgânicas, vivas e fluidas ---------- */
+                const t = MOB.t;
+
+                let wd = f.hdg - f.yaw;
+                while (wd > Math.PI) wd -= 6.28318530718;
+                while (wd < -Math.PI) wd += 6.28318530718;
+                f.yaw += wd * Math.min(1, dt * (f.ft > 0 ? 12 : 6.0));
+
+                const isWalking = f.spd > 0.08;
+                if (isWalking) {
+                    f.walkPh += Math.max(f.spd, 0.7) * dt * 11.5;
+                }
+                const swing = Math.min(1, f.spd / 0.7);
+
+                // Pernas alternam no passo de forma viva e ritmada
+                const targetLeg = isWalking ? Math.sin(f.walkPh) * 0.75 * swing : 0;
+                f.jL += (targetLeg - f.jL) * Math.min(1, dt * 16);
+
+                // Cabeça: head-bobbing rítmico característico ao andar ou bicadas ativas ao comer
+                let targetHead = 0;
+                if (f.st === 'bica') {
+                    targetHead = -0.70 + Math.sin(t * 12 + f.ph * 20) * 0.38;
+                } else if (!f.grounded) {
+                    targetHead = 0.20;
+                } else if (isWalking) {
+                    targetHead = Math.sin(f.walkPh * 2.0) * 0.32 * swing;
+                } else {
+                    targetHead = Math.sin(t * 1.6 + f.ph * 10) * 0.12;
+                }
+                f.jH += (targetHead - f.jH) * Math.min(1, dt * 12);
+
+                // Asas: batimento flutter rápido no ar ou pulando, dobradas no chão
+                let targetWing = 0;
+                if (!f.grounded || f.st === 'asa' || f.vy < -0.2) {
+                    targetWing = Math.sin(t * 26.0 + f.ph * 5) * 0.75;
+                } else if (f.ft > 0) {
+                    targetWing = Math.sin(t * 18.0) * 0.40;
+                } else {
+                    targetWing = Math.sin(t * 2.5 + f.ph) * 0.04;
+                }
+                f.jW = targetWing;
+
+                // Rabo balança suave
+                f.jT = 0.12 + (isWalking ? Math.sin(f.walkPh) * 0.22 * swing : 0) + Math.sin(t * 2.8 + f.ph * 7) * 0.08;
+
+                // Gingado (waddle) ao andar e inclinação ao bicar/cair
+                let targetPitch = 0;
+                if (f.st === 'bica') targetPitch = -0.22;
+                else if (!f.grounded) targetPitch = Math.max(-0.35, Math.min(0.35, -f.vy * 0.08));
+                else if (isWalking) targetPitch = 0.04 + Math.sin(f.walkPh * 2.0) * 0.03;
+                f.pitch += (targetPitch - f.pitch) * Math.min(1, dt * 9);
+
+                const targetRoll = isWalking ? Math.sin(f.walkPh) * 0.14 * swing : 0;
+                f.roll += (targetRoll - f.roll) * Math.min(1, dt * 9);
+            }
+        }
+        mobReg('galinha', { build: buildGalinha, tick: galinhaTick, kind: {}, land: true }); // land: fora da IA de peixe
+
+        function mobCount() { let n = 0; for (const sp of MOB.species.values()) if (sp.kind && !sp.land) n += sp.list.length; return n; } // so peixes: o /peixe regula eles
+        function galinhaCount() { const s = MOB.species.get('galinha'); return s ? s.list.length : 0; }
         function mobGet(f, x, y, z) { // bloco com chunk em cache no próprio bicho (-1 = chunk ausente)
             if (y < 0 || y >= CH) return 0;
             const cx = x >> 4, cz = z >> 4;
@@ -6324,7 +7517,7 @@ void main(){
                 }
             }
             for (const sp of MOB.species.values()) {
-                if (!sp.kind || !sp.list.length) continue;
+                if (!sp.kind || sp.land || !sp.list.length) continue; // sp.land = IA de chao (galinha), nao nada
                 fishKindTick(sp, dt, px, py, pz, pSpd);
             }
         }
@@ -6454,20 +7647,934 @@ void main(){
                     const cx = f.x | 0, cz = f.z | 0;
                     let c = f.cc && f.cc.cx === (cx >> 4) && f.cc.cz === (cz >> 4) ? f.cc : chunks.get((cx >> 4) + ',' + (cz >> 4));
                     let sL = 0.7, bL = 0;
-                    if (c && c.lit) { const v = c.light[((Math.min(CH - 1, Math.max(0, f.y | 0))) << 8) | ((cz & 15) << 4) | (cx & 15)]; sL = (v >> 4) / 15; bL = (v & 15) / 15; }
-                    const o = n * 12; n++;
+                    // luz na célula do TORNO (y+0.5): se os pés afundarem um pouco, ainda assim pega o ar — nunca o interior do bloco (que é 0 e deixaria a galinha preta)
+                    if (c && c.lit) { const v = c.light[((Math.min(CH - 1, Math.max(0, (f.y + 0.5) | 0))) << 8) | ((cz & 15) << 4) | (cx & 15)]; sL = (v >> 4) / 15; bL = (v & 15) / 15; }
+                    const o = n * 16; n++;
                     I[o] = f.x; I[o + 1] = f.y; I[o + 2] = f.z; I[o + 3] = f.scale;
                     I[o + 4] = f.yaw; I[o + 5] = f.pitch; I[o + 6] = f.roll; I[o + 7] = f.ph * 6.28318530718;
                     I[o + 8] = sL; I[o + 9] = bL; I[o + 10] = f.tint; I[o + 11] = f.ix;
+                    I[o + 12] = f.jH || 0; I[o + 13] = f.jL || 0; I[o + 14] = f.jW || 0; I[o + 15] = f.jT || 0; // juntas: cabeca, pernas, asas, rabo
                 }
                 if (!n) continue;
                 gl.bindVertexArray(sp.vao);
                 gl.bindBuffer(gl.ARRAY_BUFFER, sp.vboI);
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, I.subarray(0, n * 12));
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, I.subarray(0, n * 16));
                 gl.drawArraysInstanced(gl.TRIANGLES, 0, sp.mesh.count, n);
                 gl.bindVertexArray(null);
             }
         }
+
+        /* =========================================================================
+           MULTIPLAYER P2P (WebRTC via PeerJS + Lobby em tempo real)
+           - Lista de mundos disponíveis em tempo real (via canal público MQTT/WebSockets).
+           - Conexão direta P2P com Link ou Chave da sala.
+           - Se o Host sair do mundo, todos os clientes são desconectados e saem juntos.
+           - Sincronização: posição (lerp), blocos, terreno/seed, chat e nametags 3D.
+           ========================================================================= */
+        const escapeHtml = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const MP = {
+            active: false,
+            isHost: false,
+            peer: null,
+            myId: null,
+            roomCode: null,
+            nick: localStorage.getItem('cubo_mp_nick') || 'Jogador',
+            connections: new Map(), // peerId -> conn
+            players: new Map(),     // peerId -> { id, nick, x, y, z, ... }
+            availableRooms: new Map(), // roomId -> { id, name, host, players, ts }
+            mqtt: null,
+            hostHbTimer: null,
+            tickAcc: 0,
+            prog: null,
+            u: {},
+            vao: null,
+            vbo: null,
+            vertCount: 0,
+            tagContainer: null,
+            tags: new Map(),
+
+            init() {
+                this.tagContainer = $('mpNametags');
+                const nickIn = $('mpNick');
+                if (nickIn) {
+                    nickIn.value = this.nick;
+                    nickIn.addEventListener('input', e => {
+                        this.nick = (e.target.value.trim() || 'Jogador').slice(0, 16);
+                        localStorage.setItem('cubo_mp_nick', this.nick);
+                    });
+                }
+
+                // Botões da interface
+                const btnStartHost = $('mpBtnStartHost');
+                if (btnStartHost) btnStartHost.onclick = () => this.startHost();
+
+                const btnStopHost = $('mpBtnStopHost');
+                if (btnStopHost) btnStopHost.onclick = () => this.disconnect(true);
+
+                const btnCopy = $('mpBtnCopy');
+                if (btnCopy) btnCopy.onclick = () => {
+                    if (!this.roomCode) return;
+                    const url = `${location.origin}${location.pathname}?sala=${this.roomCode}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                        btnCopy.textContent = 'Copiado!';
+                        setTimeout(() => btnCopy.textContent = 'Copiar Link', 2000);
+                    }).catch(() => {
+                        navigator.clipboard.writeText(this.roomCode);
+                        btnCopy.textContent = 'Chave copiada!';
+                        setTimeout(() => btnCopy.textContent = 'Copiar Link', 2000);
+                    });
+                };
+
+                const btnJoin = $('mpBtnJoin');
+                if (btnJoin) btnJoin.onclick = () => {
+                    const code = $('mpJoinCode').value.trim();
+                    if (code) this.join(code);
+                };
+
+                const btnRefresh = $('mpBtnRefreshRooms');
+                if (btnRefresh) btnRefresh.onclick = () => {
+                    this.cleanExpiredRooms();
+                    this.renderRoomList();
+                };
+
+                // Detecta link na URL ao abrir a página
+                const urlParams = new URLSearchParams(location.search);
+                const salaParam = urlParams.get('sala') || (location.hash.startsWith('#sala=') ? location.hash.slice(6) : null);
+                if (salaParam) {
+                    const jCode = $('mpJoinCode');
+                    if (jCode) jCode.value = salaParam.trim();
+                    setTimeout(() => {
+                        show('multiplayer');
+                        const msg = $('mpJoinMsg');
+                        if (msg) {
+                            msg.style.display = 'block';
+                            msg.style.color = '#a8e6cf';
+                            msg.textContent = 'Chave identificada do link! Clique em "Conectar".';
+                        }
+                    }, 600);
+                }
+
+                // Botão Voltar do menu (cliente): volta ao título
+                const cBack = $('mpClientBackBtn');
+                if (cBack) cBack.onclick = () => show('title');
+
+                // Botão Voltar do in-game (host): volta ao jogo sem sair pro menu
+                const hBack = $('mpHostBackBtn');
+                if (hBack) hBack.onclick = () => { if (state === 'paused') enter(); else show('pause'); };
+
+                window.addEventListener('beforeunload', () => {
+                    if (this.active) this.disconnect(true);
+                });
+
+                this.initMesh();
+                this.initLobby();
+            },
+
+            initLobby() {
+                // Conecta ao broker público para lista de mundos disponíveis
+                try {
+                    if (typeof mqtt !== 'undefined') {
+                        const clientId = 'cubo_' + Math.random().toString(36).substring(2, 9);
+                        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+                            clientId: clientId,
+                            clean: true,
+                            reconnectPeriod: 4000
+                        });
+                        this.mqtt = client;
+
+                        client.on('connect', () => {
+                            client.subscribe('cubo_lobby_rooms_v1/#');
+                        });
+
+                        client.on('message', (topic, payload) => {
+                            try {
+                                const data = JSON.parse(payload.toString());
+                                if (data && data.id) {
+                                    if (data.closed) {
+                                        this.availableRooms.delete(data.id);
+                                    } else {
+                                        data.ts = Date.now();
+                                        this.availableRooms.set(data.id, data);
+                                    }
+                                    this.renderRoomList();
+                                }
+                            } catch (e) { }
+                        });
+                    }
+                } catch (e) {
+                    console.log('Lobby MQTT offline, fallback ativo');
+                }
+
+                // Limpeza periódica de salas que não enviaram heartbeat há mais de 8s
+                setInterval(() => {
+                    this.cleanExpiredRooms();
+                    this.renderRoomList();
+                }, 3000);
+            },
+
+            cleanExpiredRooms() {
+                const now = Date.now();
+                for (const [id, r] of this.availableRooms) {
+                    if (now - (r.ts || 0) > 8000) {
+                        this.availableRooms.delete(id);
+                    }
+                }
+            },
+
+            renderRoomList() {
+                const listEl = $('mpRoomList');
+                if (!listEl) return;
+
+                if (!this.availableRooms.size) {
+                    listEl.innerHTML = '<p id="mpNoRooms" style="font-size:12px;opacity:0.75;text-align:center;padding:14px 0;margin:0">Nenhum mundo público encontrado no momento. Peça para seu amigo abrir a sala dentro do mundo dele ou conecte via chave/link abaixo!</p>';
+                    return;
+                }
+
+                let html = '';
+                for (const [id, r] of this.availableRooms) {
+                    const isMyRoom = (id === this.roomCode);
+                    const roomName = escapeHtml(r.name || 'Mundo Aberto');
+                    const hostName = escapeHtml(r.host || 'Amigo');
+                    const pCount = Math.max(1, parseInt(r.players, 10) || 1);
+                    html += `
+                    <div class="mp-room-item" style="${isMyRoom ? 'border-color:#a8e6cf;background:rgba(168,230,207,0.12);' : ''}">
+                        <div class="mp-room-info">
+                            <div class="mp-room-name">🌐 ${roomName}</div>
+                            <div class="mp-room-meta">Criador: <b>${hostName}</b> · ${pCount} jogador(es)${isMyRoom ? ' (Sua sala)' : ''}</div>
+                        </div>
+                        ${isMyRoom ? '<span style="font-size:12px;font-weight:bold;color:#a8e6cf;padding:6px 12px;white-space:nowrap">Sua sala</span>' : `<button class="btn g" onclick="MP.join('${id}')">Entrar</button>`}
+                    </div>`;
+                }
+                listEl.innerHTML = html;
+            },
+
+            publishLobbyRoom(closed = false) {
+                if (!this.mqtt || !this.mqtt.connected || !this.roomCode) return;
+                try {
+                    const topic = 'cubo_lobby_rooms_v1/' + this.roomCode;
+                    if (closed) {
+                        this.mqtt.publish(topic, JSON.stringify({ id: this.roomCode, closed: true }));
+                    } else {
+                        const payload = {
+                            id: this.roomCode,
+                            name: (cur ? cur.name : 'Mundo'),
+                            host: this.nick,
+                            players: this.players.size + 1,
+                            ts: Date.now()
+                        };
+                        this.mqtt.publish(topic, JSON.stringify(payload));
+                    }
+                } catch (e) { }
+            },
+
+            initMesh() {
+                // Shader de renderização de outros jogadores
+                this.prog = mkProg(`#version 300 es
+layout(location=0) in vec3 p;
+layout(location=1) in vec2 uv;
+layout(location=2) in float sh;
+layout(location=3) in float part;
+
+uniform mat4 mvp;
+uniform vec3 uPos;
+uniform float uYaw;
+uniform float uPitch;
+uniform float uWalk;
+uniform float uSneak;
+uniform vec3 cam;
+uniform float light;
+uniform float fogN;
+uniform float fogF;
+uniform vec3 sky;
+
+out vec2 vUv;
+out float vSh;
+out float vFog;
+
+void main() {
+    vec3 q = p;
+    float swing = sin(uWalk) * 0.55;
+    // part: 0=corpo, 1=pernaEsq, 2=pernaDir, 3=bracoEsq, 4=bracoDir, 5=cabeca
+    if (part > 4.5) { // Cabeça
+        vec3 piv = vec3(0.0, 1.5, 0.0);
+        q -= piv;
+        float cp = cos(uPitch), sp = sin(uPitch);
+        q = vec3(cp * q.x - sp * q.y, sp * q.x + cp * q.y, q.z);
+        q += piv;
+        if (uSneak > 0.5) q.y -= 0.15;
+    } else if (part > 0.5 && part < 1.5) { // Perna Esquerda
+        vec3 piv = vec3(0.0, 0.75, 0.125);
+        q -= piv;
+        float ang = swing;
+        float c = cos(ang), s = sin(ang);
+        q = vec3(c * q.x + s * q.y, -s * q.x + c * q.y, q.z);
+        q += piv;
+    } else if (part > 1.5 && part < 2.5) { // Perna Direita
+        vec3 piv = vec3(0.0, 0.75, -0.125);
+        q -= piv;
+        float ang = -swing;
+        float c = cos(ang), s = sin(ang);
+        q = vec3(c * q.x + s * q.y, -s * q.x + c * q.y, q.z);
+        q += piv;
+    } else if (part > 2.5 && part < 3.5) { // Braço Esquerdo
+        vec3 piv = vec3(0.0, 1.375, 0.375);
+        q -= piv;
+        float ang = -swing * 0.75;
+        float c = cos(ang), s = sin(ang);
+        q = vec3(c * q.x + s * q.y, -s * q.x + c * q.y, q.z);
+        q += piv;
+        if (uSneak > 0.5) q.y -= 0.15;
+    } else if (part > 3.5 && part < 4.5) { // Braço Direito
+        vec3 piv = vec3(0.0, 1.375, -0.375);
+        q -= piv;
+        float ang = swing * 0.75;
+        float c = cos(ang), s = sin(ang);
+        q = vec3(c * q.x + s * q.y, -s * q.x + c * q.y, q.z);
+        q += piv;
+        if (uSneak > 0.5) q.y -= 0.15;
+    } else { // Tronco
+        if (uSneak > 0.5) q.y -= 0.15;
+    }
+
+    float cy = cos(uYaw), sy = sin(uYaw);
+    vec3 wp = vec3(-q.x * sy - q.z * cy, q.y, -q.x * cy + q.z * sy) + uPos;
+
+    vUv = uv;
+    vSh = sh;
+    float d = length(wp - cam);
+    vFog = clamp((d - fogN) / (fogF - fogN), 0.0, 1.0);
+    gl_Position = mvp * vec4(wp, 1.0);
+}`, `#version 300 es
+precision highp float;
+uniform sampler2D tex;
+uniform float light;
+uniform vec3 sky;
+in vec2 vUv;
+in float vSh;
+in float vFog;
+out vec4 o;
+
+void main() {
+    vec4 c = texture(tex, vUv);
+    if (c.a < 0.5) discard;
+    vec3 col = c.rgb * vSh * max(light, 0.18);
+    o = vec4(mix(col, sky, vFog), 1.0);
+}`);
+
+                for (const n of ['mvp', 'uPos', 'uYaw', 'uPitch', 'uWalk', 'uSneak', 'cam', 'light', 'fogN', 'fogF', 'sky', 'tex']) {
+                    this.u[n] = gl.getUniformLocation(this.prog, n);
+                }
+
+                // Gera a geometria do Steve
+                const V = 1 / 16, arr = [];
+                const face = (P, t, part, sh, flipU = false) => {
+                    const u0 = t / NT, u1 = (t + 1) / NT;
+                    const U = flipU ? [[u1, 1], [u0, 1], [u0, 0], [u1, 0]] : [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+                    for (const q of [0, 1, 2, 0, 2, 3]) {
+                        const p = P[q], u = U[q];
+                        arr.push(p[0], p[1], p[2], u[0], u[1], sh, part);
+                    }
+                };
+                const box = (x0, y0, z0, x1, y1, z1, t, part) => {
+                    const A = x0 * V, B = x1 * V, C = y0 * V, D = y1 * V, E = z0 * V, F = z1 * V;
+                    face([[A, D, E], [B, D, E], [B, D, F], [A, D, F]], t, part, 1.0);  // topo (+y)
+                    face([[A, C, E], [B, C, E], [B, C, F], [A, C, F]], t, part, 0.55); // base (-y)
+                    face([[B, C, E], [B, C, F], [B, D, F], [B, D, E]], t, part, 0.88); // +x (frente)
+                    face([[A, C, E], [A, C, F], [A, D, F], [A, D, E]], t, part, 0.68); // -x (costas)
+                    face([[A, C, F], [B, C, F], [B, D, F], [A, D, F]], t, part, 0.82); // +z (lado)
+                    face([[B, C, E], [A, C, E], [A, D, E], [B, D, E]], t, part, 0.75, true); // -z (lado com textura alinhada frente-costas)
+                };
+                const boxMulti = (x0, y0, z0, x1, y1, z1, tTop, tBot, tFront, tBack, tSideZ, tSideNZ, part) => {
+                    const A = x0 * V, B = x1 * V, C = y0 * V, D = y1 * V, E = z0 * V, F = z1 * V;
+                    face([[A, D, E], [B, D, E], [B, D, F], [A, D, F]], tTop, part, 1.0);      // topo (+y)
+                    face([[A, C, E], [B, C, E], [B, C, F], [A, C, F]], tBot, part, 0.55);     // base (-y)
+                    face([[B, C, E], [B, C, F], [B, D, F], [B, D, E]], tFront, part, 0.88);   // +x (frente)
+                    face([[A, C, E], [A, C, F], [A, D, F], [A, D, E]], tBack, part, 0.68);    // -x (costas)
+                    face([[A, C, F], [B, C, F], [B, D, F], [A, D, F]], tSideZ, part, 0.82);   // +z (lado)
+                    face([[B, C, E], [A, C, E], [A, D, E], [B, D, E]], tSideNZ, part, 0.75, true);  // -z (lado com textura alinhada frente-costas)
+                };
+
+                const ROSTO = 93, CAMISA = 94, CALCA = 95, CABELO = 96, CABELO_LADO = 97, PELE = 98;
+                // Pernas (part 1 = esq, 2 = dir)
+                box(-2, 0, 0.1, 2, 12, 3.9, CALCA, 1);
+                box(-2, 0, -3.9, 2, 12, -0.1, CALCA, 2);
+                // Tronco (part 0)
+                box(-2, 12, -4, 2, 24, 4, CAMISA, 0);
+                // Braços (part 3 = esq, 4 = dir) com mãos de pele na base
+                boxMulti(-2, 12, 4.1, 2, 24, 7.9, CAMISA, PELE, CAMISA, CAMISA, CAMISA, CAMISA, 3);
+                boxMulti(-2, 12, -7.9, 2, 24, -4.1, CAMISA, PELE, CAMISA, CAMISA, CAMISA, CAMISA, 4);
+                // Cabeça (part 5) — rosto apenas na frente (+x), cabelo no topo e costas, laterais com costeleta/orelha
+                boxMulti(-4, 24, -4, 4, 32, 4, CABELO, PELE, ROSTO, CABELO, CABELO_LADO, CABELO_LADO, 5);
+
+                this.vertCount = arr.length / 7;
+                this.vao = gl.createVertexArray();
+                gl.bindVertexArray(this.vao);
+                this.vbo = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+                gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 28, 12);
+                gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 28, 20);
+                gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 28, 24);
+                gl.bindVertexArray(null);
+            },
+
+            updateHud() {
+                const hud = $('mpHud');
+                if (!hud) return;
+                if (!this.active) {
+                    hud.classList.remove('on');
+                    return;
+                }
+                hud.classList.add('on');
+                const count = this.players.size + 1;
+                if (this.isHost) {
+                    hud.textContent = `Host (${count} jogadores)`;
+                    const pCountEl = $('mpHostPeers');
+                    if (pCountEl) pCountEl.textContent = `Jogadores: ${count} (${this.nick} + ${this.players.size})`;
+                } else {
+                    hud.textContent = `Conectado (${count} jogadores)`;
+                }
+            },
+
+            startHost() {
+                if (typeof Peer === 'undefined') {
+                    alert('Biblioteca PeerJS ainda carregando ou sem conexão à internet. Tente em instantes.');
+                    return;
+                }
+                if (!cur || pano) {
+                    alert('Entre no seu mundo primeiro para abrir a sala!');
+                    show('worlds');
+                    return;
+                }
+                if (this.active) this.disconnect(true);
+
+                const randId = 'cubo-' + Math.random().toString(36).substring(2, 8);
+                const peer = new Peer(randId, { debug: 1 });
+                this.peer = peer;
+
+                peer.on('open', id => {
+                    this.myId = id;
+                    this.roomCode = id;
+                    this.active = true;
+                    this.isHost = true;
+                    $('mpRoomCode').value = id;
+                    $('mpHostOff').style.display = 'none';
+                    $('mpHostOn').style.display = 'block';
+                    this.updateHud();
+                    showCmdMsg('Sala criada! Chave: ' + id);
+
+                    // Publica sala pública e inicia heartbeat
+                    this.publishLobbyRoom();
+                    if (this.hostHbTimer) clearInterval(this.hostHbTimer);
+                    this.hostHbTimer = setInterval(() => this.publishLobbyRoom(), 3000);
+                });
+
+                peer.on('connection', conn => {
+                    conn.on('open', () => {
+                        this.connections.set(conn.peer, conn);
+                        // Envia estado completo do mundo para o novo cliente
+                        const diffs = [];
+                        for (let i = 0; i < history.length; i += 5) {
+                            diffs.push(history[i], history[i + 1], history[i + 2], history[i + 4]);
+                        }
+                        conn.send({
+                            type: 'welcome',
+                            seed: cur.seed,
+                            name: cur.name,
+                            time: time,
+                            timeLock: timeLock,
+                            raining: raining,
+                            rainInt: rainInt,
+                            rainAmt: rainAmt,
+                            hostNick: this.nick,
+                            hostPos: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch },
+                            diffs: diffs
+                        });
+                        this.updateHud();
+                    });
+
+                    conn.on('data', data => this.handleData(data, conn));
+
+                    conn.on('close', () => {
+                        this.removePlayer(conn.peer);
+                        this.connections.delete(conn.peer);
+                        this.updateHud();
+                    });
+
+                    conn.on('error', () => {
+                        this.removePlayer(conn.peer);
+                        this.connections.delete(conn.peer);
+                        this.updateHud();
+                    });
+                });
+
+                peer.on('error', err => {
+                    console.error('PeerJS Host Error:', err);
+                    if (err.type === 'unavailable-id') {
+                        this.startHost();
+                    } else {
+                        alert('Erro ao abrir sala P2P: ' + (err.message || err.type));
+                        this.disconnect();
+                    }
+                });
+            },
+
+            join(rawCode) {
+                if (typeof Peer === 'undefined') {
+                    alert('Biblioteca PeerJS ainda carregando ou sem internet.');
+                    return;
+                }
+                let code = rawCode.trim();
+                if (code.includes('?sala=')) {
+                    const match = code.match(/[\?&]sala=([^&#]+)/);
+                    if (match) code = decodeURIComponent(match[1]);
+                } else if (code.includes('#sala=')) {
+                    code = code.split('#sala=')[1];
+                }
+                if (!code) return;
+
+                if (this.active) this.disconnect();
+
+                const statusEl = $('mpJoinMsg');
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.style.color = '#fef08a';
+                    statusEl.textContent = 'Conectando ao Host...';
+                }
+
+                const peer = new Peer();
+                this.peer = peer;
+
+                peer.on('open', id => {
+                    this.myId = id;
+                    const conn = peer.connect(code, { reliable: true });
+
+                    conn.on('open', () => {
+                        this.connections.set('host', conn);
+                        this.active = true;
+                        this.isHost = false;
+                        if (statusEl) statusEl.textContent = 'Aguardando dados do mundo...';
+                        conn.send({ type: 'join', nick: this.nick });
+                    });
+
+                    conn.on('data', data => this.handleData(data, conn));
+
+                    conn.on('close', () => {
+                        this.onHostLeft();
+                    });
+
+                    conn.on('error', err => {
+                        this.onHostLeft();
+                    });
+                });
+
+                peer.on('error', err => {
+                    if (statusEl) {
+                        statusEl.style.color = '#f87171';
+                        statusEl.textContent = 'Não foi possível conectar: ' + (err.message || err.type);
+                    }
+                });
+            },
+
+            // Quando o Host sai, todos os clientes saem do mundo imediatamente e voltam ao menu
+            onHostLeft() {
+                if (this.isHost) return;
+                this.disconnect(false);
+                cur = null;
+                state = 'menu';
+                locked = false;
+                try { document.exitPointerLock && document.exitPointerLock(); } catch (e) { }
+                document.body.classList.remove('hud');
+                const fade = $('bgFade');
+                if (fade) fade.classList.remove('on', 'fade');
+                startPanorama();
+                show('title');
+                setTimeout(() => {
+                    alert('O anfitrião encerrou ou saiu da sala. Você retornou ao menu.');
+                }, 120);
+            },
+
+            disconnect(notifyClients = false) {
+                if (this.isHost && notifyClients) {
+                    // Avisa todos os clientes para saírem juntos
+                    for (const conn of this.connections.values()) {
+                        if (conn.open) {
+                            try { conn.send({ type: 'host_left' }); } catch (e) { }
+                        }
+                    }
+                    this.publishLobbyRoom(true);
+                }
+
+                if (this.hostHbTimer) {
+                    clearInterval(this.hostHbTimer);
+                    this.hostHbTimer = null;
+                }
+
+                if (this.peer) {
+                    try { this.peer.destroy(); } catch (e) { }
+                    this.peer = null;
+                }
+                this.active = false;
+                this.isHost = false;
+                this.myId = null;
+                this.roomCode = null;
+                this.connections.clear();
+                for (const pid of this.players.keys()) this.removePlayer(pid);
+                this.players.clear();
+
+                const hOn = $('mpHostOn'), hOff = $('mpHostOff'), jMsg = $('mpJoinMsg');
+                if (hOn) hOn.style.display = 'none';
+                if (hOff) hOff.style.display = 'block';
+                if (jMsg) jMsg.style.display = 'none';
+                this.updateHud();
+            },
+
+            handleData(data, conn) {
+                if (!data || !data.type) return;
+
+                switch (data.type) {
+                    case 'host_left': {
+                        this.onHostLeft();
+                        break;
+                    }
+                    case 'welcome': {
+                        const statusEl = $('mpJoinMsg');
+                        if (statusEl) statusEl.textContent = 'Gerando terreno idêntico...';
+
+                        epoch++; pano = false; resetWorld();
+                        cur = {
+                            id: '__mp_guest_' + Date.now(),
+                            __mp: true, // sessão multiplayer: nunca é salvo nos mundos locais
+                            name: 'Sala de ' + data.hostNick,
+                            seed: data.seed,
+                            created: Date.now(),
+                            played: Date.now(),
+                            playTime: 0,
+                            player: null,
+                            time: data.time || 0.2,
+                            sel: 0,
+                            chunkCount: 0,
+                            thumb: null
+                        };
+                        BIO.init(data.seed);
+                        time = data.time || 0.2;
+                        timeLock = data.timeLock !== undefined ? data.timeLock : -1;
+                        raining = !!data.raining;
+                        if (typeof data.rainInt === 'number') rainInt = data.rainInt;
+                        if (typeof data.rainAmt === 'number') rainAmt = data.rainAmt;
+
+                        if (data.hostPos) {
+                            P.x = data.hostPos.x + 1.0;
+                            P.y = data.hostPos.y;
+                            P.z = data.hostPos.z + 1.0;
+                            P.yaw = data.hostPos.yaw || 0;
+                            P.pitch = data.hostPos.pitch || 0;
+                            spawnAt = [Math.floor(P.x), Math.floor(P.z)];
+                        }
+
+                        if (Array.isArray(data.diffs)) {
+                            for (let i = 0; i < data.diffs.length; i += 4) {
+                                setBlock(data.diffs[i], data.diffs[i + 1], data.diffs[i + 2], data.diffs[i + 3], false);
+                            }
+                        }
+
+                        locked = true;
+                        state = 'playing';
+                        menu.style.display = 'none';
+                        document.body.classList.add('hud');
+                        $('bgFade').classList.remove('on', 'fade');
+                        this.updateHud();
+                        showCmdMsg('Conectado à sala de ' + data.hostNick + '!');
+                        break;
+                    }
+                    case 'join': {
+                        showCmdMsg(data.nick + ' entrou no jogo!');
+                        break;
+                    }
+                    case 'pos': {
+                        let p = this.players.get(data.id);
+                        if (!p) {
+                            p = {
+                                id: data.id,
+                                nick: data.nick || 'Jogador',
+                                x: data.x, y: data.y, z: data.z,
+                                yaw: data.yaw, pitch: data.pitch,
+                                targetX: data.x, targetY: data.y, targetZ: data.z,
+                                targetYaw: data.yaw, targetPitch: data.pitch,
+                                sneak: !!data.sneak, fly: !!data.fly, walk: !!data.walk,
+                                walkPh: 0, selTile: data.selTile || 0,
+                                lastSeen: performance.now()
+                            };
+                            this.players.set(data.id, p);
+                            this.updateHud();
+                        } else {
+                            p.nick = data.nick || p.nick;
+                            p.targetX = data.x; p.targetY = data.y; p.targetZ = data.z;
+                            p.targetYaw = data.yaw; p.targetPitch = data.pitch;
+                            p.sneak = !!data.sneak; p.fly = !!data.fly; p.walk = !!data.walk;
+                            p.selTile = data.selTile || 0;
+                            p.lastSeen = performance.now();
+                        }
+
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                    case 'block': {
+                        setBlock(data.x, data.y, data.z, data.id, false);
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                    case 'chat': {
+                        showCmdMsg('<' + (data.nick || 'Jogador') + '> ' + data.text);
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                    case 'env': {
+                        if (!this.isHost) {
+                            if (typeof data.time === 'number') time = data.time;
+                            if (typeof data.timeLock === 'number') timeLock = data.timeLock;
+                            if (typeof data.raining === 'boolean') raining = data.raining;
+                            if (typeof data.rainInt === 'number') rainInt = data.rainInt;
+                            if (typeof data.rainAmt === 'number') rainAmt = data.rainAmt;
+                        }
+                        break;
+                    }
+                    case 'tnt': {
+                        spawnTnt(data.x, data.y, data.z, data.fuse, false, data.id);
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                    case 'explode': {
+                        if (Array.isArray(data.blocks)) {
+                            for (let i = 0; i < data.blocks.length; i += 3) {
+                                setBlock(data.blocks[i], data.blocks[i + 1], data.blocks[i + 2], 0, false);
+                            }
+                        }
+                        if (data.tntId) {
+                            const idx = tnts.findIndex(t => t.id === data.tntId);
+                            if (idx >= 0) tnts.splice(idx, 1);
+                        }
+                        for (let i = tnts.length - 1; i >= 0; i--) {
+                            const t = tnts[i];
+                            const d2 = (t.x - data.cx) ** 2 + (t.y - data.cy) ** 2 + (t.z - data.cz) ** 2;
+                            if (d2 < 9 && t.fuse < 1.0) tnts.splice(i, 1);
+                        }
+                        const ex = P.x - data.cx, ey = P.y + 0.9 - data.cy, ez = P.z - data.cz, dist = Math.hypot(ex, ey, ez);
+                        if (dist < data.r * 2.5) {
+                            const k = (1 - dist / (data.r * 2.5)) * 22 / (dist || 1);
+                            P.vx += ex * k; P.vy += ey * k + 4; P.vz += ez * k;
+                        }
+                        const near = Math.max(0, 1 - dist / 30);
+                        flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
+                        boom();
+                        mobsScare(data.cx, data.cy, data.cz, data.r * 2);
+
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                    case 'tnt_clear': {
+                        tnts.length = 0;
+                        if (this.isHost) {
+                            for (const [peerId, otherConn] of this.connections) {
+                                if (peerId !== conn.peer && otherConn.open) otherConn.send(data);
+                            }
+                        }
+                        break;
+                    }
+                }
+            },
+
+            broadcastTnt(x, y, z, fuse, id) {
+                const pkt = { type: 'tnt', x, y, z, fuse, id };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            broadcastExplode(cx, cy, cz, r, blocks, tntId) {
+                const pkt = { type: 'explode', cx, cy, cz, r, blocks, tntId };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            broadcastTntClear() {
+                const pkt = { type: 'tnt_clear' };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            broadcastEnv() {
+                if (!this.active || !this.isHost) return;
+                const pkt = {
+                    type: 'env',
+                    time: time,
+                    timeLock: timeLock,
+                    raining: raining,
+                    rainInt: rainInt,
+                    rainAmt: rainAmt
+                };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            broadcastBlock(x, y, z, id) {
+                const pkt = { type: 'block', x, y, z, id };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            sendChat(text) {
+                const pkt = { type: 'chat', nick: this.nick, text: text };
+                for (const conn of this.connections.values()) {
+                    if (conn.open) conn.send(pkt);
+                }
+            },
+
+            removePlayer(id) {
+                const p = this.players.get(id);
+                if (p) {
+                    showCmdMsg(p.nick + ' saiu do jogo.');
+                    this.players.delete(id);
+                }
+                const tag = this.tags.get(id);
+                if (tag) {
+                    tag.remove();
+                    this.tags.delete(id);
+                }
+                this.updateHud();
+            },
+
+            tick(dt) {
+                if (!this.active) return;
+
+                if (this.isHost) {
+                    this.envAcc = (this.envAcc || 0) + dt;
+                    if (this.envAcc >= 0.4) {
+                        this.envAcc = 0;
+                        this.broadcastEnv();
+                    }
+                }
+
+                this.tickAcc += dt;
+                if (this.tickAcc >= 0.04) {
+                    this.tickAcc = 0;
+                    const pkt = {
+                        type: 'pos',
+                        id: this.myId,
+                        nick: this.nick,
+                        x: P.x, y: P.y, z: P.z,
+                        yaw: P.yaw, pitch: P.pitch,
+                        sneak: P.sneak, fly: P.fly,
+                        walk: Math.hypot(P.vx, P.vz) > 0.08,
+                        selTile: HOT[sel] ? HOT[sel][1] : 0
+                    };
+                    for (const conn of this.connections.values()) {
+                        if (conn.open) conn.send(pkt);
+                    }
+                }
+
+                const now = performance.now();
+                for (const [id, p] of this.players) {
+                    if (now - p.lastSeen > 12000) {
+                        this.removePlayer(id);
+                        continue;
+                    }
+                    const distSq = (p.targetX - p.x) ** 2 + (p.targetY - p.y) ** 2 + (p.targetZ - p.z) ** 2;
+                    if (distSq > 36) {
+                        p.x = p.targetX; p.y = p.targetY; p.z = p.targetZ;
+                        p.yaw = p.targetYaw; p.pitch = p.targetPitch;
+                    } else {
+                        const k = Math.min(1, dt * 16);
+                        p.x += (p.targetX - p.x) * k;
+                        p.y += (p.targetY - p.y) * k;
+                        p.z += (p.targetZ - p.z) * k;
+                        let yd = p.targetYaw - p.yaw;
+                        while (yd > Math.PI) yd -= 6.283185307;
+                        while (yd < -Math.PI) yd += 6.283185307;
+                        p.yaw += yd * k;
+                        p.pitch += (p.targetPitch - p.pitch) * k;
+                    }
+                    if (p.walk) p.walkPh += dt * 8.5;
+                    else p.walkPh *= Math.max(0, 1 - dt * 10);
+                }
+            },
+
+            draw(mvp, eye, dir, light, fogN, fogF, width, height) {
+                if (!this.active || !this.players.size) return;
+                gl.useProgram(this.prog);
+                gl.uniformMatrix4fv(this.u.mvp, false, mvp);
+                gl.uniform3f(this.u.cam, eye[0], eye[1], eye[2]);
+                gl.uniform1f(this.u.light, light);
+                gl.uniform1f(this.u.fogN, fogN);
+                gl.uniform1f(this.u.fogF, fogF);
+                gl.uniform3fv(this.u.sky, SK.sky);
+                gl.uniform1i(this.u.tex, 0);
+
+                gl.bindVertexArray(this.vao);
+
+                for (const [id, p] of this.players) {
+                    gl.uniform3f(this.u.uPos, p.x, p.y, p.z);
+                    gl.uniform1f(this.u.uYaw, p.yaw);
+                    gl.uniform1f(this.u.uPitch, p.pitch);
+                    gl.uniform1f(this.u.uWalk, p.walkPh);
+                    gl.uniform1f(this.u.uSneak, p.sneak ? 1.0 : 0.0);
+                    gl.drawArrays(gl.TRIANGLES, 0, this.vertCount);
+
+                    let tag = this.tags.get(id);
+                    if (!tag && this.tagContainer) {
+                        tag = document.createElement('div');
+                        tag.className = 'mp-tag';
+                        tag.textContent = p.nick;
+                        this.tagContainer.appendChild(tag);
+                        this.tags.set(id, tag);
+                    }
+                    if (tag) {
+                        if (tag.textContent !== p.nick) tag.textContent = p.nick;
+                        const cx = p.x, cy = p.y + (p.sneak ? 1.9 : 2.25), cz = p.z;
+                        const clipX = mvp[0] * cx + mvp[4] * cy + mvp[8] * cz + mvp[12];
+                        const clipY = mvp[1] * cx + mvp[5] * cy + mvp[9] * cz + mvp[13];
+                        const clipZ = mvp[2] * cx + mvp[6] * cy + mvp[10] * cz + mvp[14];
+                        const clipW = mvp[3] * cx + mvp[7] * cy + mvp[11] * cz + mvp[15];
+
+                        const d2 = (cx - eye[0]) ** 2 + (cy - eye[1]) ** 2 + (cz - eye[2]) ** 2;
+                        if (clipW > 0.1 && d2 < 1600 && clipZ < clipW) {
+                            const sx = (clipX / clipW * 0.5 + 0.5) * innerWidth;
+                            const sy = (-clipY / clipW * 0.5 + 0.5) * innerHeight;
+                            tag.style.display = 'block';
+                            tag.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -100%)`;
+                        } else {
+                            tag.style.display = 'none';
+                        }
+                    }
+                }
+                gl.bindVertexArray(null);
+            }
+        };
 
 
 
@@ -6628,6 +8735,7 @@ void main(){
             }
             gl.uniform1f(U.flash, 0); gl.uniform3f(U.off, 0, 0, 0);
             drawMobs(mvp, e2, dir, light, fogN, fogF); // mobs opacos antes da nevoa/agua passam por aqui (lprog/brilho deixam tudo pronto)
+            if (typeof MP !== 'undefined' && MP.active) MP.draw(mvp, e2, dir, light, fogN, fogF, canvas.width, canvas.height);
             const hit = (locked && (!isTouch || aim.on)) ? raycast(eyePos(), aimDir(), 6, HOT[sel][0] === BUCKET && HOT[sel][1] === 14) : null;
             if (hit) {
                 gl.useProgram(lprog); gl.uniformMatrix4fv(LU.mvp, false, mvp); if (hit.box) { const B = hit.box; gl.uniform3f(LU.off, hit.x + B[0], hit.y + B[1], hit.z + B[2]); gl.uniform3f(LU.sc, B[3] - B[0], B[4] - B[1], B[5] - B[2]); }
@@ -6688,22 +8796,24 @@ void main(){
         function frame(now) {
             const dt = Math.min(0.05, (now - last) / 1000); last = now;
             if (!cur) { PERF.tick(dt, false); requestAnimationFrame(frame); return; }
-            const live = state === 'playing' || state === 'loading' || state === 'pano';
+            const mpLive = (typeof MP !== 'undefined' && MP.active && (state === 'paused' || state === 'inv'));
+            const live = state === 'playing' || state === 'loading' || state === 'pano' || mpLive;
             if (live && PERF.pace(dt)) { requestAnimationFrame(frame); return; } // limitador de quadros: pula este ciclo ate a hora do proximo
             const dtP = Math.min(0.05, (now - lastP) / 1000); lastP = now; // tempo REAL desde o ultimo quadro processado (dt puro ignoraria os ciclos pulados)
-            if (live) update(dtP); // pausa/inventario: cena estatica — sem update nem render (menos calor = clocks estaveis)
+            if (live) update(dtP); // no multiplayer pausa não congela o mundo; no singleplayer sim
             flashAmt = Math.max(0, flashAmt - dtP * 1.4); shake = Math.max(0, shake - dtP * 1.2);
             if (flashAmt !== _fO) flashEl.style.opacity = _fO = flashAmt;
-            { const v = rewinding ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
-            if (rewinding) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
-            if (live) { render(); rainSound(dtP); PERF.tick(dtP, state === 'playing' || state === 'pano'); } // mede o quadro acabado de processar (carregamento nao amostra: picos esperados)
-            else PERF.tick(dtP, false); // so detecta trocas de estado; estados estaticos nao alimentam estatisticas
-            if (state === 'loading') mcAnim(dtP); // blocos montando na tela de carregamento
+            const isMP = typeof MP !== 'undefined' && MP.active;
+            { const v = (rewinding && !isMP) ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
+            if (rewinding && !isMP) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
+            if (live) { render(); rainSound(dtP); PERF.tick(dtP, state === 'playing' || state === 'pano' || mpLive); }
+            else PERF.tick(dtP, false);
+            if (state === 'loading') mcAnim(dtP);
             if (spawned) {
                 if (wantThumb) { wantThumb = false; grabThumb(); }
                 if (pendingSave) { pendingSave = false; saveWorld(); }
             }
-            frames++; fpsT += dtP; // contagem apenas dos quadros de fato processados
+            frames++; fpsT += dtP;
             if (fpsT >= 0.5) {
                 fps = Math.round(frames / fpsT); frames = 0; fpsT = 0;
                 document.body.classList.toggle('flying', P.fly);
@@ -6721,6 +8831,7 @@ void main(){
             }
             requestAnimationFrame(frame);
         }
+        MP.init();
         startPanorama();
         requestAnimationFrame(frame);
         kv.init().then(() => {
