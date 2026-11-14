@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Cubo</title>
     <!-- favicon embutido (SVG inline = data URI): bloco de terra com capim; evita o 404 do /favicon.ico -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%237a4f2d'/%3E%3Crect width='16' height='5' fill='%236b8f3c'/%3E%3Crect y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='5' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3Crect x='9' y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='14' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3C/svg%3E">
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%237a4f2d'/%3E%3Crect width='16' height='5' fill='%236b8f3c'/%3E%3Crect y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='5' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3Crect x='9' y='5' width='3' height='1' fill='%236b8f3c'/%3E%3Crect x='14' y='5' width='2' height='1' fill='%236b8f3c'/%3E%3C/svg%3E">
     <!-- PeerJS para multiplayer P2P (WebRTC sem necessidade de servidor dedicado) -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <!-- MQTT para descoberta em tempo real da lista de salas públicas disponíveis -->
@@ -119,7 +120,7 @@
         :root {
             --sw: 44px;
             --iside: 112px
-            /* largura da coluna de secoes a esquerda do inventario */
+                /* largura da coluna de secoes a esquerda do inventario */
         }
 
         body.touch {
@@ -127,7 +128,7 @@
                entao se faltar espaco ela vira 8 colunas em vez de estourar */
             --sw: clamp(24px, min(calc((100vh - 150px) / 6), calc((100vw - 48px) / 10)), 54px);
             --iside: 46px
-            /* celular: so icones nas secoes */
+                /* celular: so icones nas secoes */
         }
 
         #inv {
@@ -1452,6 +1453,7 @@
             overflow: hidden;
             z-index: 85;
         }
+
         .mp-tag {
             position: absolute;
             top: 0;
@@ -1469,6 +1471,7 @@
             will-change: transform;
             pointer-events: none;
         }
+
         #mpHud {
             position: fixed;
             top: 10px;
@@ -1485,7 +1488,10 @@
             pointer-events: none;
             backdrop-filter: blur(8px);
         }
-        #mpHud.on { display: block; }
+
+        #mpHud.on {
+            display: block;
+        }
 
         .mp-room-item {
             display: flex;
@@ -1501,10 +1507,12 @@
             box-sizing: border-box;
             transition: background .15s, border-color .15s;
         }
+
         .mp-room-item:hover {
             background: rgba(255, 255, 255, 0.14);
             border-color: rgba(255, 255, 255, 0.35);
         }
+
         .mp-room-info {
             display: flex;
             flex-direction: column;
@@ -1514,6 +1522,7 @@
             overflow: hidden;
             text-align: left;
         }
+
         .mp-room-name {
             font-weight: 700;
             font-size: 14px;
@@ -1522,6 +1531,7 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
+
         .mp-room-meta {
             font-size: 12px;
             line-height: 1.35;
@@ -1530,9 +1540,11 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
+
         .mp-room-meta b {
             color: #ffd24a;
         }
+
         .mp-room-item .btn {
             flex: 0 0 auto !important;
             width: auto !important;
@@ -1741,28 +1753,35 @@
             <h2 id="mpTitle">Multiplayer</h2>
             <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
                 <label for="mpNick" style="font-size:13px;white-space:nowrap;font-weight:600">Seu Apelido:</label>
-                <input class="in" id="mpNick" maxlength="16" autocomplete="off" placeholder="Jogador" value="Jogador" style="flex:1">
+                <input class="in" id="mpNick" maxlength="16" autocomplete="off" placeholder="Jogador" value="Jogador"
+                    style="flex:1">
             </div>
 
             <!-- VISTA DO MENU: LISTA DE MUNDOS + ENTRAR POR CHAVE/LINK -->
             <div id="mpClientView">
                 <!-- Lista de Mundos Disponíveis (Salas Públicas) -->
-                <div style="text-align:left;background:rgba(0,0,0,0.32);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);margin-bottom:10px">
+                <div
+                    style="text-align:left;background:rgba(0,0,0,0.32);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);margin-bottom:10px">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
                         <b style="font-size:14px;color:#a8e6cf">🌐 Mundos Disponíveis</b>
-                        <button class="btn" id="mpBtnRefreshRooms" style="padding:4px 10px;font-size:11px" type="button">↻ Atualizar</button>
+                        <button class="btn" id="mpBtnRefreshRooms" style="padding:4px 10px;font-size:11px"
+                            type="button">↻ Atualizar</button>
                     </div>
                     <div id="mpRoomList" style="max-height:160px;overflow-y:auto;padding-right:2px">
-                        <p id="mpNoRooms" style="font-size:12px;opacity:0.75;text-align:center;padding:14px 0;margin:0">Buscando mundos abertos na rede...</p>
+                        <p id="mpNoRooms" style="font-size:12px;opacity:0.75;text-align:center;padding:14px 0;margin:0">
+                            Buscando mundos abertos na rede...</p>
                     </div>
                 </div>
 
                 <!-- Conectar via Link ou Chave -->
-                <div style="text-align:left;background:rgba(0,0,0,0.22);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px">
+                <div
+                    style="text-align:left;background:rgba(0,0,0,0.22);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px">
                     <b style="display:block;font-size:13px;margin-bottom:4px">Conectar via Chave ou Link Direto</b>
                     <div style="display:flex;gap:6px">
-                        <input class="in" id="mpJoinCode" maxlength="64" autocomplete="off" placeholder="Cole a chave (código) ou link da sala" style="flex:1">
-                        <button class="btn g" id="mpBtnJoin" style="white-space:nowrap;padding:7px 14px">Conectar</button>
+                        <input class="in" id="mpJoinCode" maxlength="64" autocomplete="off"
+                            placeholder="Cole a chave (código) ou link da sala" style="flex:1">
+                        <button class="btn g" id="mpBtnJoin"
+                            style="white-space:nowrap;padding:7px 14px">Conectar</button>
                     </div>
                     <p id="mpJoinMsg" style="font-size:12px;margin:6px 0 0;display:none"></p>
                 </div>
@@ -1772,21 +1791,29 @@
 
             <!-- VISTA IN-GAME: ABRIR MUNDO PARA AMIGOS (HOST) -->
             <div id="mpHostView" style="display:none">
-                <div style="text-align:left;background:rgba(0,0,0,0.26);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);margin-bottom:10px">
+                <div
+                    style="text-align:left;background:rgba(0,0,0,0.26);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);margin-bottom:10px">
                     <b style="display:block;margin-bottom:6px;font-size:14px;color:#a8e6cf">Abrir Mundo para Amigos</b>
                     <div id="mpHostOff">
-                        <p id="mpHostNote" style="font-size:12px;margin:2px 0 10px;opacity:0.85">Abra este mundo para que ele apareça na lista de mundos disponíveis e seus amigos possam entrar com você.</p>
-                        <button class="btn g" id="mpBtnStartHost" style="width:100%" type="button">Abrir Sala para Amigos</button>
+                        <p id="mpHostNote" style="font-size:12px;margin:2px 0 10px;opacity:0.85">Abra este mundo para
+                            que ele apareça na lista de mundos disponíveis e seus amigos possam entrar com você.</p>
+                        <button class="btn g" id="mpBtnStartHost" style="width:100%" type="button">Abrir Sala para
+                            Amigos</button>
                     </div>
                     <div id="mpHostOn" style="display:none">
-                        <p style="font-size:12px;margin:2px 0 6px;color:#a8e6cf;font-weight:bold">● Sala aberta e visível na lista pública!</p>
+                        <p style="font-size:12px;margin:2px 0 6px;color:#a8e6cf;font-weight:bold">● Sala aberta e
+                            visível na lista pública!</p>
                         <label style="font-size:11px;opacity:0.8">Chave da Sala:</label>
                         <div style="display:flex;gap:6px;align-items:center;margin:4px 0 8px">
-                            <input class="in" id="mpRoomCode" readonly style="font-weight:bold;letter-spacing:1px;text-align:center;font-size:13px;background:rgba(0,0,0,0.4)">
-                            <button class="btn g" id="mpBtnCopy" style="white-space:nowrap;padding:7px 12px;font-size:13px" type="button">Copiar Link</button>
+                            <input class="in" id="mpRoomCode" readonly
+                                style="font-weight:bold;letter-spacing:1px;text-align:center;font-size:13px;background:rgba(0,0,0,0.4)">
+                            <button class="btn g" id="mpBtnCopy"
+                                style="white-space:nowrap;padding:7px 12px;font-size:13px" type="button">Copiar
+                                Link</button>
                         </div>
                         <p id="mpHostPeers" style="font-size:12px;margin:4px 0;opacity:0.85">Jogadores: 1 (Você)</p>
-                        <button class="btn r" id="mpBtnStopHost" style="width:100%;margin-top:6px" type="button">Fechar Sala</button>
+                        <button class="btn r" id="mpBtnStopHost" style="width:100%;margin-top:6px" type="button">Fechar
+                            Sala</button>
                     </div>
                 </div>
 
@@ -1810,6 +1837,27 @@
                         type="button">Ligado</button></div>
                 <div class="cwr"><span class="lb">Limitador de quadros (constância de FPS)</span><button class="btn tg"
                         id="tCap" type="button">Automático</button></div>
+            </div>
+            <div class="cfg" id="sndCfg">
+                <h3>Som</h3>
+                <div class="cwr"><span class="lb">Volume geral</span><b id="volVal">75%</b></div>
+                <input class="rng" id="volRng" type="range" min="0" max="100" step="5" value="75"
+                    aria-label="Volume geral">
+                <div class="cwr"><span class="lb">Música de fundo</span><b id="volMusVal">85%</b></div>
+                <input class="rng" id="volMusRng" type="range" min="0" max="200" step="5" value="85"
+                    aria-label="Música de fundo">
+                <div class="cwr"><span class="lb">Som dos mobs</span><b id="volMobVal">80%</b></div>
+                <input class="rng" id="volMobRng" type="range" min="0" max="100" step="5" value="80"
+                    aria-label="Som dos mobs">
+                <div class="cwr"><span class="lb">Som da chuva</span><b id="volRainVal">80%</b></div>
+                <input class="rng" id="volRainRng" type="range" min="0" max="100" step="5" value="80"
+                    aria-label="Som da chuva">
+                <div class="cwr"><span class="lb">Som dos passos</span><b id="volStepVal">80%</b></div>
+                <input class="rng" id="volStepRng" type="range" min="0" max="100" step="5" value="80"
+                    aria-label="Som dos passos">
+                <div class="cwr"><span class="lb">Som da interface</span><b id="volUiVal">90%</b></div>
+                <input class="rng" id="volUiRng" type="range" min="0" max="100" step="5" value="90"
+                    aria-label="Som da interface">
             </div>
             <div class="cfg" id="keyCfg">
                 <h3>Controles</h3>
@@ -1837,16 +1885,21 @@
                             data-k="fly">F</b>) voar · no voo: <b data-k="jump">Espaço</b> sobe,
                         <b data-k="sneak">Shift</b> desce, <b data-k="sprint">Ctrl</b> acelera, tocar o chão encerra
                     </p>
-                    <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>baldes (9)</b>: o Balde de água solta água à vontade e o Balde vazio coleta fontes — no criativo nenhum se esgota</p>
-                    <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>C</b> zoom (segurar) na mira · <b>[ ]</b>
+                    <p class="kb"><b>Botão esquerdo</b> quebrar / acender TNT · <b>direito</b> colocar bloco · <b>baldes
+                            (9)</b>: o Balde de água solta água à vontade e o Balde vazio coleta fontes — no criativo
+                        nenhum se esgota</p>
+                    <p class="kb"><b>1-9 e 0</b> ou roda do mouse: slot da barra · <b>C</b> zoom (segurar) na mira ·
+                        <b>[ ]</b>
                         visão · <b data-k="inventory">I</b> inventário
                         (itens do criativo) · <b>Esc</b> pausa</p>
                     <p class="kb">No chat: <b>Tab</b> completa o comando (ou toque numa sugestão) · <b>/ajuda</b> lista
                         os comandos</p>
                     <p class="kb">Segure <b data-k="rewind">R</b> para voltar no tempo (desfaz explosões, água e
                         construções)</p>
-                    <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco: colocar ·
-                        <b>Segure</b> o dedo num bloco: quebrar · <b>2x no botão de pular</b>: voar · botões: pular, agachar
+                    <p class="tc"><b>Joystick</b>: andar · <b>Arraste a tela</b>: olhar · <b>Toque</b> num bloco:
+                        colocar ·
+                        <b>Segure</b> o dedo num bloco: quebrar · <b>2x no botão de pular</b>: voar · botões: pular,
+                        agachar
                         (liga/desliga), comandos, voltar no tempo, inventário (ao lado da barra) e pausa
                     </p>
                     <p>Dica: faça uma barragem com água, depois quebre um bloco dela.</p>
@@ -1877,17 +1930,18 @@
         const BUCKET = 30; // item (nao e bloco): balde em duas variantes no criativo — vazio (tile 14) e cheio de agua (tile 15)
         // Biomas/clima: fonte unica (mkBiome, mais abaixo). ICE = gelo (35), SNOWL = neve fina (36, camada de 1/8 de bloco)
         const BIO = mkBiome(), BIOMES = BIO.BIOMES, ICE = BIO.ICE, SNOWL = BIO.SNOWL;
+        const SWAMP_B = BIOMES.findIndex(b => b.name === 'Pântano'); // indice do bioma pantano (7)
         // Iluminacao estilo Minecraft: cada celula guarda luz do ceu (4 bits altos) e luz de bloco (4 bits baixos), de 0 a 15.
         // OP = quanto o bloco atenua a luz (15 = opaco). EM = luz emitida pelo bloco.
-        const OP = new Uint8Array(72).fill(15), EM = new Uint8Array(72);
+        const OP = new Uint8Array(76).fill(15), EM = new Uint8Array(76);
         OP[0] = 0; OP[6] = 1; OP[9] = 0; for (let i = 10; i < 24; i++) OP[i] = 0;
         for (let i = 10; i < 15; i++) EM[i] = 11; // 10 = tocha em pe, 11-14 = tocha de parede (nivel 11: luz suave, alcance menor que o 14 padrao)
         OP[26] = OP[28] = 1; EM[34] = 15; // folhas de bétula/abeto, lâmpada
         EM[52] = 7; EM[53] = 11; // magma e cristal brilham
-        OP[ICE] = 1; OP[SNOWL] = 0; // gelo deixa passar um pouco de luz; neve fina nao bloqueia luz
-        const LEAF = new Uint8Array(72); LEAF[6] = LEAF[26] = LEAF[28] = 1;
-        // Plantas do chao (57-68): transparentes (luz passa), sem colisao e substituiveis
-        const PLANT0 = 57, PLANT1 = 68;
+        OP[ICE] = 1; OP[SNOWL] = 0; OP[73] = 1; // gelo deixa passar um pouco de luz; neve fina nao bloqueia luz; folha de salgueiro idem carvalho
+        const LEAF = new Uint8Array(76); LEAF[6] = LEAF[26] = LEAF[28] = 1; LEAF[73] = 1; // 73 = folha de salgueiro (pantano)
+        // Plantas do chao (57-72): transparentes (luz passa), sem colisao e substituiveis (72 = alga, vive dentro da agua)
+        const PLANT0 = 57, PLANT1 = 72;
         for (let i = PLANT0; i <= PLANT1; i++) OP[i] = 0;
         // tochas de parede (ids 11-14): deslocamento ate o bloco de apoio
         const WDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -1953,12 +2007,21 @@
                 h = Math.max(3, Math.min(CH - 12, h));
                 gH = h;
                 const t = fbm(wx * 0.0022 + 300, wz * 0.0022 - 300, 2), w = fbm(wx * 0.003 - 700, wz * 0.003 + 200, 2);
+                const sw = fbm(wx * 0.0016 + 900, wz * 0.0016 - 450, 2); // mascara do pantano (manchas grandes, raras)
                 if (h >= 70) gB = 6;
                 else if (t < -0.1) gB = w > 0 ? 3 : 4;
                 else if (t > 0.12) gB = w < 0.12 ? 5 : 0;
+                else if (sw > 0.22 && h < SEA + 9) {
+                    // pantano: terreno baixo afogado — a formula de altura original e "achatarada"
+                    // perto do nivel do mar e um ruido de depressoes abre lagoas rasa (a agua
+                    // do chunk nasce sozinha nas colunas abaixo do mar)
+                    gB = 7;
+                    const dip = fbm(wx * 0.02 + 55, wz * 0.02 - 77, 2);
+                    gH = Math.max(SEA - 3, Math.min(SEA + 5, SEA + 1 + Math.round((h - SEA) * 0.3 + dip * 2.2)));
+                }
                 else gB = w > 0.12 ? 2 : (w > -0.02 ? 1 : 0);
             }
-            // indice = id do bioma (0..6). Para mudar o clima de um bioma, e so mudar o cold daqui.
+            // indice = id do bioma (0..7). Para mudar o clima de um bioma, e so mudar o cold daqui.
             const BIOMES = [
                 { name: 'Planície', cold: false },
                 { name: 'Floresta', cold: false },
@@ -1966,7 +2029,8 @@
                 { name: 'Taiga', cold: true },
                 { name: 'Tundra', cold: true },
                 { name: 'Deserto', cold: false },
-                { name: 'Montanha', cold: true }
+                { name: 'Montanha', cold: true },
+                { name: 'Pântano', cold: false }
             ];
             // Cobertura fria de um chunk: congela a agua exposta e poe neve fina por cima do bloco mais alto de cada coluna
             // (copas, troncos, pedra, areia, construcoes...). Idempotente: pode rodar de novo num chunk ja decorado.
@@ -1988,7 +2052,7 @@
             const BM = mkBiome(), hash = BM.hash, init = BM.init;
             let gH = 0, gB = 0;
             function col(wx, wz) { BM.col(wx, wz); gH = BM.h; gB = BM.b; }
-            const DENS = [0.004, 0.022, 0.020, 0.020, 0.003, 0.0035, 0.004];
+            const DENS = [0.004, 0.022, 0.020, 0.020, 0.003, 0.0035, 0.004, 0.010]; // 7 = pantano: mato com clareiras alagadas
             const D4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
             const D8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 
@@ -2208,7 +2272,7 @@
                 for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) {
                     const wx = cx * 16 + x, wz = cz * 16 + z;
                     col(wx, wz);
-                    const h = gH, b = gB, beach = h <= SEA + 1;
+                    const h = gH, b = gB, beach = h <= SEA + 1 && b !== 7; // pantano nunca e praia: a borda e lama
                     bio[(z << 4) | x] = b;
                     const ds = 44 + Math.round(P2(wx * 0.06 + 400, wz * 0.06 - 200) * 4); // limite da ardosia (onda suave entre y 40 e 48)
                     for (let y = 0; y <= h; y++) {
@@ -2218,6 +2282,7 @@
                             else if (b === 5) id = y >= h - 3 ? 4 : (y >= h - 7 ? 31 : 3);
                             else if (b === 6) id = (y === h && h >= 76) ? 32 : 3;
                             else if (b === 3 || b === 4) id = y === h ? 24 : (y >= h - 3 ? 2 : 3);
+                            else if (b === 7) id = y === h ? 30 : (y >= h - 3 ? 2 : 3); // pantano: lama sobre terra
                             else id = y === h ? 1 : (y >= h - 3 ? 2 : 3);
                         }
                         if (id === 3 && y <= ds) id = 44; // ardosia: rocha profunda
@@ -2293,6 +2358,26 @@
                         blob(wx + 2 * dd[0], wz + 2 * dd[1], top - 2, 1.4, 1.3, 1.0, 26, 0);
                     }
                 }
+                function salgueiro(wx, wz, h, a, b) { // salgueiro do pantano: copa larga e tombante (folhas 73), raizes na lama/agua
+                    const top = h + 4 + (a * 3 | 0);
+                    // raizes chupadeiras: 4 dedos de tronco mergulhando na lama ou na agua rasa
+                    for (let i = 0; i < 4; i++) {
+                        const dd = D8[(i * 2 + ((hash(wx + 1, wz + 1) * 2) | 0)) & 7];
+                        const g = groundAt(wx + dd[0], wz + dd[1]);
+                        for (let y = g; y <= h + 1; y++) put(wx + dd[0], y, wz + dd[1], 5, 1);
+                    }
+                    for (let y = h + 1; y <= top; y++) put(wx, y, wz, 5, 1);
+                    blob(wx, wz, top, 3.1 + b * 1.1, 1.7, 2.7, 73, 0); // copa larga que desce mais do que sobe
+                    // saia pendurada: fios de folhas caindo da borda da copa (marca do salgueiro)
+                    const n = 6 + ((hash(wx + 3, wz - 5) * 4) | 0);
+                    for (let i2 = 0; i2 < n; i2++) {
+                        const ang = i2 * 6.28318530718 / n + hash(wx - 9, wz + 3) * 0.6;
+                        const ex = Math.round(Math.cos(ang) * 3), ez = Math.round(Math.sin(ang) * 3);
+                        const fy = top - ((hash(wx + ex * 7, wz + ez * 11) * 2.6) | 0);
+                        const len = 1 + ((hash(wx - ex * 3, wz + ez * 5) * 2.4) | 0);
+                        for (let y = fy; y > fy - len; y--) put(wx + ex, y, wz + ez, 73, false);
+                    }
+                }
                 const TIER = [0, 1, 2, 1, 2, 3, 2, 3, 3, 3, 3, 3];
                 function spruce(wx, wz, h, a, b) { // cone em camadas com bordas irregulares e ponta fina
                     const top = h + 7 + (a * 5 | 0), mr = 2 + (b * 2 | 0);
@@ -2317,13 +2402,15 @@
                     for (let dz = -2; dz <= 2 && ok; dz++) for (let dx = -2; dx <= 2; dx++) if ((dx || dz) && hash(wx + dx, wz + dz) < r) { ok = false; break; }
                     if (!ok) continue;
                     col(wx, wz); const h = gH, b = gB;
-                    if (r >= DENS[b] || h <= SEA + 1 || (b === 6 && h >= 76)) continue;
+                    if (r >= DENS[b] || (h <= SEA + 1 && b !== 7) || (b === 6 && h >= 76)) continue;
+                    if (b === 7 && (h < SEA - 2 || h > SEA + 4)) continue; // pantano: arvore so na lama e na agua bem rasa
                     if (treeBlocked(wx, wz)) continue;
                     const a = hash(wx + 11, wz + 5), s = hash(wx + 31, wz - 17), c = hash(wx - 7, wz + 23), pk = hash(wx + 3, wz + 9);
                     if (b === 5) { const ch = 1 + (a * 3 | 0); for (let y = 1; y <= ch; y++) put(wx, h + y, wz, 29, 1); }
                     else if (b === 3 || b === 4 || b === 6) spruce(wx, wz, h, a, s);
                     else if (b === 2 && pk < 0.85) birch(wx, wz, h, a, s);
                     else if (b === 1 && pk < 0.35) birch(wx, wz, h, a, s);
+                    else if (b === 7) salgueiro(wx, wz, h, a, s); // pantano: so salgueiro, arvore que nao se ve em nenhum outro bioma
                     else oak(wx, wz, h, a, s, c);
                 }
                 /* plantas do chao: grama/flores/cogumelos nos biomas quentes e plantas secas no deserto.
@@ -2334,11 +2421,29 @@
                     if (b === 3 || b === 4 || b === 6) continue; // taiga, tundra e montanha: sem plantas
                     let y = CH - 1; while (y > 2 && d[(y << 8) | i] === 0) y--;
                     const sb = d[(y << 8) | i];
-                    if (y <= SEA + 1 || y + 1 >= CH) continue; // praia, submerso ou sem cabeca
                     const r1 = hash(wx, wz), r2 = hash(wx + 101, wz - 57), r3 = hash(wx - 31, wz + 77);
+                    if (b !== 7 && (y <= SEA + 1 || y + 1 >= CH)) continue; // praia, submerso ou sem cabeca (o pantano trata a agua la embaixo)
                     let id = 0;
                     if (b === 5) { // deserto: plantas secas na areia
                         if (sb === 4) { if (r2 < 0.010) id = 68; else if (r2 < 0.034) id = 67; }
+                    } else if (b === 7) { // pantano: agua viva na superficie e mato na lama
+                        if (sb >= 16 && sb < 24) { // coluna alagada: a celula do topo (nivel do mar) recebe o aquatico
+                            if (y === SEA) {
+                                const rr = hash(wx - 3, wz + 11);
+                                if (rr < 0.055) d[(y << 8) | i] = 69;          // junco brotando da agua
+                                else if (rr < 0.095) d[(y << 8) | i] = 70;      // vitoria-regia na superficie
+                            }
+                            // alga no fundo das lagoas fundas (profundidade 2+): o rebolico embaixo
+                            let yf = y; while (yf > 2) { const bb = d[((yf - 1) << 8) | i]; if (bb >= 16 && bb < 24) yf--; else break; }
+                            if (y - yf >= 1 && d[((yf - 1) << 8) | i] === 30) {
+                                const ra = hash(wx + 17, wz - 41);
+                                if (ra > 0.40 && ra < 0.52) d[(yf << 8) | i] = 72; // ocupa a celula de agua encostada no lodo
+                            }
+                            continue;
+                        }
+                        if (y < SEA || y + 1 >= CH || sb !== 30) continue;      // so planta em lama (mesmo na beira)
+                        if (r2 < 0.008) id = 61; else if (r2 < 0.015) id = 62;  // cogumelos curtem a umidade
+                        else if (r1 < 0.30) id = 71;                           // capim-do-pantano turvo
                     } else if (sb === 1 || sb === 2) { // so em cima de grama/terra
                         const dens = b === 1 ? 1.5 : 1.0; // floresta mais recheada
                         if (r3 < 0.006 * dens) id = r3 < 0.003 * dens ? 61 : 62; // cogumelos (raros)
@@ -2382,7 +2487,7 @@
 
         /* ---------- Texturas pintadas so com codigo ---------- */
         function rnd(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-        const atlas = document.createElement('canvas'); const NT = 99; atlas.width = NT * 16; atlas.height = 16; // 88 usados; 88-92 = galinha; 93-98 = Steve (rosto, roupa, cabelo, pele)
+        const atlas = document.createElement('canvas'); const NT = 110; atlas.width = NT * 16; atlas.height = 16; // 88 usados; 88-92 = galinha; 93-98 = Steve (rosto, roupa, cabelo, pele); 99-100 = vagalume (corpo, abdome luminoso); 101 = lama; 103-105 = pantano (junco, vitoria-regia, capim-do-pantano); 106-109 = pantano 2 (alga, folha de salgueiro, sapo pele, sapo olho)
         const actx2 = atlas.getContext('2d');
         function tile(i, fn) {
             const r = rnd(i * 977 + 13);
@@ -2423,7 +2528,7 @@
         const bucketPx = (x, y, full) => {
             const T = [0, 0, 0, 0];
             // paleta de ferro Minecraft
-            const O  = [55, 55, 55];       // contorno
+            const O = [55, 55, 55];       // contorno
             const VD = [78, 78, 78];       // muito escuro
             const DK = [106, 106, 106];    // escuro
             const MD = [139, 139, 139];    // medio
@@ -2471,10 +2576,10 @@
 
             // corpo (y 6-14)
             let L, R;
-            if (y <= 7)       { L = 3; R = 12; }
+            if (y <= 7) { L = 3; R = 12; }
             else if (y <= 10) { L = 4; R = 11; }
             else if (y <= 13) { L = 5; R = 10; }
-            else              { L = 5; R = 10; } // y=14 base
+            else { L = 5; R = 10; } // y=14 base
             if (x < L || x > R) return T;
             if (x === L || x === R) return O;
 
@@ -2490,14 +2595,14 @@
                 // gradiente de ferro: claro na esquerda, escuro na direita
                 const w = R - L - 1, p = x - L - 1, f = p / Math.max(w - 1, 1);
                 if (f < 0.25) return LT;
-                if (f < 0.5)  return LG;
+                if (f < 0.5) return LG;
                 if (f < 0.75) return MD;
                 return DK;
             }
 
             // interior cheio de agua
             if (y === 6) { return ((x + y) % 3 === 0) ? [100, 165, 240] : [55, 120, 215]; }
-            if (y <= 9)  { const n = ((x * 3 + y * 7) % 5 === 0) ? 12 : 0; return [40 + n, 92 + n, 200]; }
+            if (y <= 9) { const n = ((x * 3 + y * 7) % 5 === 0) ? 12 : 0; return [40 + n, 92 + n, 200]; }
             if (y <= 11) { const n = ((x + y) % 4 === 0) ? 8 : 0; return [30 + n, 72 + n, 185]; }
             return [25, 58, 168];
         };
@@ -2832,11 +2937,13 @@
             return [0, 0, 0, 0];
         });
         const TILES = { 1: [0, 2, 1], 2: [2, 2, 2], 3: [3, 3, 3], 4: [4, 4, 4], 5: [6, 6, 5], 6: [7, 7, 7], 7: [8, 8, 8], 8: [10, 10, 9], 9: [11, 11, 11] };
+        TILES[30] = [101, 101, 101]; // lama do pantano
+        TILES[73] = [107, 107, 107]; // folha de salgueiro (copa do salgueiro do pantano)
         for (let k = 0; k < 7; k++) { TILES[37 + k] = [31 + k, 31 + k, 31 + k]; TILES[45 + k] = [39 + k, 39 + k, 39 + k]; }
         Object.assign(TILES, { 44: [38, 38, 38], 52: [46, 46, 46], 53: [47, 47, 47], 54: [48, 48, 48], 55: [49, 49, 49], 56: [50, 50, 50] });
         Object.assign(TILES, { 24: [16, 2, 17], 25: [19, 19, 18], 26: [20, 20, 20], 27: [22, 22, 21], 28: [23, 23, 23], 29: [25, 25, 24], 31: [26, 26, 26], 32: [16, 16, 16], 33: [27, 27, 27], 34: [28, 28, 28], 35: [29, 29, 29], 36: [16, 16, 16] });
-        // Plantas (57-68): todas com a mesma textura (quadro cruzado)
-        const PLANT_TILES = { 57: 76, 58: 77, 59: 78, 60: 79, 61: 80, 62: 81, 63: 82, 64: 83, 65: 84, 66: 85, 67: 86, 68: 87 };
+        // Plantas (57-72): todas com a mesma textura (quadro cruzado) — 70 (vitoria-regia) rende prato horizontal
+        const PLANT_TILES = { 57: 76, 58: 77, 59: 78, 60: 79, 61: 80, 62: 81, 63: 82, 64: 83, 65: 84, 66: 85, 67: 86, 68: 87, 69: 103, 70: 104, 71: 105, 72: 106 };
         for (const k in PLANT_TILES) TILES[k] = [PLANT_TILES[k], PLANT_TILES[k], PLANT_TILES[k]];
         const TILES_W = [12, 12, 12];
         { // texturas da galinha (tiles 88-92): penas, crista/barbela, bico e patas, olho, asas
@@ -2909,6 +3016,75 @@
                 const n = nz(r, 8);
                 return [218 + n, 166 + n, 134 + n];
             });
+            // Texturas do pantano (tiles 101 e 103-105)
+            tile(101, (x, y, r) => { // lama: marrom-oliva encharcado, com poca escura e cascalho miudo
+                const n = nz(r, 16), wet = ((x * x * 3 + y * 7 + x * y * 2) % 9) / 9, pebble = (x * 7 + y * 11) % 13 === 0 ? 14 : 0;
+                const g = 6 + wet * 8;
+                return [74 + n - wet * 10 + pebble, 64 + n - wet * 6 + g + pebble, 44 + n + g * 0.5];
+            });
+            tile(103, (x, y, r) => { // junco: hastes verdes finas, uma delas com espiga marrom no topo
+                const n = nz(r, 12);
+                if (x >= 7 && x <= 8 && y >= 2 && y <= 6) return [96 + n, 62 + n, 30 + n]; // espiga do junco
+                const stalk = (x === 3 || x === 4 || x === 8 || x === 9 || x === 12) && y >= 1;
+                if (stalk) return ((x + y * 3) % 7 === 0) ? [56 + n, 92 + n, 40 + n] : [74 + n, 122 + n, 52 + n];
+                return [0, 0, 0, 0];
+            });
+            tile(104, (x, y, r) => { // vitoria-regia: prato redondo com veias radiais e o recorte em cunha
+                const dx = x - 7.5, dy = y - 7.5, d = Math.hypot(dx, dy);
+                if (d > 7.2) return [0, 0, 0, 0];
+                const ang = Math.atan2(dy, dx); // cunha aberta para cima-direita (recorte classico do nenufar)
+                if (ang > -1.15 && ang < -0.75 && d > 1.2) return [0, 0, 0, 0];
+                const n = nz(r, 10), vein = (Math.abs(((ang / Math.PI * 4 + 8) % 1) - 0.5) < 0.08 && d > 1.5) ? -16 : 0;
+                const edge = d > 6.4 ? -18 : 0, rim = d > 5.6 ? 8 : 0;
+                return [44 + n + vein + edge + rim, 104 + n + vein * 1.4 + edge * 1.6 + rim, 38 + n + vein + edge];
+            });
+            tile(105, (x, y, r) => { // capim-do-pantano: tufos turvos, verdes morticos com pontas caidas
+                const n = nz(r, 12);
+                const blade = (x + ((y * 5) % 3)) % 4 < 2 && y > 1 && ((x * 13 + y * 7) % 11 !== 0);
+                if (!blade) return [0, 0, 0, 0];
+                const droop = y < 5 ? -18 : 0; // pontas amareladas por cima
+                return [52 + n + droop, 88 + n + droop, 44 + n + droop * 0.6];
+            });
+            // Texturas do vagalume (tiles 99-100)
+            tile(99, (x, y, r) => { // corpo e asas: marrom-escuro com fiadas (asa fica mais clara pelo sombreamento da face)
+                const n = nz(r, 14), row = (y % 3 === 0 ? -12 : 0) + ((x * 5 + y * 3) % 9 === 0 ? 9 : 0);
+                return [64 + n + row, 52 + n + row, 34 + n + row];
+            });
+            tile(100, (x, y) => { // abdome luminoso: amarelo-esverdeado com centro quente (a "lanterna" do vagalume)
+                const d = Math.hypot(x - 7.5, y - 7.5) / 8;
+                const n = nz(rnd(100 * 977 + 13), 10);
+                const core = Math.max(0, 1 - d * d * 1.35); // brilho radial
+                return [96 + core * 170 + n, 190 + core * 65 + n, 48 + core * 70 + n];
+            });
+            // Texturas do pantano parte 2: alga, folha de salgueiro e o sapo (tiles 106-109)
+            tile(106, (x, y, r) => { // alga: fitas verdes escuras afogadas, baloico de lagoa
+                const n = nz(r, 12);
+                const fita = (x + ((y * 3) % 5)) % 4 < 2 && y > 0 && ((x * 11 + y * 5) % 13 !== 0);
+                if (!fita) return [0, 0, 0, 0];
+                const esc = y > 9 ? -14 : 0; // mais fundo: mais escuro
+                return [30 + n + esc, 88 + n + esc, 52 + n + esc * 0.7];
+            });
+            tile(107, (x, y, r) => { // folha de salgueiro: verde-cinza morteco, fininhas e caidas
+                const n = nz(r, 14);
+                const folha = ((x * 7 + y * 13) % 9 !== 0);
+                if (!folha) return [0, 0, 0, 0];
+                const fiada = (y % 3 === 0 ? -14 : 0) + ((x * 3 + y) % 6 === 0 ? 7 : 0);
+                const amarelo = y < 4 ? -10 : 0; // pontas mais mortecidas
+                return [72 + n + fiada + amarelo, 96 + n + fiada + amarelo * 1.2, 58 + n + fiada];
+            });
+            tile(108, (x, y, r) => { // sapo: pele verde-oliva com verrugas e listras nas costas
+                const n = nz(r, 16);
+                const wart = ((x * 5 + y * 7) % 11 === 0) ? -20 : 0;
+                const listra = (x > 4 && x < 11 && (x % 2 === 0)) ? 8 : 0;
+                return [80 + n + wart + listra, 112 + n + wart + listra * 0.8, 52 + n + wart];
+            });
+            tile(109, (x, y, r) => { // olho do sapo: verde-claro com pupila preta grande (perssegue a vista)
+                const d = Math.hypot(x - 7.5, y - 7.5);
+                const n = nz(r, 10);
+                if (d < 3.1) return [14 + n * 0.3, 16 + n * 0.3, 14 + n * 0.3]; // pupila
+                if (d > 7.4) return [0, 0, 0, 0];
+                return [108 + n, 146 + n, 66 + n]; // iris verde-clara
+            });
         }
         const atlasURL = atlas.toDataURL();
         { // fundo do menu enquanto o mundo carrega: textura de terra do jogo em mosaico, escurecida (estilo Minecraft)
@@ -2931,7 +3107,9 @@
         [57, 76, 'Grama'], [58, 77, 'Grama alta', 1], [59, 78, 'Grama comprida', 1], [60, 79, 'Samambaia'], // grama cresce apos plantar; 58/59 ocultos (4o elemento = 1)
         [63, 82, 'Papoula'], [64, 83, 'Dente-de-leão'], [65, 84, 'Flor azul'], [66, 85, 'Margarida'],
         [61, 80, 'Cogumelo vermelho'], [62, 81, 'Cogumelo marrom'],
-        [67, 86, 'Capim seco'], [68, 87, 'Arbusto seco']];
+        [30, 101, 'Lama'], [67, 86, 'Capim seco'], [68, 87, 'Arbusto seco'],
+        [69, 103, 'Junco'], [70, 104, 'Vitória-régia'], [71, 105, 'Capim-do-pântano'],
+        [72, 106, 'Alga'], [73, 107, 'Folhas de salgueiro']];
         { // blocos das cavernas, logo depois dos tijolos de pedra
             const on = ['carvão', 'cobre', 'ferro', 'ouro', 'redstone', 'lápis-lazúli', 'diamante'], ex = [[44, 38, 'Ardósia']];
             on.forEach((n, k) => ex.push([37 + k, 31 + k, 'Minério de ' + n]));
@@ -3004,7 +3182,7 @@
             ['Todos', [3, 3]], ['Blocos', [33, 27]], ['Naturais', [1, 0]], ['Minérios', [43, 37]],
             ['Madeira', [7, 8]], ['Plantas', [63, 82]], ['Itens', [TORCH, 13]]];
         const inSet = (id, a) => a.indexOf(id) >= 0;
-        const SEC_NAT = [1, 2, 4, 24, 32, SNOWL, ICE, 29, 31], SEC_MIN = [44, 54, 55, 52, 53],
+        const SEC_NAT = [1, 2, 4, 24, 32, SNOWL, ICE, 29, 31, 30], SEC_MIN = [44, 54, 55, 52, 53],
             SEC_WOOD = [5, 6, 25, 26, 27, 28, 7], SEC_ITEM = [TORCH, BUCKET];
         function secOf(c) {
             const id = c[0];
@@ -3396,14 +3574,14 @@ vec3 skyCol(vec3 d, vec3 o, bool lite){
 `;
         /* ---------- Agua: shader proprio (ondas, fluxo, fresnel, brilho do sol) ---------- */
         const wprog = mkProg(`#version 300 es
-layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt; layout(location=3) in vec4 fa;
+layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) in vec3 lt; layout(location=3) in vec4 fa; layout(location=4) in float sw;
 uniform mat4 mvp; uniform vec3 cam; uniform vec3 off; uniform float tm;
 uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
-out vec2 vUv; out vec3 vLt; out vec3 vW; out vec4 vFa; out float vD; out vec3 vFog;
+out vec2 vUv; out vec3 vLt; out vec3 vW; out vec4 vFa; out float vD; out vec3 vFog; out float vSw;
 void main(){
   vec3 w=p+off;
   w.y+=fa.w*0.018*(sin(w.x*2.1+tm*1.7)+sin(w.z*1.7-tm*1.4)+sin((w.x-w.z)*1.1+tm*1.1));
-  vUv=uv; vLt=lt; vW=w; vFa=fa; vD=length(w-cam);
+  vUv=uv; vLt=lt; vW=w; vFa=fa; vSw=sw; vD=length(w-cam);
   gl_Position=mvp*vec4(w,1.0);
   {
     vec3 dv=(w-cam)/max(vD,0.001);
@@ -3415,7 +3593,7 @@ void main(){
 precision highp float;
 ${SKYGLSL}
 uniform sampler2D tex; uniform float light; uniform float fl; uniform float fogN; uniform float fogF; uniform vec4 hl; uniform float hf;
-in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; in vec3 vFog; out vec4 o;
+in vec2 vUv; in vec3 vLt; in vec3 vW; in vec4 vFa; in float vD; in vec3 vFog; in float vSw; out vec4 o;
 void main(){
   vec2 u1=vUv*0.23+vec2(tm*0.011,tm*0.007)-vFa.xy*tm*0.16;
   vec2 u2=vUv*0.41+vec2(-tm*0.009,tm*0.013)-vFa.xy*tm*0.27;
@@ -3438,12 +3616,16 @@ void main(){
   if(hl.w>0.0){ float lv=hl.w-distance(hl.xyz,vW); if(lv>0.0) bB=max(bB,pow(0.8,15.0-lv)*hf*0.7); }
   vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.03));
   vec3 base=mix(vec3(0.15,0.43,0.62),vec3(0.04,0.17,0.38),vFa.z)*(0.82+0.36*h);
+  // pantano: agua barrenta, verde-escura e mais opaca; com menos reflexo e quase sem espuma
+  base=mix(base,vec3(0.05,0.13,0.08)*(0.8+0.4*h),vSw);
   vec3 col=base*vLt.x*lc;
-  col=mix(col,refl*max(vLt.y,0.1),fr);
+  col=mix(col,refl*max(vLt.y,0.1),fr*(1.0-0.35*vSw));
   col+=vec3(1.0,0.95,0.8)*spec*vLt.y+vec3(0.6,0.75,1.0)*mspec*vLt.y;
   float foam=smoothstep(0.74,0.96,h)*step(0.05,length(vFa.xy))*(1.0-vFa.z*0.6);
+  foam*=1.0-0.85*vSw;
   col=mix(col,vec3(0.86,0.94,1.0)*max(max(lc.r,lc.g),lc.b)*vLt.x,foam*0.45);
   float a=clamp(mix(0.5,0.86,vFa.z)+fr*0.18+foam*0.25,0.4,0.95);
+  a=min(1.0,a+vSw*0.14);
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
   o=vec4(mix(col,vFog,f),a);
 }`.replace('BUMP', '1.6'));
@@ -3541,7 +3723,7 @@ void main(){
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-        function makeMesh(arr, fl = 8) { // fl = floats por vertice (8 = bloco; 12 = agua, com fluxo/profundidade/onda)
+        function makeMesh(arr, fl = 8) { // fl = floats por vertice (8 = bloco; 12 = agua; 13 = agua pantano, com fator de barro)
             if (!arr.length) return null;
             const st = fl * 4;
             const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
@@ -3550,7 +3732,8 @@ void main(){
             gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, st, 0);
             gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, st, 12);
             gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, st, 20);
-            if (fl === 12) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, st, 32); }
+            if (fl >= 12) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, st, 32); }
+            if (fl === 13) { gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 1, gl.FLOAT, false, st, 48); } // sw: 1 = agua de pantano (barrenta)
             gl.bindVertexArray(null);
             return { vao, vbo, count: arr.length / fl };
         }
@@ -3692,6 +3875,16 @@ void main(){
         const PLANT_BOX = [0.12, 0, 0.12, 0.88, 1, 0.88]; // caixa de mira para acertar/quebrar
         function pushPlant(arr, b, ox, oy, oz, lv) {
             const t = TILES[b][2], u0 = t / NT, u1 = (t + 1) / NT;
+            if (b === 70) { // vitoria-regia: prato horizontal quase colado na superficie da agua
+                const sk = (lv >> 4) / 15, bk = (lv & 15) / 15;
+                // desloca um pouquinho por posicao (mesma semente do quadro cruzado) para nao repetir
+                const hsh2 = ((ox * 73856093) ^ (oz * 19349663)) >>> 0;
+                const jx = (((hsh2 & 15) / 15) - 0.5) * 0.3, jz = ((((hsh2 >> 4) & 15) / 15) - 0.5) * 0.3;
+                const m = 0.94, uv2 = [[u0, 1], [u0, 0], [u1, 0], [u1, 1]];
+                const V2 = [[0, m], [m, m], [m, 0], [0, 0]]; // prato cobre quase o bloco todo
+                for (const i of ORDER) arr.push(ox + V2[i][0] + jx, oy + 0.92, oz + V2[i][1] + jz, uv2[i][0], uv2[i][1], 0.95, sk, bk);
+                return;
+            }
             const hsh = ((ox * 73856093) ^ (oz * 19349663)) >>> 0;
             const cx = ox + 0.5 + (((hsh & 15) / 15) - 0.5) * 0.4, cz = oz + 0.5 + ((((hsh >> 4) & 15) / 15) - 0.5) * 0.4;
             const W = 0.36, sk = (lv >> 4) / 15, bk = (lv & 15) / 15;
@@ -3766,7 +3959,7 @@ void main(){
                 return wt ? tot / wt : 0;
             };
             // vertice de agua (12 floats): pos(3) uv-mundo(2) [sombra, ceu, bloco] [fluxo x, fluxo z, profundidade, flag de onda]
-            const pushWater = (x, y, z, b) => {
+            const pushWater = (x, y, z, b, sw) => {
                 const faces = [];
                 for (let f = 0; f < 6; f++) { const F = FACES[f]; if (transp(nb(x + F.n[0], y + F.n[1], z + F.n[2]))) faces.push(f); }
                 if (!faces.length) return;
@@ -3790,8 +3983,8 @@ void main(){
                     const F = FACES[f], lv = lt(x + F.n[0], y + F.n[1], z + F.n[2]), sk = (lv >> 4) / 15, bk = (lv & 15) / 15;
                     for (const q of ORDER) {
                         const v = F.v[q], wx = X0 + x + v[0], wy = y + (v[1] ? H[v[0] + 2 * v[2]] : 0), wz = Z0 + z + v[2];
-                        if (f < 2) w.push(wx, wy, wz, wx, wz, F.s, sk, bk, fx, fz, dpt, v[1] && !up ? 1 : 0);
-                        else w.push(wx, wy, wz, F.n[0] ? wz : wx, wy, F.s, sk, bk, 0, sf, dpt, v[1] && !up ? 1 : 0);
+                        if (f < 2) w.push(wx, wy, wz, wx, wz, F.s, sk, bk, fx, fz, dpt, v[1] && !up ? 1 : 0, sw);
+                        else w.push(wx, wy, wz, F.n[0] ? wz : wx, wy, F.s, sk, bk, 0, sf, dpt, v[1] && !up ? 1 : 0, sw);
                     }
                 }
             };
@@ -3802,7 +3995,7 @@ void main(){
                 const b = d[idx(x, y, z)]; if (!b) continue;
                 if (isTorch(b)) { pushTorch(o, X0 + x, y, Z0 + z, (L[idx(x, y, z)] >> 4) / 15, b); continue; }
                 if (isPlant(b)) { pushPlant(o, b, X0 + x, y, Z0 + z, L[idx(x, y, z)]); continue; } // quadro cruzado com luz propria
-                if (isWater(b)) { pushWater(x, y, z, b); continue; }
+                if (isWater(b)) { pushWater(x, y, z, b, ch.bio && ch.bio[(z << 4) | x] === SWAMP_B ? 1 : 0); continue; }
                 const tl = TILES[b], isL = LEAF[b] === 1, fg = isL ? 4 : (y < lTop[(z << 4) | x] ? 2 : 0);
                 for (let f = 0; f < 6; f++) {
                     const F = FACES[f], n = nb(x + F.n[0], y + F.n[1], z + F.n[2]);
@@ -3823,7 +4016,7 @@ void main(){
             freeMesh(ch.mo); freeMesh(ch.mw);
             ch.drops = drops;
             ch.mo = makeMesh(new Float32Array(o));
-            ch.mw = makeMesh(new Float32Array(w), 12);
+            ch.mw = makeMesh(new Float32Array(w), 13);
             ch.dirty = false;
         }
         const cubeArr = []; FACES.forEach(F => pushFace(cubeArr, F, 0, 0, 0, [10, 10, 9][F.k], 1));
@@ -3981,9 +4174,11 @@ void main(){
             w.postMessage({ cx, cz, seed: cur.seed });
         }
         function addChunk(cx, cz, data, modified, bio) {
-            chunks.set(ckey(cx, cz), { cx, cz, data, bio: bio || chunkBio(cx, cz), dirty: true, modified, sd: false, mo: null, mw: null, light: new Uint8Array(CS * CS * CH), lit: false });
+            const ch = { cx, cz, data, bio: bio || chunkBio(cx, cz), dirty: true, modified, sd: false, mo: null, mw: null, light: new Uint8Array(CS * CS * CH), lit: false };
+            chunks.set(ckey(cx, cz), ch);
             _lcx = 1e9;
             dirtyAt(cx - 1, cz); dirtyAt(cx + 1, cz); dirtyAt(cx, cz - 1); dirtyAt(cx, cz + 1);
+            genChunkDecors(ch); // fundo do mar decorado junto com o terreno: nasce assim que o chunk existe
         }
         const _want = [];
         function streamChunks() {
@@ -4000,9 +4195,9 @@ void main(){
                     freeMesh(ch.mo); freeMesh(ch.mw);
                     if (ch.decors) {
                         for (let i = 0; i < ch.decors.length; i++) {
-                            const d = ch.decors[i];
-                            const idx = d.sp.list.indexOf(d.item);
-                            if (idx >= 0) d.sp.list.splice(idx, 1);
+                            // marca como morta: a limpeza acontece no decorTick (splice em
+                            // lista grande a cada chunk descarregado dava engasgo ao nadar)
+                            ch.decors[i].item.dead = true;
                         }
                         ch.decors.length = 0;
                         ch.decorGen = false;
@@ -4065,15 +4260,18 @@ void main(){
             const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
             let ix = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + joy.x, iz = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) + joy.y;
             const l = Math.max(1, Math.hypot(ix, iz)); ix /= l; iz /= l;
-            const ctrl = keys.ControlLeft || keys.ControlRight, shift = keys.ShiftLeft || keys.ShiftRight;
-            // agachar: Shift (nao voando nem nadando). So levanta se houver espaco acima da cabeca.
+            // acoes lidas pelos binds configurados (nao por codigo fixo: trocar a tecla
+            // nas configuracoes tem que valer na pratica, nao so no rotulo)
+            const kDown = a => !!keys[binds[a]];
+            const runHeld = kDown('sprint'), shift = kDown('sneak');
+            // agachar: tecla de agachar (padrao Ctrl; nao voando nem nadando). So levanta se houver espaco acima da cabeca.
             let wantSneak = shift && !P.fly && !inW;
             if (!wantSneak && P.sneak) { P.sneak = false; if (hits(P.x, P.y, P.z)) wantSneak = true; }
             P.sneak = wantSneak;
-            // correr: Ctrl (ou toque duplo em W) com o jogador indo para frente; joystick no celular
-            const run = !P.sneak && (((ctrl || sprintLatch) && iz > 0.1) || joy.mag > 0);
+            // correr: tecla de correr (padrao Shift; ou toque duplo em W) com o jogador indo para frente; joystick no celular
+            const run = !P.sneak && (((runHeld || sprintLatch) && iz > 0.1) || joy.mag > 0);
             P.sprint = run && !P.fly;
-            const flySprint = P.fly && (ctrl || sprintLatch) && iz > 0.1; // voo rapido: Ctrl (ou toque duplo em W) indo para frente
+            const flySprint = P.fly && (runHeld || sprintLatch) && iz > 0.1; // voo rapido: tecla de correr (ou toque duplo em W) indo para frente
             let speed = P.fly ? (flySprint ? 22 : (joy.mag > 0 ? 16 : 11)) : (P.sneak ? 1.8 : (run ? 7 : 4.5)); // voo como no Minecraft criativo: ~11 b/s, ~22 b/s correndo
             if (inW && !P.fly) speed *= 0.6;
             speed *= spdMul; // cheat /veloz: multiplicador de velocidade (andando ou voando)
@@ -4083,7 +4281,7 @@ void main(){
             const k = Math.min(1, dt * (P.fly ? 6 : (P.ground || inW ? 12 : 3))); // voando: um pouco de deslize ao parar
             P.vx += (wx * speed - P.vx) * k; P.vz += (wz * speed - P.vz) * k;
             if (P.fly) {
-                const t = ((keys.Space ? 1 : 0) - (shift ? 1 : 0)) * 8; // subir/descer: Espaco / Shift, ~8 b/s
+                const t = ((keys.Space ? 1 : 0) - (shift ? 1 : 0)) * 8; // subir/descer: Espaco / tecla de agachar, ~8 b/s
                 P.vy += (t - P.vy) * Math.min(1, dt * 9);
             } else {
                 P.vy -= (inW ? 7 : 28) * dt;
@@ -4094,6 +4292,7 @@ void main(){
             const mx = Math.max(Math.abs(P.vx), Math.abs(P.vy), Math.abs(P.vz));
             const n = Math.max(4, Math.ceil(mx * dt / 0.2)), sd = dt / n;
             const guard = P.sneak && P.ground && P.vy <= 0; // agachado no chao: nao cai da borda
+            const wasGround = P.ground, impactVy = P.vy; // para o som de pouso
             P.ground = false;
             let wall = false, landed = false;
             for (let i = 0; i < n; i++) {
@@ -4107,6 +4306,30 @@ void main(){
                 if (hits(P.x, P.y, P.z)) { P.y -= P.vy * sd; if (P.vy < 0) { P.ground = true; if (P.fly) landed = true; } P.vy = 0; }
             }
             if (landed) P.fly = false; // tocar o chao descendo encerra o voo (como no Minecraft)
+            // passos: distancia acumula e cada pisada tem comprimento sorteado — o ritmo
+            // nunca trava numa grade fixa (o que soava robotico). O pe alterna E/D no pan.
+            {
+                const hv = Math.hypot(P.vx, P.vz);
+                if ((P.ground || inW) && hv > 0.8 && !P.fly) {
+                    SND.stepAcc += hv * dt;
+                    if (SND.stepAcc >= SND.nextStride) {
+                        SND.stepAcc -= SND.nextStride; // carrega a sobra: a proxima pisada nasce do que ficou
+                        SND.nextStride = (P.sprint ? 2.25 : 1.6) * (0.82 + Math.random() * 0.36);
+                        SND.footI = -(SND.footI || 1);
+                        if (inW) SND.step('water', SND.footI);
+                        else {
+                            const below = getBlock(Math.floor(P.x), Math.floor(P.y - 0.15), Math.floor(P.z), 0);
+                            SND.step(SND.matOf(below), SND.footI);
+                        }
+                    }
+                } else SND.stepAcc = Math.min(SND.stepAcc, 1.0);
+                // baque de pouso: caiu de uma altura consideravel
+                if (P.ground && !wasGround && !inW && impactVy < -9) {
+                    const below = getBlock(Math.floor(P.x), Math.floor(P.y - 0.15), Math.floor(P.z), 0);
+                    SND.step(SND.matOf(below), (Math.random() < 0.5 ? -1 : 1));
+                    SND.tone({ f: 120, f2: 55, dur: 0.14, type: 'triangle', gain: 0.22 });
+                }
+            }
             // Impulso de saida da agua (igual ao Minecraft): batendo de lado numa margem,
             // com espaco livre acima dela, o jogador ganha um empurrao para cima, sem precisar apertar pulo.
             if (inW && !P.fly && wall && (ix || iz)) {
@@ -4187,16 +4410,542 @@ void main(){
                 MP.broadcastTnt(x, y, z, fuse, tId);
             }
         }
-        function boom() {
-            try {
-                audio = audio || new AudioContext();
-                const len = audio.sampleRate * 0.9, buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
-                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-                const s = audio.createBufferSource(); s.buffer = buf;
-                const f = audio.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
-                const g = audio.createGain(); g.gain.value = 0.9;
-                s.connect(f); f.connect(g); g.connect(audio.destination); s.start();
-            } catch (e) { }
+        /* ============================================================
+           SOM — motor de audio 100% procedural (WebAudio, sem arquivos)
+           Tudo e sintetizado em tempo real: ruido filtrado com envelope,
+           osciladores com varredura de pitch e camadas ambientes em loop.
+           Barramentos: bus (mundo), busAmb (ambiente), busUI (interface) ->
+           passa-baixa global (submersao abafa tudo) -> compressor -> master.
+           Efeitos de mundo sao espacializados: ganho pela distancia e
+           panoramica pelo angulo em relacao a camera.
+           ============================================================ */
+        const SND = {
+            ctx: null, ready: false,
+            master: null, comp: null, lp: null, bus: null, busAmb: null, busUI: null,
+            vol: 0.75, muted: false,
+            volMus: 0.85, volMob: 0.8, volRain: 0.8, volStep: 0.8, volUI: 0.9,
+            noiseBuf: null, amb: {},
+            stepAcc: 0, nextStride: 1.6, footI: 1, birdT: 2, crickT: 1, dripT: 3, seaNear: 0, seaAcc: 0,
+            wasWater: false, wasSub: false,
+
+            init() {
+                if (this.ctx) { this.resume(); return; }
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return;
+                let ctx;
+                try { ctx = new AC(); } catch (e) { return; }
+                this.ctx = ctx;
+                const master = this.master = ctx.createGain(); master.gain.value = this.muted ? 0 : this.vol;
+                const comp = this.comp = ctx.createDynamicsCompressor();
+                comp.threshold.value = -16; comp.knee.value = 24; comp.ratio.value = 9;
+                comp.attack.value = 0.004; comp.release.value = 0.26;
+                const lp = this.lp = ctx.createBiquadFilter();
+                lp.type = 'lowpass'; lp.frequency.value = 20000; lp.Q.value = 0.5;
+                const bus = this.bus = ctx.createGain(); bus.gain.value = 1;
+                const busAmb = this.busAmb = ctx.createGain(); busAmb.gain.value = 1;
+                const busUI = this.busUI = ctx.createGain(); busUI.gain.value = this.volUI;
+                const busMob = this.busMob = ctx.createGain(); busMob.gain.value = this.volMob;
+                const busStep = this.busStep = ctx.createGain(); busStep.gain.value = this.volStep;
+                bus.connect(lp); busAmb.connect(lp); busUI.connect(lp);
+                busMob.connect(lp); busStep.connect(lp);
+                lp.connect(comp); comp.connect(master); master.connect(ctx.destination);
+                // ruido branco de 2 s reaproveitado por todos os efeitos
+                const len = Math.floor(ctx.sampleRate * 2);
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+                this.noiseBuf = buf;
+                this.buildAmb();
+                this.ready = true;
+            },
+            resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => { }); },
+            setVol(v) { this.vol = Math.max(0, Math.min(1, v)); if (this.master) this.master.gain.value = this.muted ? 0 : this.vol; },
+            setMute(m) { this.muted = !!m; if (this.master) this.master.gain.value = this.muted ? 0 : this.vol; },
+            // grupo separado: mus | mob | rain | step | ui (guardado antes do audio existir; barramentos assumem ao nascer)
+            setGroup(name, v) {
+                v = Math.max(0, v);
+                if (name === 'mus') this.volMus = Math.min(2, v); // musica pode passar de 100%: ate 200%
+                else if (name === 'rain') { v = Math.min(1, v); this.volRain = v; }
+                else if (name === 'ui') { v = Math.min(1, v); this.volUI = v; if (this.busUI) this.busUI.gain.value = v; }
+                else if (name === 'mob') { v = Math.min(1, v); this.volMob = v; if (this.busMob) this.busMob.gain.value = v; }
+                else if (name === 'step') { v = Math.min(1, v); this.volStep = v; if (this.busStep) this.busStep.gain.value = v; }
+            },
+            // dentro do jogo? (no menu/pausa nenhum som de mundo toca — nem cacarejo de galinha longe)
+            inGame() { return state === 'playing' || state === 'inv'; },
+
+            /* ---- blocos basicos de sintese ---- */
+            out(o) { return o.bus === 'amb' ? this.busAmb : o.bus === 'ui' ? this.busUI : o.bus === 'mob' ? this.busMob : o.bus === 'step' ? this.busStep : this.bus; },
+            noise(o) {
+                if (!this.ready) return;
+                const ctx = this.ctx, t = ctx.currentTime + (o.delay || 0), dur = o.dur || 0.12;
+                const src = ctx.createBufferSource();
+                src.buffer = this.noiseBuf; src.loop = true;
+                src.playbackRate.value = o.rate || 1;
+                const flt = ctx.createBiquadFilter();
+                flt.type = o.type || 'bandpass';
+                flt.frequency.setValueAtTime(o.f || 1000, t);
+                if (o.f2) flt.frequency.exponentialRampToValueAtTime(Math.max(40, o.f2), t + dur);
+                flt.Q.value = Math.max(0.1, o.q === undefined ? 1 : o.q);
+                const g = ctx.createGain();
+                const peak = Math.max(0.0002, o.gain === undefined ? 0.3 : o.gain);
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(peak, t + Math.min(0.012, dur * 0.25));
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                let node = g;
+                if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, o.pan || 0)); g.connect(p); node = p; }
+                src.connect(flt); flt.connect(g);
+                node.connect(this.out(o));
+                src.start(t); src.stop(t + dur + 0.05);
+            },
+            tone(o) {
+                if (!this.ready) return;
+                const ctx = this.ctx, t = ctx.currentTime + (o.delay || 0), dur = o.dur || 0.15;
+                const osc = ctx.createOscillator();
+                osc.type = o.type || 'sine';
+                osc.frequency.setValueAtTime(o.f || 440, t);
+                if (o.f2) osc.frequency.exponentialRampToValueAtTime(Math.max(20, o.f2), t + dur);
+                const g = ctx.createGain();
+                const peak = Math.max(0.0002, o.gain === undefined ? 0.25 : o.gain);
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(peak, t + Math.min(0.012, dur * 0.2));
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                let node = g;
+                if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, o.pan || 0)); g.connect(p); node = p; }
+                osc.connect(g);
+                node.connect(this.out(o));
+                osc.start(t); osc.stop(t + dur + 0.05);
+            },
+            // ganho e panoramica a partir da posicao no mundo (null se longe demais)
+            spatial(x, y, z, ref) {
+                const dx = x - P.x, dy = y - (P.y + P.eh), dz = z - P.z;
+                const d = Math.hypot(dx, dy, dz);
+                if (d > (ref || 34)) return null;
+                const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+                const pan = d > 0.001 ? Math.max(-1, Math.min(1, (dx * rx + dz * rz) / d)) : 0;
+                return { gain: 1 / (1 + d / 9), pan, dist: d };
+            },
+
+            /* ---- sons por material ---- */
+            matOf(b) {
+                if (b === 0) return 'soft';
+                if (isWater(b)) return 'water';
+                if (b === 4 || b === 31) return 'sand';
+                if (b === 1 || b === 2 || b === 24 || isPlant(b)) return 'grass';
+                if (b === 30) return 'mud'; // lama do pantano: som proprio, molhado
+                if (b === 5 || b === 25 || b === 27 || b === 7) return 'wood';
+                if (b === 6 || b === 26 || b === 28) return 'leaf';
+                if (b === 9) return 'glass';
+                if (b === ICE || b === SNOWL) return 'snow';
+                return 'stone';
+            },
+            dig(mat) { // som de escavar (repetido enquanto segura o botao)
+                if (!this.ready) return;
+                const j = 0.9 + Math.random() * 0.25;
+                switch (mat) {
+                    case 'grass': this.noise({ type: 'highpass', f: 2400 * j, dur: 0.1, gain: 0.13, rate: j }); break;
+                    case 'sand': this.noise({ type: 'bandpass', f: 2800 * j, q: 0.7, dur: 0.13, gain: 0.15, rate: j }); break;
+                    case 'wood': this.noise({ type: 'bandpass', f: 520 * j, q: 3.5, dur: 0.1, gain: 0.16, rate: j }); this.tone({ f: 180 * j, f2: 90, dur: 0.09, type: 'triangle', gain: 0.1 }); break;
+                    case 'leaf': this.noise({ type: 'highpass', f: 3200 * j, dur: 0.12, gain: 0.1, rate: j }); break;
+                    case 'glass': this.noise({ type: 'highpass', f: 4200 * j, dur: 0.09, gain: 0.11, rate: j }); break;
+                    case 'snow': this.noise({ type: 'highpass', f: 3600 * j, dur: 0.11, gain: 0.09, rate: j }); break;
+                    default: this.noise({ type: 'bandpass', f: 1500 * j, f2: 800, q: 1.6, dur: 0.09, gain: 0.16, rate: j });
+                        this.tone({ f: 110 * j, f2: 70, dur: 0.07, type: 'triangle', gain: 0.09 }); break;
+                }
+            },
+            place(mat) {
+                if (!this.ready) return;
+                const j = 0.9 + Math.random() * 0.25;
+                switch (mat) {
+                    case 'grass': this.noise({ type: 'highpass', f: 2000 * j, dur: 0.09, gain: 0.11 }); break;
+                    case 'sand': this.noise({ type: 'bandpass', f: 2200 * j, q: 0.7, dur: 0.12, gain: 0.12 }); break;
+                    case 'wood': this.noise({ type: 'bandpass', f: 420 * j, q: 3, dur: 0.11, gain: 0.16 }); this.tone({ f: 150 * j, f2: 80, dur: 0.11, type: 'triangle', gain: 0.12 }); break;
+                    case 'glass': this.noise({ type: 'highpass', f: 3800 * j, dur: 0.08, gain: 0.12 }); this.tone({ f: 2400, f2: 1200, dur: 0.08, type: 'sine', gain: 0.06 }); break;
+                    case 'snow': this.noise({ type: 'highpass', f: 3000 * j, dur: 0.1, gain: 0.09 }); break;
+                    default: this.noise({ type: 'lowpass', f: 900 * j, dur: 0.11, gain: 0.16 }); this.tone({ f: 95 * j, f2: 60, dur: 0.1, type: 'triangle', gain: 0.11 }); break;
+                }
+            },
+            step(mat, foot) { // passo em camadas: corpo grave + textura do material, sorteado a cada pisada
+                // (nada se repete igual: frequencias, duracoes e ganhos variam; 'foot' alterna pe E/D no pan)
+                // ganhos generosos: passos precisam se afirmar mesmo com o volume dos efeitos alto
+                if (!this.ready || !this.inGame()) return;
+                const pan = foot ? foot * 0.13 : 0, B = { bus: 'step', pan };
+                const r = (a, b) => a + Math.random() * (b - a);
+                switch (mat) {
+                    case 'grass': // grama: rocar macio por cima de um corpo grave (nao fica fino)
+                        this.noise({ ...B, type: 'lowpass', f: r(480, 720), dur: r(0.07, 0.1), gain: r(0.13, 0.17), rate: r(0.7, 1) });
+                        this.noise({ ...B, type: 'bandpass', f: r(1700, 3000), q: 0.8, dur: r(0.05, 0.09), gain: r(0.09, 0.14) });
+                        if (Math.random() < 0.3) this.noise({ ...B, type: 'bandpass', f: r(900, 1400), q: 1.2, dur: 0.06, gain: 0.09, delay: r(0.03, 0.06) }); // folha arrastada de vez em quando
+                        break;
+                    case 'sand': // areia: crocancia com os graos se espalhando
+                        this.noise({ ...B, type: 'bandpass', f: r(2000, 3000), q: 0.55, dur: r(0.08, 0.13), gain: r(0.16, 0.23), rate: r(0.8, 1.1) });
+                        this.noise({ ...B, type: 'lowpass', f: r(380, 560), dur: 0.08, gain: r(0.08, 0.11) });
+                        break;
+                    case 'wood': // madeira: batida oca de assoalho
+                        this.noise({ ...B, type: 'bandpass', f: r(380, 560), q: 3.2, dur: 0.07, gain: r(0.18, 0.25) });
+                        this.tone({ ...B, f: r(115, 170), f2: 65, dur: 0.09, type: 'triangle', gain: r(0.11, 0.18) });
+                        break;
+                    case 'stone': // pedra: toque seco, meio clique
+                        this.noise({ ...B, type: 'bandpass', f: r(1100, 1600), q: 1.5, dur: 0.05, gain: r(0.18, 0.25), rate: r(0.9, 1.15) });
+                        this.noise({ ...B, type: 'lowpass', f: r(280, 420), dur: 0.06, gain: r(0.09, 0.14) });
+                        break;
+                    case 'snow': // neve: crepitado de gelo compactado
+                        this.noise({ ...B, type: 'highpass', f: r(2400, 3400), dur: r(0.07, 0.11), gain: r(0.11, 0.17), rate: r(0.75, 1.05) });
+                        this.noise({ ...B, type: 'bandpass', f: r(700, 1100), q: 0.9, dur: 0.07, gain: r(0.08, 0.11) });
+                        break;
+                    case 'leaf': // folhagem seca: estalo alto curto
+                        this.noise({ ...B, type: 'highpass', f: r(2600, 3800), dur: r(0.06, 0.1), gain: r(0.11, 0.16), rate: r(0.8, 1.1) });
+                        this.noise({ ...B, type: 'bandpass', f: r(600, 900), q: 1, dur: 0.05, gain: 0.08 });
+                        break;
+                    case 'glass': // vidro: toque cristalino
+                        this.noise({ ...B, type: 'highpass', f: r(3000, 4200), dur: 0.05, gain: r(0.14, 0.18) });
+                        this.tone({ ...B, f: r(2200, 3000), f2: r(1200, 1600), dur: 0.05, type: 'sine', gain: 0.07 });
+                        break;
+                    case 'water': // agua rasa: chapinhada com respingo
+                        this.noise({ ...B, type: 'bandpass', f: r(750, 1100), q: 0.7, dur: r(0.12, 0.2), gain: r(0.2, 0.3) });
+                        this.noise({ ...B, type: 'highpass', f: 2800, dur: 0.08, gain: r(0.09, 0.14), delay: r(0.02, 0.05) });
+                        break;
+                    case 'mud': // lama do pantano: chupada pesada, com ocasiao de sucção no levantar do pe
+                        this.noise({ ...B, type: 'lowpass', f: r(420, 640), dur: r(0.09, 0.13), gain: r(0.2, 0.27) });
+                        this.noise({ ...B, type: 'bandpass', f: r(1400, 2100), q: 0.9, dur: r(0.05, 0.08), gain: r(0.08, 0.12) });
+                        if (Math.random() < 0.35) this.noise({ ...B, type: 'bandpass', f: r(600, 950), q: 2.2, dur: 0.1, gain: r(0.08, 0.13), delay: r(0.06, 0.1) }); // pe saindo da lama
+                        break;
+                    default: // pedra genérica/terra batida: thump + clique
+                        this.noise({ ...B, type: 'bandpass', f: r(1000, 1500), f2: r(600, 850), q: 1.3, dur: r(0.05, 0.08), gain: r(0.18, 0.25) });
+                        this.noise({ ...B, type: 'lowpass', f: r(260, 400), dur: 0.06, gain: r(0.1, 0.15) });
+                }
+            },
+            splash(x, y, z, big) {
+                if (!this.ready) return;
+                const sp = x === undefined ? null : this.spatial(x, y, z, 30);
+                if (x !== undefined && !sp) return; // longe demais: nem toca
+                const gain = sp ? sp.gain : 1, pan = sp ? sp.pan : 0;
+                this.noise({ type: 'bandpass', f: 1400, f2: 320, q: 0.7, dur: big ? 0.55 : 0.3, gain: (big ? 0.32 : 0.2) * gain, pan });
+                this.noise({ type: 'highpass', f: 3000, dur: big ? 0.35 : 0.18, gain: (big ? 0.16 : 0.1) * gain, pan, delay: 0.02 });
+                if (big) this.tone({ f: 420, f2: 160, dur: 0.3, type: 'sine', gain: 0.1 * gain, pan });
+            },
+            bubble() {
+                if (!this.ready) return;
+                const f = 500 + Math.random() * 900;
+                this.tone({ f, f2: f * 2.2, dur: 0.1, type: 'sine', gain: 0.05, bus: 'amb' });
+            },
+            pickup() { // pegou um item
+                if (!this.ready) return;
+                this.tone({ f: 880, dur: 0.07, type: 'triangle', gain: 0.11, bus: 'ui' });
+                this.tone({ f: 1320, dur: 0.1, type: 'triangle', gain: 0.09, bus: 'ui', delay: 0.05 });
+            },
+            ui(kind) {
+                if (!this.ready) return;
+                switch (kind) {
+                    case 'click': this.tone({ f: 620, f2: 760, dur: 0.05, type: 'square', gain: 0.045, bus: 'ui' }); break;
+                    case 'open': this.tone({ f: 300, f2: 700, dur: 0.13, type: 'triangle', gain: 0.07, bus: 'ui' }); break;
+                    case 'close': this.tone({ f: 700, f2: 280, dur: 0.13, type: 'triangle', gain: 0.07, bus: 'ui' }); break;
+                    case 'error': this.tone({ f: 240, f2: 170, dur: 0.16, type: 'square', gain: 0.07, bus: 'ui' }); break;
+                    case 'ok': this.tone({ f: 700, dur: 0.07, type: 'triangle', gain: 0.07, bus: 'ui' }); this.tone({ f: 1050, dur: 0.1, type: 'triangle', gain: 0.06, bus: 'ui', delay: 0.06 }); break;
+                    default: this.tone({ f: 520, dur: 0.05, type: 'square', gain: 0.04, bus: 'ui' });
+                }
+            },
+            cluck(x, y, z) { // galinha: dois tons curtos e agudos (so dentro do jogo)
+                if (!this.ready || !this.inGame()) return;
+                const sp = x === undefined ? null : this.spatial(x, y, z, 30);
+                if (x !== undefined && !sp) return;
+                const gain = sp ? sp.gain : 1, pan = sp ? sp.pan : 0;
+                const f = 900 + Math.random() * 260;
+                this.tone({ bus: 'mob', f, f2: f * 0.62, dur: 0.09, type: 'sawtooth', gain: 0.075 * gain, pan });
+                this.tone({ bus: 'mob', f: f * 0.85, f2: f * 0.5, dur: 0.08, type: 'sawtooth', gain: 0.06 * gain, pan, delay: 0.11 });
+            },
+            flap(x, y, z) { // asas (so dentro do jogo)
+                if (!this.ready || !this.inGame()) return;
+                const sp = x === undefined ? null : this.spatial(x, y, z, 26);
+                if (x !== undefined && !sp) return;
+                const gain = sp ? sp.gain : 1, pan = sp ? sp.pan : 0;
+                this.noise({ bus: 'mob', type: 'bandpass', f: 700, f2: 380, q: 0.8, dur: 0.14, gain: 0.11 * gain, pan });
+            },
+            fishSplash(x, y, z) { // peixe salpicando na superficie (so dentro do jogo)
+                if (!this.ready || !this.inGame()) return;
+                const sp = x === undefined ? null : this.spatial(x, y, z, 28);
+                if (x !== undefined && !sp) return;
+                const gain = sp ? sp.gain : 1, pan = sp ? sp.pan : 0;
+                this.noise({ bus: 'mob', type: 'bandpass', f: 2200, f2: 700, q: 0.9, dur: 0.22, gain: 0.13 * gain, pan });
+            },
+            sapoAt(x, y, z) { // coaxar do sapo em ponto do mundo (o papo infla junto, visual)
+                if (!this.ready || !this.inGame()) return;
+                const sp = this.spatial(x, y, z, 24); if (!sp) return;
+                const f = 150 + Math.random() * 90; // grave: peito de sapo
+                const n = 1 + ((Math.random() * 2.4) | 0); // 1 a 3 coaxadas por vez
+                for (let i = 0; i < n; i++) {
+                    const d = i * (0.28 + Math.random() * 0.12);
+                    this.tone({ bus: 'mob', f: f * 0.8, f2: f * 1.25, dur: 0.13, type: 'sawtooth', gain: 0.07 * sp.gain, delay: d, pan: sp.pan });
+                    this.tone({ bus: 'mob', f: f * 1.3, f2: f * 0.7, dur: 0.16, type: 'sawtooth', gain: 0.05 * sp.gain, delay: d + 0.1, pan: sp.pan });
+                }
+            },
+            fuse() { // pavio da TNT
+                if (!this.ready) return;
+                this.noise({ type: 'highpass', f: 4200, dur: 0.5, gain: 0.05 });
+                this.tone({ f: 2600, f2: 3600, dur: 0.4, type: 'sawtooth', gain: 0.02 });
+            },
+            boomS(x, y, z) { // explosao
+                if (!this.ready) return;
+                const sp = x === undefined ? null : this.spatial(x, y, z, 90);
+                if (x !== undefined && !sp) return;
+                const gain = sp ? sp.gain : 1, pan = sp ? sp.pan : 0;
+                this.noise({ type: 'lowpass', f: 2600, f2: 90, dur: 1.5, gain: 0.85 * gain, pan, rate: 0.55 });
+                this.noise({ type: 'lowpass', f: 700, dur: 2.4, gain: 0.5 * gain, pan, delay: 0.04, rate: 0.35 });
+                this.tone({ f: 90, f2: 28, dur: 1.1, type: 'sine', gain: 0.5 * gain, pan });
+                this.tone({ f: 55, f2: 22, dur: 1.8, type: 'triangle', gain: 0.35 * gain, pan, delay: 0.06 });
+            },
+            bird() { // passarinho
+                if (!this.ready) return;
+                const base = 2200 + Math.random() * 1400;
+                const n = 2 + ((Math.random() * 3) | 0);
+                for (let i = 0; i < n; i++) {
+                    const d = i * (0.09 + Math.random() * 0.05);
+                    this.tone({ f: base * (1 + i * 0.12), f2: base * (1.35 + i * 0.1), dur: 0.06, type: 'sine', gain: 0.045, bus: 'amb', delay: d });
+                    this.tone({ f: base * (1.35 + i * 0.1), f2: base * 0.9, dur: 0.05, type: 'sine', gain: 0.035, bus: 'amb', delay: d + 0.05 });
+                }
+            },
+            cricket() { // grilo a noite
+                if (!this.ready) return;
+                const n = 3 + ((Math.random() * 3) | 0);
+                for (let i = 0; i < n; i++) this.noise({ type: 'bandpass', f: 4200 + Math.random() * 400, q: 14, dur: 0.03, gain: 0.03, bus: 'amb', delay: i * 0.055, pan: Math.random() * 1.6 - 0.8 });
+            },
+            sapo() { // sapo do pantano coaxando (visto que e ambiente, sai no bus amb com pan sorteado)
+                if (!this.ready) return;
+                const pan = Math.random() * 1.7 - 0.85;
+                const f = 150 + Math.random() * 90; // grave: peito de sapo
+                const n = 1 + ((Math.random() * 2.4) | 0); // 1 a 3 coaxadas por vez
+                for (let i = 0; i < n; i++) {
+                    const d = i * (0.28 + Math.random() * 0.12);
+                    this.tone({ f: f * 0.8, f2: f * 1.25, dur: 0.13, type: 'sawtooth', gain: 0.05, bus: 'amb', delay: d, pan });
+                    this.tone({ f: f * 1.3, f2: f * 0.7, dur: 0.16, type: 'sawtooth', gain: 0.035, bus: 'amb', delay: d + 0.1, pan });
+                }
+            },
+            drip() { // gota na caverna
+                if (!this.ready) return;
+                const f = 900 + Math.random() * 700;
+                this.tone({ f, f2: f * 0.35, dur: 0.16, type: 'sine', gain: 0.07, bus: 'amb', pan: Math.random() * 1.4 - 0.7 });
+            },
+
+            /* ---- musiquinha suave dos menus: pad de acordes lentos + melodia pentatonica esparsa,
+               com eco curto para dar profundidade. Toca so fora do jogo (menu/pausa). ---- */
+            musTick(dt) {
+                const ctx = this.ctx, t = ctx.currentTime, M = this.mus;
+                if (!M) return;
+                const CH = [
+                    [130.81, 196.00, 261.63, 329.63], // C:  C3 G3 C4 E4
+                    [110.00, 164.81, 220.00, 261.63], // Am: A2 E3 A3 C4
+                    [174.61, 220.00, 261.63, 349.23], // F:  F3 A3 C4 F4
+                    [98.00, 196.00, 246.94, 293.66]   // G:  G2 G3 B3 D4
+                ];
+                const PENT = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.26]; // pentatonica de Do maior
+                M.chordT -= dt;
+                if (M.chordT <= 0) {
+                    M.chordT = 7 + Math.random() * 4; // acorde novo a cada 7-11 s: respiro longo
+                    M.chordI = (M.chordI + 1 + ((Math.random() * 2) | 0) * 2) % CH.length; // avanca 1 ou 3
+                    const fr = CH[M.chordI];
+                    for (const v of M.pad) { try { v.g.gain.setTargetAtTime(0.0001, t, 1.6); v.o.stop(t + 7); } catch (e) { } }
+                    M.pad = [];
+                    for (let i = 0; i < fr.length; i++) {
+                        const g = ctx.createGain();
+                        g.gain.setValueAtTime(0.0001, t);
+                        g.gain.exponentialRampToValueAtTime(0.04, t + 2.5); // acorde nasce devagar
+                        g.connect(M.dry);
+                        const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = fr[i]; o1.detune.value = -4;
+                        const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = fr[i]; o2.detune.value = 4;
+                        const g2 = ctx.createGain(); g2.gain.value = 0.22; // triangulo bem baixo: so da "cor" ao timbre
+                        o1.connect(g); o2.connect(g2); g2.connect(g);
+                        o1.start(t); o2.start(t);
+                        M.pad.push({ g, o: o1 });
+                    }
+                }
+                M.melT -= dt;
+                if (M.melT <= 0 && M.pad.length) {
+                    M.melT = 2.5 + Math.random() * 4; // notas esparsas, sem pressa
+                    const dur = 1.4 + Math.random() * 1.4;
+                    const nota = (f, t0, g0) => {
+                        const g = ctx.createGain();
+                        g.gain.setValueAtTime(0.0001, t0);
+                        g.gain.exponentialRampToValueAtTime(g0, t0 + 0.35);
+                        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+                        g.connect(M.dry);
+                        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+                        o.connect(g); o.start(t0); o.stop(t0 + dur + 0.1);
+                    };
+                    const pega = () => PENT[(Math.random() * PENT.length) | 0] * (Math.random() < 0.3 ? 0.5 : 1);
+                    nota(pega(), t, 0.048);
+                    if (Math.random() < 0.4) nota(pega(), t + dur * 0.6, 0.038); // as vezes a nota responde outra
+                }
+            },
+
+            /* ---- camadas ambientes em loop ---- */
+            buildAmb() {
+                const ctx = this.ctx;
+                const loop = (type, f, q) => {
+                    const src = ctx.createBufferSource();
+                    src.buffer = this.noiseBuf; src.loop = true; src.playbackRate.value = 0.6 + Math.random() * 0.5;
+                    const flt = ctx.createBiquadFilter(); flt.type = type; flt.frequency.value = f; flt.Q.value = q;
+                    const g = ctx.createGain(); g.gain.value = 0;
+                    src.connect(flt); flt.connect(g); g.connect(this.busAmb);
+                    src.start();
+                    return { g, flt, src };
+                };
+                this.amb.wave = loop('lowpass', 420, 0.7);      // ressaca do mar
+                this.amb.foam = loop('bandpass', 1500, 0.8);    // espuma da arrebentacao
+                this.amb.wind = loop('lowpass', 380, 0.7);       // vento: quemaco grave, sem assobio
+                this.amb.deep = loop('lowpass', 200, 1.1);      // rumor submerso
+                this.amb.cave = loop('lowpass', 150, 0.9);      // ar da caverna
+                // zumbido grave de caverna
+                const dr = ctx.createOscillator(); dr.type = 'sine'; dr.frequency.value = 52;
+                const dg = ctx.createGain(); dg.gain.value = 0;
+                dr.connect(dg); dg.connect(this.busAmb); dr.start();
+                this.amb.drone = { g: dg };
+                // musica dos menus: barramento proprio ligado direto ao master (nao sofre o
+                // filtro de submersao nem o compressor dos efeitos), com eco curto espacial
+                const mg = ctx.createGain(); mg.gain.value = 0; mg.connect(this.master);
+                const dry = ctx.createGain(); dry.gain.value = 1; dry.connect(mg);
+                const dl = ctx.createDelay(1); dl.delayTime.value = 0.34;
+                const dfb = ctx.createGain(); dfb.gain.value = 0.32; dl.connect(dfb); dfb.connect(dl);
+                const dw = ctx.createGain(); dw.gain.value = 0.5; dl.connect(dw); dw.connect(mg);
+                dry.connect(dl);
+                this.mus = { g: mg, dry, pad: [], chordI: 0, chordT: 1.5, melT: 2 };
+            },
+            // quanto de mar aberto ha por perto: em alto-mar = 1, na praia = 0
+            seaProbe() {
+                let open = 0, near = 0;
+                for (let i = 0; i < 8; i++) {
+                    const a = i / 8 * 6.28318530718;
+                    for (const r of [6, 14, 24]) {
+                        const x = Math.floor(P.x + Math.cos(a) * r), z = Math.floor(P.z + Math.sin(a) * r);
+                        if (isWater(getBlock(x, SEA, z, 0))) { if (r >= 24) open++; break; }
+                    }
+                    if (isWater(getBlock(Math.floor(P.x + Math.cos(a) * 6), SEA, Math.floor(P.z + Math.sin(a) * 6), 0))) near++;
+                }
+                return { open: open / 8, near: near / 8 };
+            },
+
+            /* ---- mixer do quadro: ambiente, submersao, sons ocasionais ---- */
+            update(dt) {
+                if (!this.ready) return;
+                const ctx = this.ctx, t = ctx.currentTime;
+                this.resume();
+                // no menu (e na pausa) o mundo fica mudo e entra a musiquinha suave.
+                // No inventario o som do mundo continua: voce ainda esta no mundo.
+                const inGame = state === 'playing' || state === 'inv';
+                if (!inGame) {
+                    const A = this.amb;
+                    const mudo = (node, tc) => { if (node && node.g) node.g.gain.setTargetAtTime(0, t, tc || 0.8); };
+                    mudo(A.wave); mudo(A.foam); mudo(A.wind); mudo(A.deep); mudo(A.cave); mudo(A.drone, 1.5);
+                    this.lp.frequency.setTargetAtTime(20000, t, 0.2); // sem abafar (nao ha submersao no menu)
+                    if (this.mus) {
+                        this.mus.g.gain.setTargetAtTime(this.volMus, t, 1.0); // musica entra e sai devagar (volume proprio)
+                        this.musTick(dt);
+                    }
+                    return;
+                }
+                // de volta ao jogo: pad da musica solta as vozes e o proximo acorde fica iminente
+                // (assim, ao reabrir o menu, a musiquinha reassume em ~0,5 s em vez de esperar o antigo timer)
+                if (this.mus) {
+                    this.mus.g.gain.setTargetAtTime(0, t, 1.0);
+                    this.mus.chordT = Math.min(this.mus.chordT, 0.6);
+                    this.mus.melT = Math.min(this.mus.melT, 0.9);
+                    for (const v of this.mus.pad) try { v.g.gain.setTargetAtTime(0.0001, t, 0.8); } catch (e) { }
+                }
+                const eyeY = P.y + P.eh;
+                const headW = isWater(getBlock(Math.floor(P.x), Math.floor(eyeY), Math.floor(P.z), 0));
+                const feetW = isWater(getBlock(Math.floor(P.x), Math.floor(P.y + 0.2), Math.floor(P.z), 0));
+                const sub = headW;
+                // filtro global: submerso abafa tudo
+                this.lp.frequency.setTargetAtTime(sub ? 420 : 20000, t, 0.15);
+                // ambiente
+                this.seaAcc += dt;
+                if (this.seaAcc > 0.5) { this.seaAcc = 0; this.seaNear = this.seaProbe(); }
+                const sky = gL(Math.floor(P.x), Math.floor(eyeY), Math.floor(P.z)) >> 4;
+                const alt = Math.max(0, Math.min(1, (P.y - SEA) / 70));
+                const night = (time % 1) > 0.78 || (time % 1) < 0.22;
+                const bio = biomeAt(Math.floor(P.x), Math.floor(P.z));
+                const forest = bio === 1 || bio === 2;
+                const shelter = typeof rnShelter === 'number' ? rnShelter : 0;
+                const snowK = typeof rnSnowK === 'number' ? rnSnowK : 0;
+                const windK = (0.012 + alt * 0.09) * (1 - 0.6 * shelter); // vento: sussurro de fundo, nunca domina
+                // mar: so se ouve mesmo em alto-mar (rodeado de agua aberta em toda direcao).
+                // Na praia ou na beira fica praticamente mudo; nadando em mar aberto e visivel.
+                const sea = this.seaNear || { open: 0, near: 0 };
+                const altoMar = sea.open; // fracao de direcoes com mar aberto ate 24 blocos
+                const waveK = sub ? 0.10 + altoMar * 0.04 : (headW || feetW) ? 0.06 + altoMar * 0.10 : altoMar * 0.015;
+                const caveK = (sky < 3 && P.y < SEA - 6) ? 0.16 : 0;
+                const A = this.amb;
+                const set = (node, v, tc) => { if (node && node.g) node.g.gain.setTargetAtTime(v, t, tc || 0.4); };
+                set(A.wave, waveK);
+                set(A.foam, sub ? 0 : (headW || feetW) ? altoMar * 0.03 : altoMar * 0.008, 0.6);
+                set(A.wind, windK, 0.8);
+                set(A.deep, sub ? 0.30 : 0, 0.5);
+                set(A.cave, caveK, 0.8);
+                set(A.drone, caveK * 0.5, 1.0);
+                // sons ocasionais do ambiente
+                if (!sub) {
+                    this.birdT -= dt;
+                    if (this.birdT <= 0) {
+                        this.birdT = 3 + Math.random() * 9;
+                        if (forest && !night && sky > 6 && P.y > SEA) this.bird();
+                    }
+                    this.crickT -= dt;
+                    if (this.crickT <= 0) {
+                        this.crickT = 0.6 + Math.random() * 1.6;
+                        if (night && sky > 3 && P.y > SEA && !forest) this.cricket();
+                    }
+                    this.sapoT = this.sapoT === undefined ? 2 + Math.random() * 6 : this.sapoT - dt;
+                    if (this.sapoT <= 0) {
+                        // pantano: coro de sapos, muito mais frequente a noite (de dia e esporadico)
+                        this.sapoT = bio === SWAMP_B ? (night ? 1.2 + Math.random() * 3 : 8 + Math.random() * 20) : 6 + Math.random() * 12;
+                        if (bio === SWAMP_B && P.y > SEA - 2) this.sapo();
+                    }
+                }
+                this.dripT -= dt;
+                if (this.dripT <= 0) {
+                    this.dripT = 1.5 + Math.random() * 5;
+                    if (sky < 3 && P.y < SEA - 6) this.drip();
+                }
+                // entrada/saida de agua
+                const inW = headW || feetW;
+                if (inW !== this.wasWater) {
+                    if (inW) this.splash(P.x, P.y, P.z, true);
+                    this.wasWater = inW;
+                }
+                if (sub && Math.random() < dt * 1.6) this.bubble();
+            }
+        };
+        // o audio so pode nascer depois de um gesto do usuario: prepara no primeiro clique/tecla
+        ['pointerdown', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, function sndKick() {
+            SND.init();
+            removeEventListener(ev, sndKick, true);
+        }, { capture: true }));
+        /* Sons sutis de interface: cliques em qualquer botao dos menus, abas e itens do
+           inventario, e tique curto ao pegar/arrastar um item. Delegacao: vale tambem
+           para os elementos criados dinamicamente (abas, slots da grade, teclas). */
+        {
+            const menuEl = document.getElementById('menu');
+            if (menuEl) menuEl.addEventListener('click', e => {
+                const b = e.target && e.target.closest ? e.target.closest('button') : null;
+                if (b && !b.disabled) SND.ui('click');
+            });
+            const invEl2 = document.getElementById('inv');
+            if (invEl2) {
+                invEl2.addEventListener('click', e => { // abas de categoria do inventario
+                    const t = e.target && e.target.closest ? e.target.closest('#invTabs .tab') : null;
+                    if (t) SND.ui('click');
+                });
+                invEl2.addEventListener('pointerdown', e => { // pegar um item da grade/da barra: tique curto
+                    const t = e.target && e.target.closest ? e.target.closest('#invGrid > *, #invHot > *') : null;
+                    if (t) SND.ui('click');
+                });
+            }
+            // sliders: som ao soltar (nao a cada passo do arrasto)
+            ['dRng', 'fRng', 'sRng', 'volRng'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', () => SND.ui('click'));
+            });
+        }
+        function boom(x, y, z) {
+            SND.boomS(x, y, z);
         }
         function explode(cx, cy, cz, r, sync = true, tntId = null) {
             const R = Math.ceil(r), bx = Math.floor(cx), by = Math.floor(cy), bz = Math.floor(cz);
@@ -4218,7 +4967,7 @@ void main(){
             }
             const near = Math.max(0, 1 - dist / 30);
             flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
-            boom();
+            boom(cx, cy, cz);
             mobsScare(cx, cy, cz, r * 2); // Explosão espanta os peixes num raio maior (declaração içada — seguro)
 
             if (sync && typeof MP !== 'undefined' && MP.active) {
@@ -4315,7 +5064,12 @@ void main(){
                 }
                 else if (isPlant(b)) { // planta sem apoio some (sem queda animada: igual relva do Minecraft)
                     const bl = getBlock(x, y - 1, z, 3);
-                    if (!(bl !== 0 && !isWater(bl) && !isSoft(bl))) { growD.delete(x + ',' + y + ',' + z); setBlock(x, y, z, 0); }
+                    if (b === 69 || b === 70) { // aquaticos do pantano: vivem NA agua (juncos e pratos flutuam na agua rasa)
+                        const sup = getBlock(x, y - 1, z, 3);
+                        if (!(isWater(sup) || (sup !== 0 && !isSoft(sup)))) { growD.delete(x + ',' + y + ',' + z); setBlock(x, y, z, 0); }
+                        else growD.delete(x + ',' + y + ',' + z);
+                    }
+                    else if (!(bl !== 0 && !isWater(bl) && !isSoft(bl))) { growD.delete(x + ',' + y + ',' + z); setBlock(x, y, z, 0); }
                     else if (b <= 58) { // grama cresce aos poucos: 57 (pequena) -> 58 -> 59; plantada ou natural
                         const k = x + ',' + y + ',' + z, t = growD.get(k);
                         if (t === undefined) { growD.set(k, 600 + (Math.random() * 1200 | 0)); active.add(k); } // 30-90s por etapa
@@ -4600,6 +5354,9 @@ void main(){
             const qBtn = $('quit'), sInfo = $('saveInfo');
             if (qBtn) qBtn.textContent = isGuest ? 'Sair da Sala' : 'Salvar e sair';
             if (sInfo) sInfo.textContent = isGuest ? 'Você está conectado à sala de um amigo.' : 'O progresso é salvo automaticamente.';
+            /* Convidado no mundo de um amigo: o botão de abrir mundo não aparece (não é o mundo dele) */
+            const mpBtn = $('btnPauseMp');
+            if (mpBtn) mpBtn.style.display = isGuest ? 'none' : '';
             if (!isGuest) requestSave(true);
             show('pause');
         }
@@ -4692,6 +5449,7 @@ void main(){
             if (img.complete && img.naturalWidth) img.dispatchEvent(new Event('load'));
         })();
         function show(name) {
+            const prevScr = curScr;
             if (name === 'settings') { back = curScr; cancelCapture(); }
             curScr = name;
             document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === 's-' + name));
@@ -4700,13 +5458,26 @@ void main(){
             menu.style.display = 'flex';
             // Multiplayer: alterna vista conforme contexto (in-game = host, menu = client/lista)
             if (name === 'multiplayer') {
+                /* Dentro de um mundo o apelido fica travado: mudar o nome no meio da partida
+                   confundiria quem já está vendo o seu nametag. Convidado (mundo de um amigo)
+                   também não pode abrir sala — esconde a vista de host. */
+                const mp = (typeof MP !== 'undefined') ? MP : null;
                 const inGame = (state === 'paused');
+                const guest = !!(mp && mp.active && !mp.isHost);
+                const nickIn = $('mpNick');
+                if (nickIn) {
+                    nickIn.disabled = inGame;
+                    nickIn.title = inGame ? 'Você não pode mudar o apelido estando dentro de um mundo.' : '';
+                }
+                const showHost = inGame && !guest; // convidado nunca vê "Abrir Mundo para Amigos"
                 const cView = $('mpClientView'), hView = $('mpHostView'), tEl = $('mpTitle');
-                if (cView) cView.style.display = inGame ? 'none' : 'block';
-                if (hView) hView.style.display = inGame ? 'block' : 'none';
-                if (tEl) tEl.textContent = inGame ? 'Abrir Mundo para Amigos' : 'Multiplayer — Mundos de Amigos';
-                if (!inGame && typeof MP !== 'undefined') { MP.cleanExpiredRooms(); MP.renderRoomList(); }
+                if (cView) cView.style.display = showHost ? 'none' : 'block';
+                if (hView) hView.style.display = showHost ? 'block' : 'none';
+                if (tEl) tEl.textContent = showHost ? 'Abrir Mundo para Amigos' : 'Multiplayer — Mundos de Amigos';
+                if (!inGame && mp) { mp.cleanExpiredRooms(); mp.renderRoomList(); }
             }
+            // troca de tela: assobio suave de transicao (nao toca na montagem inicial: o SND ainda nao existe)
+            if (prevScr !== name && typeof SND !== 'undefined' && SND.ready) SND.ui('open');
         }
         const fmtDur = s => { s = Math.floor(s || 0); if (s < 60) return '< 1 min'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'min' : m + ' min'; };
         const fmtSize = n => { const kb = n * 24; return kb < 1024 ? kb + ' KB' : (kb / 1024).toFixed(1) + ' MB'; }; // chunk agora tem 16x16x96 blocos
@@ -4864,6 +5635,7 @@ void main(){
         function setChatHint(txt, isError) {
             chatHint.textContent = txt;
             chatHint.classList.toggle('err', !!isError);
+            if (isError) SND.ui('error'); // comando errado: tique negativo
         }
         function clearChatKeys() {
             held[0] = held[2] = false;
@@ -4874,6 +5646,7 @@ void main(){
             if (chatOpen) return;
             if (state !== 'playing' || rewinding) return; // no menu o T continua valendo para o texto
             chatOpen = true;
+            SND.ui('open'); // som de abrir chat
             clearChatKeys(); touchReset(); // cancela toque em andamento no canvas (nao pode quebrar bloco enquanto digita)
             joy.x = joy.y = joy.mag = 0; knob.style.transform = '';
             chatEl.classList.add('on');
@@ -4888,6 +5661,7 @@ void main(){
             if (!chatOpen) return;
             chatOpen = false;
             chatEl.classList.remove('on');
+            SND.ui('close'); // som de fechar chat
             chatInput.blur();
             chatKbLift();
         }
@@ -5008,19 +5782,23 @@ void main(){
                 case 'pos': case 'coords': case 'xyz': {
                     const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
                     const lv = gL(Math.floor(P.x), Math.floor(P.y + 1), Math.floor(P.z));
-                    return { keep: true, msg: 'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + '\n' +
-                        (bi >= 0 ? 'Bioma: ' + BIOMES[bi].name + ' · ' : '') + 'luz céu ' + (lv >> 4) + ' · bloco ' + (lv & 15) };
+                    return {
+                        keep: true, msg: 'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + '\n' +
+                            (bi >= 0 ? 'Bioma: ' + BIOMES[bi].name + ' · ' : '') + 'luz céu ' + (lv >> 4) + ' · bloco ' + (lv & 15)
+                    };
                 }
                 case 'status': case 'debug': {
                     const bi = biomeAt(Math.floor(P.x), Math.floor(P.z));
                     const temp = raining ? precipWord().toLowerCase() + ' ' + wxName(rainIntT) : 'claro';
-                    return { keep: true, msg:
-                        'FPS ' + fps + ' · 1% ' + Math.round(PERF.fps1) + ' · quadro médio/pior ' + PERF.avgMs.toFixed(1) + '/' + PERF.worstMs.toFixed(1) + ' ms\n' +
-                        'Governador: qualidade ' + (PERF.lvl + 1) + '/' + LADDER.length + ' · res ' + Math.round(LADDER[PERF.lvl].rs * 100) + '% · teto ' + PERF.capLabel() + (PERF.freeze > 0 ? ' · alívio temporário ativo' : '') + '\n' +
-                        'chunks ' + chunks.size + ' · visão ' + renderDist + ' · fila malha ' + _dirty.length + ' · fila luz ' + _unlit.length + ' · peixes alvo ' + Math.round(MOB.target * PERF.mobScale) + '\n' +
-                        'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
-                        'Hora ' + hhmm(time) + (timeLock >= 0 ? ' [travada]' : '') + ' · clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + '\n' +
-                        'TNT ' + tnts.length + ' · peixes ' + mobCount() + ' · galinhas ' + galinhaCount() + ' · velocidade x' + spdMul };
+                    return {
+                        keep: true, msg:
+                            'FPS ' + fps + ' · 1% ' + Math.round(PERF.fps1) + ' · quadro médio/pior ' + PERF.avgMs.toFixed(1) + '/' + PERF.worstMs.toFixed(1) + ' ms\n' +
+                            'Governador: qualidade ' + (PERF.lvl + 1) + '/' + LADDER.length + ' · res ' + Math.round(LADDER[PERF.lvl].rs * 100) + '% · teto ' + PERF.capLabel() + (PERF.freeze > 0 ? ' · alívio temporário ativo' : '') + '\n' +
+                            'chunks ' + chunks.size + ' · visão ' + renderDist + ' · fila malha ' + _dirty.length + ' · fila luz ' + _unlit.length + ' · peixes alvo ' + Math.round(MOB.target * PERF.mobScale) + '\n' +
+                            'XYZ ' + P.x.toFixed(1) + ' ' + P.y.toFixed(1) + ' ' + P.z.toFixed(1) + (P.fly ? ' [voando]' : '') + '\n' +
+                            'Hora ' + hhmm(time) + (timeLock >= 0 ? ' [travada]' : '') + ' · clima ' + temp + (bi >= 0 ? ' · ' + BIOMES[bi].name : '') + '\n' +
+                            'TNT ' + tnts.length + ' · peixes ' + mobCount() + ' · galinhas ' + galinhaCount() + ' · vagalumes ' + vagalumeCount() + ' · velocidade x' + spdMul
+                    };
                 }
                 case 'tp': case 'teleportar': {
                     const a = parts.slice(1).map(Number);
@@ -5320,11 +6098,11 @@ void main(){
             ['back', 'Andar para trás', 'KeyS'],
             ['right', 'Andar para a direita', 'KeyD'],
             ['jump', 'Pular / nadar / subir', 'Space'],
-            ['sprint', 'Correr / acelerar no voo', 'ControlLeft'],
-            ['sneak', 'Agachar / descer no voo', 'ShiftLeft'],
+            ['sprint', 'Correr / acelerar no voo', 'ShiftLeft'],
+            ['sneak', 'Agachar / descer no voo', 'ControlLeft'],
             ['fly', 'Voar (liga/desliga)', 'KeyF'],
             ['rewind', 'Voltar no tempo (segurar)', 'KeyR'],
-            ['inventory', 'Abrir inventário (criativo)', 'KeyI']
+            ['inventory', 'Abrir inventário (criativo)', 'KeyE']
         ];
         const DEF = {}; for (const a of ACTIONS) DEF[a[0]] = a[2];
         const MANAGED = new Set([...Object.values(DEF), 'ControlRight', 'ShiftRight']);
@@ -5351,8 +6129,8 @@ void main(){
             binds = nb;
         }
         rebuildKeyMap();
-        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.keys && !s.kv && s.keys.inventory === 'KeyE') s.keys.inventory = 'KeyI'; loadBinds(s.keys); rebuildKeyMap(); if (s.fov) FOVDEG = Math.max(40, Math.min(110, s.fov | 0)); if (s.sens) SENS = Math.max(0.1, Math.min(3, s.sens)); if (s.inv) INVERT_Y = !!s.inv; if (s.fog === false) FOG_ON = false; if (s.dbg === false) DEBUG_HUD = false; if (s.cap !== undefined) PERF.setCap(s.cap); } catch (e) { }
-        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 2, fov: FOVDEG, sens: SENS, inv: INVERT_Y, fog: FOG_ON, dbg: DEBUG_HUD, cap: PERF.capMode })); } catch (e) { } }
+        try { const s = JSON.parse(localStorage.getItem('cubo:settings') || '{}'); if (s.rd) renderDist = Math.max(2, Math.min(12, s.rd | 0)); if (s.kv < 3 && s.keys) { s.keys.sprint = 'ShiftLeft'; s.keys.sneak = 'ControlLeft'; s.keys.inventory = 'KeyE'; } loadBinds(s.keys); rebuildKeyMap(); if (s.fov) FOVDEG = Math.max(40, Math.min(110, s.fov | 0)); if (s.sens) SENS = Math.max(0.1, Math.min(3, s.sens)); if (s.inv) INVERT_Y = !!s.inv; if (s.fog === false) FOG_ON = false; if (s.dbg === false) DEBUG_HUD = false; if (s.cap !== undefined) PERF.setCap(s.cap); if (s.vol !== undefined) { SND.vol = Math.max(0, Math.min(1, +s.vol || 0)); SND.muted = SND.vol === 0; } SND.setGroup('mus', s.volMus !== undefined ? +s.volMus : 0.85); SND.setGroup('mob', s.volMob !== undefined ? +s.volMob : 0.8); SND.setGroup('rain', s.volRain !== undefined ? +s.volRain : 0.8); SND.setGroup('step', s.volStep !== undefined ? +s.volStep : 0.8); SND.setGroup('ui', s.volUi !== undefined ? +s.volUi : 0.9); } catch (e) { }
+        function saveSettings() { try { localStorage.setItem('cubo:settings', JSON.stringify({ rd: renderDist, keys: binds, kv: 3, fov: FOVDEG, sens: SENS, inv: INVERT_Y, fog: FOG_ON, dbg: DEBUG_HUD, cap: PERF.capMode, vol: SND.vol, volMus: SND.volMus, volMob: SND.volMob, volRain: SND.volRain, volStep: SND.volStep, volUi: SND.volUI })); } catch (e) { } }
         function updDist() { const r = $('dRng'); if (r) r.value = renderDist; $('dVal').textContent = renderDist; saveSettings(); }
         updDist();
         const KNAMES = { Space: 'Espaço', ControlLeft: 'Ctrl', ShiftLeft: 'Shift', AltLeft: 'Alt', AltRight: 'Alt Dir.', CapsLock: 'Caps Lock', Enter: 'Enter', Backspace: 'Backspace', ArrowUp: 'Seta cima', ArrowDown: 'Seta baixo', ArrowLeft: 'Seta esq.', ArrowRight: 'Seta dir.', Backquote: '`', Minus: '-', Equal: '=', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', NumpadEnter: 'Num Enter' };
@@ -5407,6 +6185,11 @@ void main(){
         $('dRng').oninput = e => { renderDist = +e.target.value; updDist(); };
         $('fRng').oninput = e => { FOVDEG = +e.target.value; $('fVal').textContent = FOVDEG; saveSettings(); };
         $('sRng').oninput = e => { SENS = +e.target.value / 100; $('sVal').textContent = e.target.value + '%'; saveSettings(); };
+        $('volRng').oninput = e => { SND.setVol(+e.target.value / 100); SND.setMute(+e.target.value === 0); $('volVal').textContent = e.target.value + '%'; saveSettings(); };
+        // grupos de som: cada slider controla seu barramento separado
+        [['volMusRng', 'volMusVal', 'mus'], ['volMobRng', 'volMobVal', 'mob'], ['volRainRng', 'volRainVal', 'rain'], ['volStepRng', 'volStepVal', 'step'], ['volUiRng', 'volUiVal', 'ui']].forEach(([rid, vid, grp]) => {
+            $(rid).oninput = e => { SND.setGroup(grp, +e.target.value / 100); $(vid).textContent = e.target.value + '%'; saveSettings(); };
+        });
         $('tFog').onclick = function () { FOG_ON = !FOG_ON; this.textContent = FOG_ON ? 'Ligada' : 'Desligada'; saveSettings(); };
         $('tInv').onclick = function () { INVERT_Y = !INVERT_Y; this.textContent = INVERT_Y ? 'Ligado' : 'Desligado'; saveSettings(); };
         $('tDebug').onclick = function () { DEBUG_HUD = !DEBUG_HUD; this.textContent = DEBUG_HUD ? 'Ligado' : 'Desligado'; applyDebugHUD(); saveSettings(); };
@@ -5419,6 +6202,12 @@ void main(){
             $('dRng').value = renderDist; $('dVal').textContent = renderDist;
             $('fRng').value = FOVDEG; $('fVal').textContent = FOVDEG;
             $('sRng').value = Math.round(SENS * 100); $('sVal').textContent = Math.round(SENS * 100) + '%';
+            $('volRng').value = Math.round(SND.vol * 100); $('volVal').textContent = Math.round(SND.vol * 100) + '%';
+            $('volMusRng').value = Math.round(SND.volMus * 100); $('volMusVal').textContent = Math.round(SND.volMus * 100) + '%';
+            $('volMobRng').value = Math.round(SND.volMob * 100); $('volMobVal').textContent = Math.round(SND.volMob * 100) + '%';
+            $('volRainRng').value = Math.round(SND.volRain * 100); $('volRainVal').textContent = Math.round(SND.volRain * 100) + '%';
+            $('volStepRng').value = Math.round(SND.volStep * 100); $('volStepVal').textContent = Math.round(SND.volStep * 100) + '%';
+            $('volUiRng').value = Math.round(SND.volUI * 100); $('volUiVal').textContent = Math.round(SND.volUI * 100) + '%';
             $('tFog').textContent = FOG_ON ? 'Ligada' : 'Desligada';
             $('tInv').textContent = INVERT_Y ? 'Ligado' : 'Desligado';
             $('tDebug').textContent = DEBUG_HUD ? 'Ligado' : 'Desligado';
@@ -5448,7 +6237,7 @@ void main(){
             if (state === 'inv') { // inventario aberto: digitando na busca? deixa o campo receber as teclas
                 if (e.target === invSearch) { if (e.code === 'Escape') { e.preventDefault(); closeInv(true); } return; }
                 if (e.code === 'Escape' || lc(e.code) === DEF.inventory) { if (!e.repeat) closeInv(e.code === 'Escape'); return; }
-                if (e.code.startsWith('Digit')) { let n = +e.code.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
+                if (e.code.startsWith('Digit')) { let n = +e.code.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { if (sel !== n) SND.ui('click'); sel = n; refreshHotbar(); } }
                 return;
             }
             if (chatOpen) return; // digitando no chat: o jogo ignora as teclas
@@ -5462,7 +6251,7 @@ void main(){
             if (c === 'Space' && !e.repeat) spaceTap();
             if (c === 'KeyR' && !(typeof MP !== 'undefined' && MP.active)) rewinding = true;
             if (c === DEF.inventory && !e.repeat) openInv();
-            if (c.startsWith('Digit')) { let n = +c.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { sel = n; refreshHotbar(); } }
+            if (c.startsWith('Digit')) { let n = +c.slice(5) - 1; if (n < 0) n = 9; if (n >= 0 && n < 10) { if (sel !== n) SND.ui('click'); sel = n; refreshHotbar(); } }
             if (c === 'BracketLeft') { renderDist = Math.max(2, renderDist - 1); updDist(); }
             if (c === 'BracketRight') { renderDist = Math.min(12, renderDist + 1); updDist(); }
             if (c === 'KeyW' && !e.repeat) { const n = performance.now(); if (n - lastW < 300) sprintLatch = true; lastW = n; }
@@ -5509,6 +6298,7 @@ void main(){
             invSearch.dispatchEvent(new Event('input'));
             invTip.textContent = catOfT(HOT[sel][0], HOT[sel][1])[2] + '  (slot ' + (sel + 1) + ')';
             invEl.classList.add('on');
+            SND.ui('open'); // som de abrir inventario
             if (!isTouch) invSearch.focus();
         }
         // Esc fecha so o inventario: o navegador nao deixa recapturar o mouse a partir do Esc (nao e um gesto do usuario),
@@ -5518,6 +6308,7 @@ void main(){
         function closeInv(viaEsc) {
             if (state !== 'inv') return;
             invEl.classList.remove('on');
+            SND.ui('close'); // som de fechar inventario
             invSearch.blur(); // celular: recolhe o teclado da busca, se o campo estiver focado
             if (isTouch) { state = 'playing'; locked = true; document.body.classList.add('hud'); return; }
             state = 'paused'; // se o mouse for recapturado, pointerlockchange volta para 'playing'
@@ -5550,7 +6341,7 @@ void main(){
             });
             invEl.addEventListener('pointercancel', () => { invTap = null; });
         }
-        addEventListener('wheel', e => { if (chatOpen) return; if (!locked) return; sel = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; refreshHotbar(); });
+        addEventListener('wheel', e => { if (chatOpen) return; if (!locked) return; const ns = (sel + (e.deltaY > 0 ? 1 : HOT.length - 1)) % HOT.length; if (ns !== sel) SND.ui('click'); sel = ns; refreshHotbar(); });
         addEventListener('contextmenu', e => e.preventDefault());
         canvas.addEventListener('mousedown', e => { if (chatOpen) return; if (!locked) return; held[e.button] = true; holdT = 0; act(e.button); });
         addEventListener('mouseup', e => { held[e.button] = false; });
@@ -5584,6 +6375,7 @@ void main(){
             const hit = raycast(eyePos(), aimDir(), 6); if (!hit) return;
             if (btn === 0) {
                 if (hit.isDecor) {
+                    SND.dig('leaf'); // decoracao quebra como folha
                     const dec = hit.decor;
                     const idx = dec.sp.list.indexOf(dec.f);
                     if (idx >= 0) dec.sp.list.splice(idx, 1);
@@ -5597,10 +6389,12 @@ void main(){
                     return;
                 }
                 if (hit.y <= 0 || (hit.b === 56 && hit.y <= 2)) return; // fundo do mundo (rocha matriz) nao quebra
+                SND.dig(SND.matOf(hit.b)); // som de cavar no material do bloco
                 setBlock(hit.x, hit.y, hit.z, 0);
-                if (hit.b === 8) spawnTnt(hit.x + 0.5, hit.y, hit.z + 0.5, 3);
+                if (hit.b === 8) { spawnTnt(hit.x + 0.5, hit.y, hit.z + 0.5, 3); SND.fuse(); }
             } else if (btn === 2) {
                 if (hit.isDecor) {
+                    SND.dig('leaf');
                     const id = HOT[sel][0];
                     const dec = hit.decor;
                     const idx = dec.sp.list.indexOf(dec.f);
@@ -5613,6 +6407,7 @@ void main(){
                     const ch = chunks.get((bx >> 4) + ',' + (bz >> 4));
                     if (ch && ch.decors) { const ci = ch.decors.findIndex(d => d.item === dec.f); if (ci >= 0) ch.decors.splice(ci, 1); }
                     setBlock(hit.x, hit.y, hit.z, id);
+                    SND.place(SND.matOf(id));
                     return;
                 }
                 const id = HOT[sel][0]; let x = hit.px, y = hit.py, z = hit.pz;
@@ -5631,6 +6426,7 @@ void main(){
                     if (x + 1 > P.x - r && x < P.x + r && z + 1 > P.z - r && z < P.z + r && y + 1 > P.y && y < P.y + 1.8) return;
                 }
                 setBlock(x, y, z, pid);
+                SND.place(SND.matOf(pid)); // som de colocar
             }
         }
 
@@ -5706,9 +6502,10 @@ void main(){
             el.addEventListener('touchend', end, { passive: false }); el.addEventListener('touchcancel', end, { passive: false });
         }
         holdBtn('bJump', () => { keys.Space = true; spaceTap(); }, () => { keys.Space = false; });
-        holdBtn('bDown', () => { keys.ShiftLeft = true; }, () => { keys.ShiftLeft = false; });
+        // agachar/descer usam a tecla LOGICA do bind de 'sneak' (o padrao agora e Ctrl; segue configuravel)
+        holdBtn('bDown', () => { keys[binds.sneak] = true; }, () => { keys[binds.sneak] = false; });
         holdBtn('bRew', () => { if (!(typeof MP !== 'undefined' && MP.active)) rewinding = true; }, () => { rewinding = false; rewHold = 0; });
-        $('bSneak').addEventListener('touchstart', e => { e.preventDefault(); keys.ShiftLeft = !keys.ShiftLeft; e.currentTarget.classList.toggle('on', !!keys.ShiftLeft); }, { passive: false });
+        $('bSneak').addEventListener('touchstart', e => { e.preventDefault(); keys[binds.sneak] = !keys[binds.sneak]; e.currentTarget.classList.toggle('on', !!keys[binds.sneak]); }, { passive: false });
         $('bPause').addEventListener('touchstart', e => { e.preventDefault(); pause(); }, { passive: false });
         $('bCmd').addEventListener('touchstart', e => { // balao: abre/fecha o chat de comandos (o celular nao tem tecla T)
             e.preventDefault(); chatOpen ? closeChat() : openChat();
@@ -6079,27 +6876,35 @@ void main(){
             }
             gl.depthMask(true); gl.disable(gl.BLEND);
         }
-        function rainSound(dt) { // ruido rosa em loop, filtrado: abafa quando o jogador esta sob telhado/copa
+        function rainSound(dt) { // chuva: ruido rosa em loop, entra no barramento de ambiente do SND
+            if (!SND.ready) return;
             rnAcc += dt; if (rnAcc < 0.1) return; rnAcc = 0;
             try {
                 const on = (state === 'playing' ? 1 : 0) * rainAmt;
+                const ctx = SND.ctx;
                 if (!rnAud) {
                     if (on <= 0.01) return;
-                    audio = audio || new AudioContext();
-                    const sr = audio.sampleRate, len = sr * 3, buf = audio.createBuffer(1, len, sr), d = buf.getChannelData(0), fd = (sr * 0.05) | 0;
+                    // ruido rosa com loop invisivel: gera len+fd amostras e as fd primeiras do
+                    // buffer cruzam gradualmente com o conteudo que vem depois do fim. Assim,
+                    // quando o buffer recomeca, ele ja esta "entrando" no comeco dele mesmo —
+                    // emenda continua, sem degrau nem pausa audivel.
+                    const sr = ctx.sampleRate, len = sr * 6, fd = (sr * 0.25) | 0;
+                    const raw = new Float32Array(len + fd);
                     let b0 = 0, b1 = 0, b2 = 0;
-                    for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16; }
-                    for (let i = 0; i < fd; i++) { d[i] *= i / fd; d[len - 1 - i] *= i / fd; }
-                    const src = audio.createBufferSource(); src.buffer = buf; src.loop = true;
-                    const hp = audio.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350;
-                    const lp = audio.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
-                    const g = audio.createGain(); g.gain.value = 0;
-                    src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(audio.destination); src.start();
+                    for (let i = 0; i < len + fd; i++) { const w = Math.random() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; raw[i] = (b0 + b1 + b2 + w * 0.1848) * 0.16; }
+                    const buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+                    for (let i = 0; i < len; i++) d[i] = raw[i];
+                    for (let i = 0; i < fd; i++) { const tf = i / fd; d[i] = raw[i] * tf + raw[len + i] * (1 - tf); }
+                    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+                    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 350;
+                    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+                    const g = ctx.createGain(); g.gain.value = 0;
+                    src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(SND.busAmb); src.start();
                     rnAud = { g, lp };
                 }
-                if (audio.state === 'suspended') audio.resume().catch(() => { });
-                const tn = audio.currentTime;
-                rnAud.g.gain.setTargetAtTime(on * 0.28 * (1 - 0.6 * rnShelter) * (1 - 0.7 * rnSnowK), tn, 0.25);
+                SND.resume();
+                const tn = ctx.currentTime;
+                rnAud.g.gain.setTargetAtTime(on * 0.28 * (1 - 0.6 * rnShelter) * (1 - 0.7 * rnSnowK) * SND.volRain, tn, 0.25);
                 rnAud.lp.frequency.setTargetAtTime(7500 - 5200 * rnShelter, tn, 0.3);
             } catch (e) { }
         }
@@ -6260,7 +7065,7 @@ layout(location=0) in vec3 p; layout(location=1) in vec2 uv; layout(location=2) 
 layout(location=4) in vec4 ia; layout(location=5) in vec4 ib; layout(location=6) in vec4 ic; layout(location=7) in vec4 id;
 uniform mat4 mvp; uniform vec3 cam; uniform vec3 sky; uniform vec3 sun; uniform vec3 glow; uniform vec3 mglow;
 uniform float light; uniform float fogN; uniform float fogF; uniform float tm;
-out vec2 vUv; out float vSh; out float vS; out float vB; out float vT; out float vD; out vec3 vFog;
+out vec2 vUv; out float vSh; out float vS; out float vB; out float vT; out float vD; out vec3 vFog; out float vGl;
 void main(){
   vec3 q=p*ia.w;
   if(w>1.5){
@@ -6294,7 +7099,7 @@ void main(){
   q=vec3(cp*q.x+sp*q.y,-sp*q.x+cp*q.y,q.z);
   float cyw=cos(ib.x),syw=sin(ib.x);
   vec3 wp=vec3(q.x*cyw+q.z*syw,q.y,-q.x*syw+q.z*cyw)+ia.xyz;
-  vUv=uv; vSh=sh; vS=ic.x; vB=ic.y; vT=ic.z; vD=length(wp-cam); gl_Position=mvp*vec4(wp,1.0);
+  vUv=uv; vSh=sh; vS=ic.x; vB=ic.y; vT=ic.z; vD=length(wp-cam); vGl=id.x; gl_Position=mvp*vec4(wp,1.0);
   {
     vec3 dv=(wp-cam)/max(vD,0.001);
     float sd=max(dot(dv,sun),0.0); sd*=sd; float md=max(-dot(dv,sun),0.0); md*=md;
@@ -6303,7 +7108,7 @@ void main(){
 }`, `#version 300 es
 precision highp float;
 uniform sampler2D tex; uniform float light; uniform float fogN; uniform float fogF;
-in vec2 vUv; in float vSh; in float vS; in float vB; in float vT; in float vD; in vec3 vFog; out vec4 o;
+in vec2 vUv; in float vSh; in float vS; in float vB; in float vT; in float vD; in vec3 vFog; in float vGl; out vec4 o;
 void main(){
   vec4 c=texture(tex,vUv);
   if(c.a<0.5) discard;
@@ -6311,7 +7116,10 @@ void main(){
   float bB=pow(0.8,15.0-vB*15.0);
   vec3 lc=max(max(vec3(sB),vec3(1.0,0.78,0.5)*bB),vec3(0.05));
   vec3 tint=mix(vec3(0.93,0.99,1.10),vec3(1.16,1.05,0.86),vT);
-  vec3 col=c.rgb*vSh*lc*tint;
+  // vagalume: faces com sh>1.5 sao EMISSIVAS (abdome) — brilham por conta propria,
+  // na intensidade vGl (piscar vindo da CPU). Mobs normais (sh<=1) nao mudam nada.
+  float em=max(vSh-1.5,0.0)*clamp(vGl,0.0,1.4);
+  vec3 col=c.rgb*(min(vSh,1.0)*lc+vec3(0.92,1.12,0.58)*em*1.55)*tint;
   float f=clamp((vD-fogN)/(fogF-fogN),0.0,1.0);
   o=vec4(mix(col,vFog,f),1.0);
 }`);
@@ -6583,6 +7391,7 @@ void main(){
             if (j < 0) return false; // barra cheia: o item fica no chao
             HOT[j] = [f.id, f.tile];
             refreshHotbar();
+            SND.pickup(); // ding de coleta
             if (cur && !cur.__pano) requestSave();
             const c = catOfT(f.id, f.tile);
             showCmdMsg('+ ' + (c ? c[2] : 'Item'));
@@ -6798,6 +7607,7 @@ void main(){
             anemona: { tgt: 35, sc: [0.75, 1.25], h: 1, ix: 0, tint: 0.6, box: [0.15, 0, 0.15, 0.85, 0.85, 0.85], build: buildAnemona }
         };
         let decorT = 0.2;
+        const DECOR_CAP = 700; // máx. de instâncias por espécie (o mar todo carregado não estoura o FPS)
         const decorFloor = b => b === 2 || b === 3 || b === 4 || b === 31 || b === 44 || b === 54 || b === 55; // areia, pedra, terra, arenito, ardósia, cascalho, calcita
         function genChunkDecors(ch) { // gera decorações determinísticas para o chunk baseado em semente e profundidade
             if (!ch || ch.decorGen) return;
@@ -6818,32 +7628,32 @@ void main(){
 
                     if (col.depth <= 2) {
                         // Água rasa / margem / poça: pouquíssima grama rasteira ou nada (carga quase zero)
-                        if (roll < 0.035) key = 'gramaMar';
+                        if (roll < 0.05) key = 'gramaMar';
                     } else if (col.depth <= 5) {
-                        // Média profundidade: grama marinha, tufos de alga normais e raras anêmonas/estrelas
-                        if (roll < 0.12) {
-                            if (roll < 0.065) key = 'gramaMar';
-                            else if (roll < 0.10) key = 'alga';
-                            else if (roll < 0.112) key = 'estrela';
+                        // Média profundidade: grama marinha, tufos de alga, estrelas e anêmonas
+                        if (roll < 0.20) {
+                            if (roll < 0.10) key = 'gramaMar';
+                            else if (roll < 0.165) key = 'alga';
+                            else if (roll < 0.185) key = 'estrela';
                             else key = 'anemona';
                         }
                     } else {
-                        // Fundo do mar profundo (depth >= 6): carga maior com kelp gigante e recifes de corais
-                        if (roll < 0.28) {
+                        // Fundo do mar profundo: carga maior com kelp gigante e recifes de corais
+                        if (roll < 0.42) {
                             const reefNoise = decorHash(wx >> 2, wz >> 2, 77);
-                            if (reefNoise > 0.60 && roll < 0.22) {
+                            if (reefNoise > 0.58 && roll < 0.30) {
                                 // Recife de coral em colônias
                                 const cType = decorHash(wx, wz, 9);
-                                if (cType < 0.25) key = 'coralA';
-                                else if (cType < 0.50) key = 'coralV';
-                                else if (cType < 0.75) key = 'coralAm';
-                                else if (cType < 0.90) key = 'coralVm';
+                                if (cType < 0.22) key = 'coralA';
+                                else if (cType < 0.44) key = 'coralV';
+                                else if (cType < 0.66) key = 'coralAm';
+                                else if (cType < 0.85) key = 'coralVm';
                                 else key = 'anemona';
                             } else {
                                 // Floresta marinha profunda: kelp gigante, alga, grama e estrelas
                                 const vType = decorHash(wx, wz, 15);
-                                if (vType < 0.38 && col.depth >= 5) key = 'algaAlta';
-                                else if (vType < 0.68) key = 'alga';
+                                if (vType < 0.36 && col.depth >= 5) key = 'algaAlta';
+                                else if (vType < 0.66) key = 'alga';
                                 else if (vType < 0.88) key = 'gramaMar';
                                 else if (vType < 0.95) key = 'estrela';
                                 else key = 'anemona';
@@ -6856,6 +7666,7 @@ void main(){
                     if (!D || col.depth < D.h) continue; // não cabe na coluna d'água
                     const S = MOB.species.get(key);
                     if (!S) continue;
+                    if (S.list.length >= DECOR_CAP) continue; // teto por espécie: segura a carga de instâncias no mar todo
 
                     const scRoll = decorHash(wx, wz, 21);
                     const scale = D.sc[0] + scRoll * (D.sc[1] - D.sc[0]);
@@ -6874,29 +7685,22 @@ void main(){
                 }
             }
         }
-        function decorTick(dt) { // espalha e mantém as decorações nos chunks próximos com constância determinística
+        function decorTick(dt) { // limpeza e mapa de raycast (a geração já acontece com o chunk)
             decorT -= dt; if (decorT > 0) return; decorT = 0.4;
-            const pcx = Math.floor(P.x) >> 4, pcz = Math.floor(P.z) >> 4;
-            const R = 3;
-            let chunksGen = 0;
-            for (let dz = -R; dz <= R; dz++) {
-                for (let dx = -R; dx <= R; dx++) {
-                    if (dx * dx + dz * dz > R * R + 1) continue;
-                    const ch = chunks.get((pcx + dx) + ',' + (pcz + dz));
-                    if (ch && !ch.decorGen) {
-                        genChunkDecors(ch);
-                        chunksGen++;
-                        if (chunksGen >= 2) break;
-                    }
-                }
-                if (chunksGen >= 2) break;
-            }
+            const px = P.x, pz = P.z;
+            /* A geração já acontece em addChunk (junto com o terreno), então aqui só cuidamos da
+               limpeza e do mapa de raycast — ambos restritos ao que está perto do jogador: o mar
+               inteiro carregado tem milhares de decorações e não vale a pena varrer tudo a cada tique. */
+            const NEAR = 40 * 40;
             // Limpa decorações cujo apoio sumiu (quebrou chão ou drenou água)
             for (const key in DECOR) {
                 const S = MOB.species.get(key); if (!S) continue;
                 const L = S.list;
                 for (let i = L.length - 1; i >= 0; i--) {
                     const f = L[i];
+                    if (f.dead) { L.splice(i, 1); continue; } // o chunk que a carregava descarregou
+                    const dx = f.x - px, dz = f.z - pz;
+                    if (dx * dx + dz * dz > NEAR) continue; // longe: o chunk que a carrega descarrega e leva junto
                     const floorB = getBlock(f.bx, f.by, f.bz, 3);
                     const waterB = getBlock(f.bx, f.by + 1, f.bz, 3);
                     if (!decorFloor(floorB) || !isWater(waterB)) {
@@ -6904,13 +7708,16 @@ void main(){
                     }
                 }
             }
-            // Sincroniza o mapa de raycast para interação e quebra
+            // Sincroniza o mapa de raycast para interação e quebra (só o alcance da mira: 10 blocos)
             decorMap.clear();
+            const RN2 = 10 * 10;
             for (const key in DECOR) {
                 const D = DECOR[key], S = MOB.species.get(key); if (!S) continue;
                 const L = S.list;
                 for (let i = 0; i < L.length; i++) {
                     const f = L[i], bx = f.bx !== undefined ? f.bx : (f.x | 0), bz = f.bz !== undefined ? f.bz : (f.z | 0);
+                    const dx = f.x - px, dz = f.z - pz;
+                    if (dx * dx + dz * dz > RN2) continue;
                     const by0 = f.by + 1, h = Math.ceil(D.h * (f.scale || 1));
                     for (let dy = 0; dy < h; dy++) {
                         decorMap.set(bx + ',' + (by0 + dy) + ',' + bz, { sp: S, f, key, box: D.box, by0 });
@@ -6965,8 +7772,15 @@ void main(){
             box(4.5, 9, -0.5, 7.5, 10, 0.5, AM, 11);       // bico
             box(0.5, 10, -0.5, 4.5, 13, 0.5, CRIST, 11);   // crista
             box(4.5, 6, -0.5, 6.5, 8, 0.5, CRIST, 11);     // barbela
-            box(-2.5, 4, -3.5, 1.5, 7, -1.5, ASAS, 14);    // asa -z
-            box(-2.5, 4, 1.5, 1.5, 7, 3.5, ASAS, 15);      // asa +z
+            // Asas em 3 penas em degrau por lado (capa do ombro alta, pena do meio recuada,
+            // ponta fina apontando para o rabo): silhueta de asa dobrada em vez de "um bloco".
+            // Extremos mantidos em ±3.5 voxels (z) para bater com a caixa de colisão.
+            box(-1.5, 5.5, -3.5, 1.5, 7.5, -1.5, ASAS, 14);      // asa -z: capa do ombro
+            box(-2.5, 4.5, -3.0, 0.5, 6.0, -2.0, ASAS, 14);       // asa -z: pena do meio
+            box(-3.0, 3.75, -2.75, -1.0, 4.75, -1.75, ASAS, 14);  // asa -z: ponta primária
+            box(-1.5, 5.5, 1.5, 1.5, 7.5, 3.5, ASAS, 15);         // asa +z: capa do ombro
+            box(-2.5, 4.5, 2.0, 0.5, 6.0, 3.0, ASAS, 15);         // asa +z: pena do meio
+            box(-3.0, 3.75, 1.75, -1.0, 4.75, 2.75, ASAS, 15);    // asa +z: ponta primária
             const ex0 = 3.5 * V, ex1 = 4.5 * V, ey0 = 9 * V, ey1 = 10 * V;
             face([[ex1, ey0, -1.5 * V - 0.003], [ex0, ey0, -1.5 * V - 0.003], [ex0, ey1, -1.5 * V - 0.003], [ex1, ey1, -1.5 * V - 0.003]], OLHO, 11, 0.9);
             face([[ex0, ey0, 1.5 * V + 0.003], [ex1, ey0, 1.5 * V + 0.003], [ex1, ey1, 1.5 * V + 0.003], [ex0, ey1, 1.5 * V + 0.003]], OLHO, 11, 0.9);
@@ -6978,9 +7792,13 @@ void main(){
                 hdg: Math.random() * 6.28318530718, spd: 0, idle: 0,
                 st: 'anda', stT: 3 + Math.random() * 5, turnT: 0, walkT: Math.random() * 2,
                 wtx: 0, wtz: 0, wcol: null, banh: 0,
-                ft: 0, grounded: true, ph: Math.random(), scale: 0.92 + Math.random() * 0.2,
+                ft: 0, grounded: true, pulo: 0, ph: Math.random(), scale: 0.92 + Math.random() * 0.2,
                 tint: Math.max(0, Math.min(1, 0.5 + (Math.random() - 0.5) * 0.25)),
                 ix: 0.15, walkPh: Math.random() * 6.28, jH: 0, jL: 0, jW: 0, jT: 0.1,
+                tremP: 0, tremR: 0, tremH: 0, tremL: 0, // arrepio do frio (só visual, zerado fora do frio)
+                airT: 0, fugaT: 0, // no-ar (para so bater asa em queda longa) e susto continuo (asa da fuga so no comeco)
+                medoCD: 0, // pausa entre sustos: segura o proximo "susto do jogador" (fuga unica, depois acalma)
+                assustou: false, // ja levou um susto: so volta a fugir com jogador chegando de novo
                 cc: null, s: null // s: sem cardume (o mobsScare confere)
             };
         }
@@ -7025,7 +7843,7 @@ void main(){
         /* ---------- vontades da galinha: ela faz as coisas porque quer ----------
            Escolha calma por peso entre intenções longas. O rumo só muda quando a vontade
            troca (ou quando um obstáculo obriga) — ela não fica rodando à toa. */
-        const GAL_WILL = [['anda', 30], ['par', 15], ['bica', 24], ['asa', 9], ['pula', 7], ['banho', 15]]; // [nome, peso %]
+        const GAL_WILL = [['anda', 30], ['par', 15], ['bica', 24], ['asa', 6], ['pula', 7], ['banho', 15]]; // [nome, peso %]
         function galBanhoSpot(f) { // acha água rasa por perto (raio ~16) para o banho
             for (let k = 0; k < 28; k++) {
                 const a = Math.random() * 6.28318530718, r = 3 + Math.random() * 13;
@@ -7044,7 +7862,7 @@ void main(){
             if (w === 'anda') { f.stT = 4 + Math.random() * 7; f.hdg = Math.random() * 6.28318530718; }
             else if (w === 'par') f.stT = 2 + Math.random() * 4;
             else if (w === 'bica') { f.stT = 2.5 + Math.random() * 4; f.idle = 1; }
-            else if (w === 'asa') { f.stT = 1.5 + Math.random() * 2.5; if (f.grounded && Math.random() < 0.4) f.vy = 3 + Math.random(); }
+            else if (w === 'asa') { f.stT = 1.3 + Math.random() * 1.9; if (f.grounded && Math.random() < 0.4) f.vy = 3 + Math.random(); }
             else if (w === 'pula') { f.stT = 1 + Math.random() * 0.8; f.hdg += (Math.random() - 0.5) * 1.4; if (f.grounded) f.vy = 3.6 + Math.random() * 1.2; }
             else if (w === 'banho') {
                 const sp = galBanhoSpot(f);
@@ -7067,9 +7885,35 @@ void main(){
                 const at = Math.max(0, Math.min(CH - 1, Math.floor(f.y + 0.1)));
                 if (getBlock(Math.floor(f.x), at, Math.floor(f.z), -1) === -1) continue; // chunk descarregado: espera o despawn por distância
                 /* ---------- fuga do jogador (explosões chegam prontas pelo mobsScare) ---------- */
-                if (f.ft > 0) f.ft -= dt;
+                if (f.ft > 0) { f.ft -= dt; f.fugaT = Math.min(9, f.fugaT + dt); } else f.fugaT = 0;
+                // fugaT = tempo seguido de susto: o batimento de asa da fuga vale so no comeco dele.
+                // SUSTO UNICO + PAUSA (medoCD): antes o medo era renovado a cada tick enquanto o
+                // jogador ficava por perto, entao a galinha ficava em fuga 100% do tempo (e o passo
+                // da fuga fazia o bicho tremer sem parar). Agora ela se assusta uma vez, corre,
+                // acalma e so volta a fugir depois de uma pausa de varios segundos.
+                if (f.medoCD > 0) f.medoCD -= dt;
+                if (f.pulo > 0) f.pulo -= dt; // janela do pulo de degrau: enquanto estiver no ar, não vira para longe
+                // cacarejo ocasional (mais frequente perto do jogador: o ganho ja cai com a distancia)
+                f.cq = (f.cq === undefined ? 3 + Math.random() * 8 : f.cq) - dt;
+                if (f.cq <= 0) { f.cq = 4 + Math.random() * 11; SND.cluck(f.x, f.y + 0.4, f.z); }
                 const far = pSpd > 4.2 ? 20 : 9; // correndo, o jogador assusta de mais longe
-                if (d2 < far) f.ft = Math.max(f.ft, pSpd > 4.2 ? 1.7 : 1.2);
+                // P/ fugir de novo ela precisa que o jogador esteja SE MOVENDO (chegando de
+                // novo) e a pausa ter terminado: ficar parado do lado dela não a assusta em
+                // loop. O primeiro susto vale sempre (assustou = false).
+                if (d2 < far && f.ft <= 0 && f.medoCD <= 0 && (pSpd > 0.6 || !f.assustou)) {
+                    f.ft = pSpd > 4.2 ? 1.7 : 1.2;
+                    f.medoCD = 6 + Math.random() * 4; // calma de 6 a 10 s antes do proximo susto
+                    f.assustou = true;
+                    // gritinho de susto na hora: cacarejo mais agudo e dobrado (so dentro do jogo)
+                    if (SND.inGame()) {
+                        const sq = SND.spatial(f.x, f.y + 0.4, f.z, 30);
+                        if (sq) {
+                            const f0 = 1150 + Math.random() * 250;
+                            SND.tone({ bus: 'mob', f: f0, f2: f0 * 0.6, dur: 0.1, type: 'sawtooth', gain: 0.09 * sq.gain, pan: sq.pan });
+                            SND.tone({ bus: 'mob', f: f0 * 1.15, f2: f0 * 0.55, dur: 0.12, type: 'sawtooth', gain: 0.08 * sq.gain, pan: sq.pan, delay: 0.13 });
+                        }
+                    }
+                }
                 if (f.ft > 0 && f.st !== 'fuga') { f.st = 'fuga'; f.stT = 99; f.idle = 0; } // a fuga sequestra a vontade
                 if (f.ft <= 0 && f.st === 'fuga') galNextWill(f);                            // passou o susto: volta a querer coisas
                 /* ---------- vontade vigente: duração longa e rumo fixo (vira só na virada) ---------- */
@@ -7089,10 +7933,14 @@ void main(){
                     case 'banho': {
                         const col = getWaterCol(Math.floor(f.x), Math.floor(f.z));
                         f.wcol = (col && col.depth <= 5) ? col : null;
-                        if (f.wcol) want = 0;                                          // flutuando: só boia e curte
+                        // "molhado" = pe realmente NA agua: na borda a caixa ainda encosta na
+                        // margem (o rabo continua no bloco de terra) e ela boiaria presa na
+                        // beira. Enquanto nao mergulhou de verdade, segue caminhando para wtx.
+                        const molhado = isWater(getBlock(Math.floor(f.x), Math.floor(f.y + 0.1), Math.floor(f.z), 0));
+                        if (f.wcol && molhado) want = 0;                                // flutuando de verdade: só boia e curte
                         else {
                             const dwx = f.wtx - f.x, dwz = f.wtz - f.z;
-                            if (dwx * dwx + dwz * dwz > 2.2) { f.hdg = Math.atan2(-dwz, dwx); want = 1.2; } // caminha até a água
+                            if (dwx * dwx + dwz * dwz > 2.2 || f.wcol) { f.hdg = Math.atan2(-dwz, dwx); want = 1.2; } // até mergulhar
                             else galNextWill(f);                                        // desistiu do banho: outra vontade
                         }
                         f.banh = 0.3; // deixa a água atravessável até o banho terminar
@@ -7100,18 +7948,45 @@ void main(){
                     }
                     default: f.st = 'anda'; f.stT = 4;
                 }
+                // bater de asas: no estado 'asa' e durante a fuga
+                if (f.st === 'asa' || f.ft > 0) {
+                    f.flapS = (f.flapS === undefined ? 0 : f.flapS) - dt;
+                    if (f.flapS <= 0) { f.flapS = 0.5; SND.flap(f.x, f.y + 0.4, f.z); }
+                } else f.flapS = 0.12; // comeca a bater quase junto ao virar
                 f.spd += (want - f.spd) * Math.min(1, dt * 7);
 
-                /* ---------- colisão sólida e robusta AABB ---------- */
+                /* ---------- colisão sólida: OBB da galinha (bate com o visual) ----------
+                   A malha é centrada e gira com f.yaw no shader: bico a 7.5 voxels na frente,
+                   rabo a 6.5 nas costas, asas a 3.5 nos lados — tudo multiplicado por f.scale.
+                   Um raio fixo de 0.28 deixava o bico entrar ~0,25 bloco dentro da parede
+                   ("galinha entrando no bloco"). Agora testa a CAIXA GIRADA contra cada célula
+                   (SAT 2D nos 4 eixos), então encosta exatamente onde o desenho encosta. */
                 const galHits = (px, py, pz) => {
-                    const r = 0.28;
-                    const x0 = Math.floor(px - r), x1 = Math.floor(px + r);
-                    const y0 = Math.floor(py + 0.05), y1 = Math.floor(py + 0.70);
-                    const z0 = Math.floor(pz - r), z1 = Math.floor(pz + r);
+                    const sc = f.scale, cyw = Math.cos(f.yaw), syw = Math.sin(f.yaw);
+                    const A = 0.46875 * sc, K = 0.40625 * sc, W = 0.21875 * sc; // frente, costas, meia-largura
+                    const L = (A + K) * 0.5, co = (A - K) * 0.5; // meia-comprimento e deslocamento do centro
+                    const cxw = px + co * cyw, czw = pz - co * syw;             // centro da caixa no mundo
+                    const hx = L * Math.abs(cyw) + W * Math.abs(syw);            // AABB que envolve a caixa girada
+                    const hz = L * Math.abs(syw) + W * Math.abs(cyw);
+                    const yB = py + 0.05, yT = py + 0.8125 * sc;                 // pés até a ponta da crista
+                    const x0 = Math.floor(cxw - hx), x1 = Math.floor(cxw + hx);
+                    const y0 = Math.floor(yB), y1 = Math.floor(yT);
+                    const z0 = Math.floor(czw - hz), z1 = Math.floor(czw + hz);
+                    const e0x = cyw, e0z = -syw, e1x = syw, e1z = cyw;            // eixos locais no mundo
                     for (let x = x0; x <= x1; x++) {
                         for (let y = y0; y <= y1; y++) {
+                            if (yB >= y + 1 || yT <= y) continue;                // sem sobreposição em Y
                             for (let z = z0; z <= z1; z++) {
-                                if (solidAt(x, y, z)) return true;
+                                if (!solidAt(x, y, z)) continue;
+                                const ccx = x + 0.5, ccz = z + 0.5;
+                                // SAT: eixos mundo X, mundo Z, frente-costas e lados da caixa
+                                if (Math.abs(cxw - ccx) > L * Math.abs(e0x) + W * Math.abs(e1x) + 0.5) continue;
+                                if (Math.abs(czw - ccz) > L * Math.abs(e0z) + W * Math.abs(e1z) + 0.5) continue;
+                                const p0 = cxw * e0x + czw * e0z, q0 = ccx * e0x + ccz * e0z;
+                                if (Math.abs(p0 - q0) > L + 0.5 * (Math.abs(e0x) + Math.abs(e0z))) continue;
+                                const p1 = cxw * e1x + czw * e1z, q1 = ccx * e1x + ccz * e1z;
+                                if (Math.abs(p1 - q1) > W + 0.5 * (Math.abs(e1x) + Math.abs(e1z))) continue;
+                                return true;
                             }
                         }
                     }
@@ -7124,13 +7999,28 @@ void main(){
                     let mx = dirX * f.spd * dt;
                     let mz = dirZ * f.spd * dt;
 
+                    // Pés sobre água (flutuando ou na borda da margem): andar em cima de água
+                    // não é queda — ela boia. Calculado ANTES da checagem de penhasco porque
+                    // lá também precisa saber se ela já está no lago.
+                    const fy0 = Math.floor(f.y + 0.1);
+                    const naAgua = isWater(getBlock(Math.floor(f.x), fy0, Math.floor(f.z), 0)) ||
+                        isWater(getBlock(Math.floor(f.x), fy0 - 1, Math.floor(f.z), 0));
+
                     // Se calma, não anda em direção a penhascos (> 2 blocos de queda)
+                    // Banho (f.banh > 0) ou pés na água: água também vale como apoio — sem isso
+                    // ela nunca entra no lago (banho) nem sai dele (a margem é ar+água, sem sólido
+                    // em dy<=2, e ela ficaria girando na borda pra sempre).
                     if (f.ft <= 0) {
                         let hasGroundAhead = false;
                         const testX = Math.floor(f.x + dirX * 0.45), testZ = Math.floor(f.z + dirZ * 0.45);
                         const baseFloor = Math.floor(f.y);
                         for (let dy = 0; dy <= 2; dy++) {
                             if (solidAt(testX, baseFloor - dy, testZ)) { hasGroundAhead = true; break; }
+                        }
+                        if (!hasGroundAhead && (f.banh > 0 || naAgua)) {
+                            for (let dy = 0; dy <= 4; dy++) { // coluna de água à frente (rasa ou funda)
+                                if (isWater(getBlock(testX, baseFloor - dy, testZ, 0))) { hasGroundAhead = true; break; }
+                            }
                         }
                         if (!hasGroundAhead) {
                             mx = 0; mz = 0;
@@ -7141,32 +8031,52 @@ void main(){
                         }
                     }
 
-                    // Movimento no eixo X (com subida suave de 1 degrau se houver)
+                    // Movimento no eixo X/Z (com subida suave de degrau se houver)
+                    // O degrau só vale se a posição atual estiver LIMPA: com os pés encaixados no
+                    // chão, "subir 1 bloco" viraria um teleporte para cima a cada toque na parede.
+                    const limpa = !galHits(f.x, f.y, f.z);
+                    // Boia com os pés na borda da margem (afundada ~0,05 no nível da água):
+                    // precisa só de um degrauzinho para levantar a caixa acima do bloco da terra
+                    // e sair do lago — sem ele, ela bate na margem e a IA vira para longe p/ sempre.
+                    const degrau = (nx, nz) => {
+                        if (!limpa) return false;
+                        if (f.grounded && !galHits(nx, f.y + 1.001, nz) && !galHits(f.x, f.y + 1.001, f.z)) {
+                            // Mob pequeno: ela NÃO desliza para cima do bloco — dá um pulo batendo
+                            // as asas (vy=7.5: pico discreto ~1,1 bloco, a caixa passa do topo)
+                            // e só ganha avanço horizontal no ar, quando já passou do topo. Se não
+                            // conseguir, o pulo expira e a IA vira para longe normalmente.
+                            f.vy = 7.5; f.grounded = false; f.pulo = 0.9;
+                            return false;
+                        }
+                        if (naAgua && !galHits(nx, f.y + 0.25, nz) && !galHits(f.x, f.y + 0.25, f.z)) {
+                            f.y += 0.25; // topo da margem está a até 0,25 da caixa: sobe e passa
+                            return true;
+                        }
+                        return false;
+                    };
                     if (mx !== 0) {
                         if (!galHits(f.x + mx, f.y, f.z)) {
                             f.x += mx;
-                        } else if (f.grounded && !galHits(f.x + mx, f.y + 1.02, f.z) && !galHits(f.x, f.y + 1.02, f.z)) {
+                        } else if (degrau(f.x + mx, f.z)) {
                             f.x += mx;
-                            f.y += 1.001;
                         } else {
                             mx = 0;
-                            if (f.turnT <= 0) {
+                            if (f.pulo <= 0 && f.turnT <= 0) { // no ar (pulo de degrau) segura o rumo
                                 f.turnT = 0.5;
                                 f.hdg += (Math.random() < 0.5 ? 1 : -1) * (1.1 + Math.random() * 0.8);
                             }
                         }
                     }
 
-                    // Movimento no eixo Z (com subida suave de 1 degrau se houver)
+                    // Movimento no eixo Z (mesmo degrau)
                     if (mz !== 0) {
                         if (!galHits(f.x, f.y, f.z + mz)) {
                             f.z += mz;
-                        } else if (f.grounded && !galHits(f.x, f.y + 1.02, f.z + mz) && !galHits(f.x, f.y + 1.02, f.z)) {
+                        } else if (degrau(f.x, f.z + mz)) {
                             f.z += mz;
-                            f.y += 1.001;
                         } else {
                             mz = 0;
-                            if (f.turnT <= 0) {
+                            if (f.pulo <= 0 && f.turnT <= 0) { // no ar (pulo de degrau) segura o rumo
                                 f.turnT = 0.5;
                                 f.hdg += (Math.random() < 0.5 ? 1 : -1) * (1.1 + Math.random() * 0.8);
                             }
@@ -7186,25 +8096,38 @@ void main(){
                     if (f.grounded && f.st === 'pula') { f.vy = 4.2; f.grounded = false; }
                     else if (f.grounded && f.st === 'bica' && f.ft <= 0 && Math.random() < dt * 0.12) { f.vy = 3.6; f.grounded = false; }
 
-                    f.vy -= 22 * dt;
-                    if (!f.grounded && f.vy < -2.6) f.vy = -2.6; // bater de asas suaviza queda (flutter)
+                    /* Apoio firme embaixo dos pés? Sem este teste a gravidade agia mesmo com a
+                       galinha pousada: ela afundava ~5 cm (a folga da caixa de colisão) e voltava
+                       a cada ~4 quadros, num bote vertical de altíssima frequência — era o TREMIOR
+                       constante que parecia vibração. E, como o "grounded" ficava falso quase
+                       sempre, o gatilho das asas (!grounded && airT > 0.25) ficava ligado e ela
+                       batia as asas sem parar. Pousada com chão embaixo, ela fica exatamente
+                       parada (vy = 0) e só volta a cair quando não há apoio (borda, degrau). */
+                    const supB = mobGet(f, Math.floor(f.x), Math.floor(f.y - 0.06), Math.floor(f.z));
+                    const apoiada = f.grounded && supB > 0 && !isWater(supB) && !isSoft(supB);
+                    if (apoiada) {
+                        f.vy = 0;
+                    } else {
+                        f.vy -= 22 * dt;
+                        if (!f.grounded && f.vy < -2.6) f.vy = -2.6; // bater de asas suaviza queda (flutter)
 
-                    // Integração vertical sub-dividida para não atravessar chão
-                    const totalDy = f.vy * dt;
-                    const steps = Math.max(1, Math.ceil(Math.abs(totalDy) / 0.12));
-                    const stepDy = totalDy / steps;
-                    for (let s = 0; s < steps; s++) {
-                        f.y += stepDy;
-                        if (galHits(f.x, f.y, f.z)) {
-                            f.y -= stepDy;
-                            if (f.vy < 0) {
-                                f.grounded = true;
-                                f.y = Math.floor(f.y - 0.02) + 1.001; // apoia precisamente na superfície superior do bloco
+                        // Integração vertical sub-dividida para não atravessar chão
+                        const totalDy = f.vy * dt;
+                        const steps = Math.max(1, Math.ceil(Math.abs(totalDy) / 0.12));
+                        const stepDy = totalDy / steps;
+                        for (let s = 0; s < steps; s++) {
+                            f.y += stepDy;
+                            if (galHits(f.x, f.y, f.z)) {
+                                f.y -= stepDy;
+                                if (f.vy < 0) {
+                                    f.grounded = true;
+                                    f.y = Math.floor(f.y - 0.02) + 1.001; // apoia precisamente na superfície superior do bloco
+                                }
+                                f.vy = 0;
+                                break;
+                            } else {
+                                if (f.vy < 0) f.grounded = false;
                             }
-                            f.vy = 0;
-                            break;
-                        } else {
-                            if (f.vy < 0) f.grounded = false;
                         }
                     }
                 }
@@ -7238,16 +8161,29 @@ void main(){
                 }
 
                 /* ---------- animações orgânicas, vivas e fluidas ---------- */
+                if (f.grounded) f.airT = 0; else f.airT += dt; // tempo de voo: degrau rápido não é queda
                 const t = MOB.t;
 
                 let wd = f.hdg - f.yaw;
                 while (wd > Math.PI) wd -= 6.28318530718;
                 while (wd < -Math.PI) wd += 6.28318530718;
+                const yaw0 = f.yaw;
                 f.yaw += wd * Math.min(1, dt * (f.ft > 0 ? 12 : 6.0));
+                // O giro acontece DEPOIS da checagem de movimento: se ele encaixar a caixa
+                // na parede (o bico cresce na direção do muro ao endireitar), desfaz o giro —
+                // sem isso a anti-penetração "libertava" a galinha LIFTANDO 2 blocos,
+                // por cima da parede, e ela atravessava o mundo. A virada continua no quadro
+                // seguinte, quando a posição já tiver mudado.
+                if (galHits(f.x, f.y, f.z)) f.yaw = yaw0;
 
                 const isWalking = f.spd > 0.08;
                 if (isWalking) {
-                    f.walkPh += Math.max(f.spd, 0.7) * dt * 11.5;
+                    // Cadência do passo COM TETO: a fase crescia direto com o spd, e na fuga
+                    // (3.2) a cabeça ia a 11,7 Hz e as pernas a 5,8 Hz — o bicho inteiro
+                    // TREMIA de forma constante enquanto o jogador ficava por perto (o medo
+                    // é renovado todo tick). Agora passa no máximo como um passo firme:
+                    // caminhando ~1,6 Hz nas pernas / ~3,1 Hz na cabeça, correndo ~2,2 / ~4,3.
+                    f.walkPh += Math.min(Math.max(f.spd, 0.7), 1.6) * dt * 8.5;
                 }
                 const swing = Math.min(1, f.spd / 0.7);
 
@@ -7262,22 +8198,36 @@ void main(){
                 } else if (!f.grounded) {
                     targetHead = 0.20;
                 } else if (isWalking) {
-                    targetHead = Math.sin(f.walkPh * 2.0) * 0.32 * swing;
+                    // Balanço no ritmo do passo (1,6 Hz). Com walkPh*2 saía a 3,1 Hz e a cabeça
+                    // parecia vibrar em vez de balanço.
+                    targetHead = Math.sin(f.walkPh) * 0.26 * swing;
                 } else {
                     targetHead = Math.sin(t * 1.6 + f.ph * 10) * 0.12;
                 }
                 f.jH += (targetHead - f.jH) * Math.min(1, dt * 12);
 
-                // Asas: batimento flutter rápido no ar ou pulando, dobradas no chão
+                // Asas: batimento flutter rápido SÓ quando há esforço de verdade — vontade de asa,
+                // pulo para subir degrau (vy > 1.5, o vy = 7.5 do degrau) ou queda longa (airT).
+                // Antes o gatilho era "!pousado || vy < -0.2": qualquer pezinho no ar ligava o
+                // flutter 4x/s — andar num degrau, cair meia parede e, principalmente, BOIAR na
+                // água (o flutuar deixa grounded falso o banho inteiro) faziam ela bater as asas
+                // o tempo todo. Na água ela rema devagar; na fuga, bate só no começo do susto.
+                const boia = inWater || isWater(getBlock(feetX, feetY - 1, feetZ, 0));
                 let targetWing = 0;
-                if (!f.grounded || f.st === 'asa' || f.vy < -0.2) {
+                if (f.st === 'asa' || (!f.grounded && !boia && (f.vy > 1.5 || f.airT > 0.25))) {
                     targetWing = Math.sin(t * 26.0 + f.ph * 5) * 0.75;
-                } else if (f.ft > 0) {
+                } else if (f.ft > 0 && f.fugaT < 1.4) {
                     targetWing = Math.sin(t * 18.0) * 0.40;
+                } else if (boia) {
+                    targetWing = Math.sin(t * 7.0 + f.ph * 4) * 0.13; // remada tranquila na agua
                 } else {
                     targetWing = Math.sin(t * 2.5 + f.ph) * 0.04;
                 }
                 f.jW = targetWing;
+
+                // Indicador de esforço (mesmo cálculo dos outros bichos): na fuga (spd 3.2)
+                // passa de 0.5 — o sinal de "asa aberta corrida" que a instância carrega.
+                f.ix = Math.min(1.5, f.spd / 3.3);
 
                 // Rabo balança suave
                 f.jT = 0.12 + (isWalking ? Math.sin(f.walkPh) * 0.22 * swing : 0) + Math.sin(t * 2.8 + f.ph * 7) * 0.08;
@@ -7286,14 +8236,379 @@ void main(){
                 let targetPitch = 0;
                 if (f.st === 'bica') targetPitch = -0.22;
                 else if (!f.grounded) targetPitch = Math.max(-0.35, Math.min(0.35, -f.vy * 0.08));
-                else if (isWalking) targetPitch = 0.04 + Math.sin(f.walkPh * 2.0) * 0.03;
+                else if (isWalking) targetPitch = 0.04 + Math.sin(f.walkPh) * 0.03;
                 f.pitch += (targetPitch - f.pitch) * Math.min(1, dt * 9);
 
                 const targetRoll = isWalking ? Math.sin(f.walkPh) * 0.14 * swing : 0;
                 f.roll += (targetRoll - f.roll) * Math.min(1, dt * 9);
+
+                /* ---------- arrepio do frio: SÓ em bioma com neve ----------
+                   O tremor "de medo" constante era bug (cadência do passo sem teto + medo
+                   renovado todo tick). Aqui é o arrepio de verdade, dedinho: um tremor rápido
+                   e miudinho em pitch/roll/cabeca/pernas que vale enquanto ela estiver num
+                   bioma frio (Taiga/Tundra/Montanha). Fora do frio os canais zeram e ela
+                   fica lisa. `coldAt` não vive no recorte dos testes — por isso o typeof. */
+                const frio = typeof coldAt === 'function' && coldAt(Math.floor(f.x), Math.floor(f.z));
+                if (frio) {
+                    // Arrepio "dedinho": ~6 Hz e amplitudes pequenas, só na cabeça e nas patas.
+                    // Antes era 13 Hz no corpo inteiro (somado ao pitch/roll da pose) — lia como vibração
+                    // mecânica constante, e não como frio.
+                    const tw = t * 38 + f.ph * 6.28318530718;
+                    f.tremP = 0; // corpo: imóvel (sem tremor geral)
+                    f.tremR = 0;
+                    f.tremH = Math.sin(tw) * 0.05;
+                    f.tremL = Math.sin(tw * 1.13 + 2.4) * 0.025;
+                } else {
+                    f.tremP = f.tremR = f.tremH = f.tremL = 0; // calor: nem pisca
+                }
             }
         }
         mobReg('galinha', { build: buildGalinha, tick: galinhaTick, kind: {}, land: true }); // land: fora da IA de peixe
+
+        /* ---------- Vagalume: o mob mais tranquilo do jogo ----------
+           Bichinho de luz que só vive a noite: flutua sobre o campo, pisca devagar
+           e se recolhe quando o sol nasce. Sem corrida, sem susto: se o jogador
+           chega perto demais, ele só deriva para o lado e continua passeando.
+           O brilho vem de dentro do shader (abdome com sh=2.5, emissivo) e o
+           piscar é CPU (f.jH = intensidade 0..1.4, lida como vGl no shader). */
+        const VAG = { target: 16, t: 0, dieT: 0 };
+        const vagFree = b => b === 0 || isSoft(b); // ar ou planta/la/tocha: por onde o vagalume pode nascer
+        const vagDayF = () => Math.max(0, Math.min(1, 0.5 + Math.sin(time * Math.PI * 2) * 1.2)); // 0 = noite, 1 = dia (mesma conta do render)
+        function buildVagalume() {
+            const V = MOB_V, arr = [];
+            const face = (P, t, w, sh) => {
+                const u0 = t / NT, u1 = (t + 1) / NT, U = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+                for (const q of [0, 1, 2, 0, 2, 3]) { const p = P[q], u = U[q]; arr.push(p[0], p[1], p[2], u[0], u[1], w, sh); }
+            };
+            const box = (x0, y0, z0, x1, y1, z1, t, w) => {
+                const A = x0 * V, B = x1 * V, C = y0 * V, D = y1 * V, E = z0 * V, F = z1 * V;
+                face([[A, D, E], [B, D, E], [B, D, F], [A, D, F]], t, w, 1.0);   // topo
+                face([[A, C, E], [B, C, E], [B, C, F], [A, C, F]], t, w, 0.5);    // base
+                face([[B, C, E], [B, C, F], [B, D, F], [B, D, E]], t, w, 0.88);   // +x
+                face([[A, C, E], [A, C, F], [A, D, F], [A, D, E]], t, w, 0.66);   // -x
+                face([[A, C, F], [B, C, F], [B, D, F], [A, D, F]], t, w, 0.84);   // +z
+                face([[B, C, E], [A, C, E], [A, D, E], [B, D, E]], t, w, 0.72);   // -z
+            };
+            const CORPO = 99, LUZ = 100;
+            // modelo no MESMO espaco de voxels da galinha: as asas usam as juntas 14/15 do shader,
+            // cujo pivo de batimento fica em (-0.5, 5.5, ±1.5) — a charneira das asas encosta nele.
+            box(-2.5, 4.6, -1.4, 2.0, 6.4, 1.4, CORPO, 10);  // torax (sem juntas: peca solida do corpo)
+            box(2.0, 5.0, -1.0, 3.2, 6.2, 1.0, CORPO, 10);   // cabeca (fuselada no torax: pequena demais pra articular)
+            box(0.2, 5.2, -4.2, 1.6, 5.9, -1.5, CORPO, 14);  // asa -z: bate no pivo da junta 14
+            box(0.2, 5.2, 1.5, 1.6, 5.9, 4.2, CORPO, 15);    // asa +z: junta 15 (espelho)
+            // abdome brilhante: todas as faces com sh=2.5 — o shader trata sh>1.5 como emissivo
+            const gFace = (P2) => face(P2, LUZ, 10, 2.5);
+            const A = -4.6 * V, B2 = -2.3 * V, C2 = 4.9 * V, D2 = 6.1 * V, E2 = -1.2 * V, F2 = 1.2 * V;
+            gFace([[A, D2, E2], [B2, D2, E2], [B2, D2, F2], [A, D2, F2]]);
+            gFace([[A, C2, E2], [B2, C2, E2], [B2, C2, F2], [A, C2, F2]]);
+            gFace([[B2, C2, E2], [B2, C2, F2], [B2, D2, F2], [B2, D2, E2]]);
+            gFace([[A, C2, E2], [A, C2, F2], [A, D2, F2], [A, D2, E2]]);
+            gFace([[A, C2, F2], [B2, C2, F2], [B2, D2, F2], [A, D2, F2]]);
+            gFace([[B2, C2, E2], [A, C2, E2], [A, D2, E2], [B2, D2, E2]]);
+            return mkMobMesh(arr);
+        }
+        function vagalumeNew(x, y, z) {
+            return {
+                x, y, z, yaw: Math.random() * 6.28318530718, pitch: 0, roll: 0,
+                hdg: Math.random() * 6.28318530718, spd: 0, spdW: 0.3, turnT: 1 + Math.random() * 3,
+                gT: 0, gy: -1, hov: Math.random() * 1.5, wph: Math.random() * 6.28, ph: Math.random(),
+                blT: Math.random() * 2.5, onT: 0, jH: 0, jW: 0, jL: 0, jT: 0,
+                scale: 0.15 + Math.random() * 0.05, tint: 0.4 + (Math.random() - 0.5) * 0.12, ix: 0,
+                cc: null, s: null
+            };
+        }
+        function vagalumeMaintain(L, dia) { // nasce em grupinhos sobre o campo, so de noite
+            if (!spawned || pano || dia > 0.3) return;
+            const alvo = biomeAt(Math.floor(P.x), Math.floor(P.z)) === SWAMP_B ? VAG.target * 2.5 : VAG.target; // pantano: festa de vagalume (bem mais)
+            const eff = Math.max(0, Math.round(alvo * PERF.mobScale));
+            if (L.length > eff) { // acima do alvo: joga fora as mais longes
+                L.sort((a, b) => ((b.x - P.x) * (b.x - P.x) + (b.z - P.z) * (b.z - P.z)) - ((a.x - P.x) * (a.x - P.x) + (a.z - P.z) * (a.z - P.z)));
+                L.length = eff;
+                return;
+            }
+            if (L.length >= eff) return;
+            if (rainAmt > 0.5) return; // chuva forte: ninguem sai de casa
+            for (let t = 0; t < 4 && L.length < eff; t++) {
+                const a = Math.random() * 6.28318530718, r = 10 + Math.random() * 20;
+                const wx = Math.floor(P.x + Math.cos(a) * r), wz = Math.floor(P.z + Math.sin(a) * r);
+                if (!chunks.get(ckey(wx >> 4, wz >> 4))) continue;
+                // desce do ceu ate o primeiro chao com ar em cima (grama, praia, ate copa de arvore)
+                let gy = -1;
+                for (let y = Math.min(CH - 4, Math.floor(P.y) + 10); y > 2; y--) {
+                    if (mobGet(SC_T, wx, y, wz) === -1) break; // chunk fora do alcance
+                    if (solidAt(wx, y, wz)) {
+                        if (y + 3 < CH && vagFree(getBlock(wx, y + 1, wz, 0)) && vagFree(getBlock(wx, y + 2, wz, 0)) && vagFree(getBlock(wx, y + 3, wz, 0))) gy = y;
+                        break;
+                    }
+                }
+                if (gy < 0) continue;
+                const n = 4 + ((Math.random() * 4) | 0); // enxame de 4 a 7: vagalume e bicho de turma
+                for (let k = 0; k < n && L.length < eff; k++) {
+                    L.push(vagalumeNew(wx + 0.5 + (Math.random() - 0.5) * 1.8, gy + 1.2 + Math.random() * 1.6, wz + 0.5 + (Math.random() - 0.5) * 1.8));
+                }
+            }
+        }
+        function vagalumeTick(dt) {
+            const S = MOB.species.get('vagalume'); if (!S) return;
+            const L = S.list;
+            VAG.t -= dt;
+            const dia = vagDayF();
+            if (VAG.t <= 0) { VAG.t = 0.5; vagalumeMaintain(L, dia); }
+            // amanhecer: a colonia se recolhe (um a um, sem desaparecer de golpe)
+            if (dia > 0.34) {
+                VAG.dieT -= dt;
+                if (VAG.dieT <= 0 && L.length) { VAG.dieT = 0.35; L.splice((Math.random() * L.length) | 0, 1); }
+                if (dia > 0.62) L.length = 0;
+            }
+            const px = P.x, py = P.y + 0.6, pz = P.z;
+            for (let i = L.length - 1; i >= 0; i--) {
+                const f = L[i];
+                const rx = f.x - px, ry = f.y - py, rz = f.z - pz;
+                const d2 = rx * rx + ry * ry + rz * rz;
+                if (d2 > 4225 || f.y < -8) { L.splice(i, 1); continue; } // longe demais ou caiu do mundo
+                const at = Math.max(0, Math.min(CH - 1, Math.floor(f.y + 0.1)));
+                if (getBlock(Math.floor(f.x), at, Math.floor(f.z), -1) === -1) continue; // chunk descarregado: espera
+                /* ---------- piscar: acende rapido, apaga suave, pausa longa ---------- */
+                f.blT -= dt;
+                if (f.onT > 0) {
+                    f.onT -= dt;
+                    const alvo = 1.15 + 0.15 * Math.sin(f.wph * 11 + f.ph * 9); // tremulinho enquanto aceso
+                    f.jH += (alvo - f.jH) * Math.min(1, dt * 6);
+                } else {
+                    f.jH = Math.max(0, f.jH - dt * 2.4);
+                    if (f.blT <= 0) { f.onT = 0.5 + Math.random() * 1.4; f.blT = f.onT + 1.4 + Math.random() * 3.6; }
+                }
+                /* ---------- deriva rápida e inquieta: vira sempre, voa com vontade ---------- */
+                f.turnT -= dt;
+                if (f.turnT <= 0) { f.turnT = 0.8 + Math.random() * 1.8; f.hdg += (Math.random() - 0.5) * 3.2; f.spdW = 0.6 + Math.random() * 0.75; }
+                if (d2 < 3.4) { // jogador perto demais: deriva para o lado, sem susto
+                    f.hdg = Math.atan2(-rz, rx);
+                    f.spdW = 1.15;
+                    f.turnT = Math.min(f.turnT, 0.5);
+                }
+                f.spd += (f.spdW - f.spd) * Math.min(1, dt * 4.5);
+                /* ---------- chao embaixo: acompanha o terreno flutuando ---------- */
+                f.gT -= dt;
+                if (f.gT <= 0) {
+                    f.gT = 0.3 + Math.random() * 0.4;
+                    const bx = Math.floor(f.x), bz = Math.floor(f.z);
+                    let gy = -1;
+                    for (let y = Math.min(CH - 2, Math.floor(f.y)); y >= 1 && y > Math.floor(f.y) - 9; y--) {
+                        if (solidAt(bx, y, bz)) { gy = y + 1; break; }
+                    }
+                    f.gy = gy; // -1 = sem apoio embaixo (mar/abismo): deriva para cima devagar
+                }
+                let ty = f.gy >= 0 ? f.gy + 0.8 + f.hov : f.y + 0.12;
+                ty += Math.sin(f.wph * 0.35 + f.ph * 7) * 0.28; // bojo suave, cada um no seu ritmo
+                if (solidAt(Math.floor(f.x), Math.floor(f.y), Math.floor(f.z))) f.y += dt * 3.2; // enterrado: sobe para fora
+                else f.y += (ty - f.y) * Math.min(1, dt * 2.4);
+                /* ---------- asas: tremulam em voo, sossegam em descanso ---------- */
+                f.wph += dt * (18 + 26 * Math.min(1, f.spd * 2));
+                f.jW = f.spd > 0.04 ? Math.sin(f.wph * 1.6) * (0.3 + 0.3 * Math.min(1, f.spd)) : f.jW * Math.max(0, 1 - dt * 5);
+                /* ---------- andar: prova de parede simples (bicho pequeno, colisao leve) ---------- */
+                if (f.spd > 0.02) {
+                    const dirX = Math.cos(f.hdg), dirZ = -Math.sin(f.hdg);
+                    const mx = dirX * f.spd * dt, mz = dirZ * f.spd * dt;
+                    const px2 = Math.floor(f.x + mx + (mx > 0 ? 0.22 : mx < 0 ? -0.22 : 0));
+                    const pz2 = Math.floor(f.z + mz + (mz > 0 ? 0.22 : mz < 0 ? -0.22 : 0));
+                    if (solidAt(px2, Math.floor(f.y), pz2)) { f.hdg += 1.3 + Math.random() * 1.3; f.spd *= 0.4; } // parede: vira e segue
+                    else { f.x += mx; f.z += mz; }
+                }
+                // pose: cabeca indica o rumo (mesma convacao da galinha: frente da malha = +x local)
+                let wd = f.hdg - f.yaw;
+                while (wd > Math.PI) wd -= 6.28318530718;
+                while (wd < -Math.PI) wd += 6.28318530718;
+                f.yaw += wd * Math.min(1, dt * 6);
+                f.pitch = Math.sin(f.wph * 0.21) * 0.09;
+                f.roll = Math.sin(f.wph * 0.17 + 1.3) * 0.11;
+            }
+        }
+        mobReg('vagalume', { build: buildVagalume, tick: vagalumeTick, kind: {}, land: true });
+        function vagalumeCount() { const s = MOB.species.get('vagalume'); return s ? s.list.length : 0; }
+
+        /* ---------- Sapo: o dono do pantano ----------
+           Bichinho de lama e lagoa: fica sentado na margem, infla o papo e coaxa (som
+           espacializado), de vez em quando da um pulo curto de perna chutada. Na agua
+           ele boia na superficie e pulu para a margem mais seca por perto. Nao tem medo
+           de pisar na agua: a lagoa e o quintal dele. So existe no pantano (dia e noite). */
+        const SAP = { target: 7, t: 0 };
+        const SAP_T = { cc: null }; // cache de chunk pro mobGet do spawn
+        function buildSapo() {
+            const V = MOB_V, arr = [];
+            const face = (P, t, w, sh) => {
+                const u0 = t / NT, u1 = (t + 1) / NT, U = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+                for (const q of [0, 1, 2, 0, 2, 3]) { const p = P[q], u = U[q]; arr.push(p[0], p[1], p[2], u[0], u[1], w, sh); }
+            };
+            const box = (x0, y0, z0, x1, y1, z1, t, w) => {
+                const A = x0 * V, B = x1 * V, C = y0 * V, D = y1 * V, E = z0 * V, F = z1 * V;
+                face([[A, D, E], [B, D, E], [B, D, F], [A, D, F]], t, w, 1.0);   // topo
+                face([[A, C, E], [B, C, E], [B, C, F], [A, C, F]], t, w, 0.5);   // base
+                face([[B, C, E], [B, C, F], [B, D, F], [B, D, E]], t, w, 0.88);  // +x (frente)
+                face([[A, C, E], [A, C, F], [A, D, F], [A, D, E]], t, w, 0.66);  // -x
+                face([[A, C, F], [B, C, F], [B, D, F], [A, D, F]], t, w, 0.84);  // +z
+                face([[B, C, E], [A, C, E], [A, D, E], [B, D, E]], t, w, 0.72);  // -z
+            };
+            const PELE = 108, OLHO = 109;
+            // juntas do shader: 10 corpo (nada), 11 papo/focinho (infla no coaxar, pivo na frente do cranio),
+            // 14/15 coxas traseiras (batem em X no pivo do quadril — chute do pulo)
+            box(-4.5, 0, -3.5, 3.5, 4, 3.5, PELE, 10);      // corpo chato e largo (8x4x7)
+            box(3.5, 0, -2.5, 6.5, 3, 2.5, PELE, 11);       // focinho (junta 11: levanta no coaxar)
+            box(1.5, 3, -3.0, 4.5, 6.5, -0.5, OLHO, 10);    // olho -z (globo saltado no topo)
+            box(1.5, 3, 0.5, 4.5, 6.5, 3.0, OLHO, 10);      // olho +z
+            box(0.5, 0, -4.4, 2.0, 1.4, -3.4, PELE, 10);    // pata dianteira -z
+            box(0.5, 0, 3.4, 2.0, 1.4, 4.4, PELE, 10);      // pata dianteira +z
+            box(-8.0, 0, -4.0, -4.0, 3.0, -1.0, PELE, 14);  // coxa traseira -z (chuta no pulo)
+            box(-8.0, 0, 1.0, -4.0, 3.0, 4.0, PELE, 15);    // coxa traseira +z
+            return mkMobMesh(arr);
+        }
+        function sapoNew(x, y, z) {
+            return {
+                x, y, z, vy: 0, yaw: Math.random() * 6.28318530718, pitch: 0, roll: 0,
+                hdg: Math.random() * 6.28318530718, hspd: 0, grounded: true,
+                hopT: 1.5 + Math.random() * 3.5, croakT: 2 + Math.random() * 6, puff: 0,
+                jH: 0, jL: 0, jW: 0, jT: 0, ix: 0.1, ph: Math.random(),
+                scale: 0.5 + Math.random() * 0.16, tint: 0.42 + (Math.random() - 0.5) * 0.22,
+                tremP: 0, tremR: 0, tremH: 0, tremL: 0,
+                cc: null, s: null
+            };
+        }
+        function sapoMaintain(L) { // nasce na margem de lama com agua por perto; so no pantano, dia e noite
+            if (!spawned || pano) return;
+            if (biomeAt(Math.floor(P.x), Math.floor(P.z)) !== SWAMP_B) return;
+            const eff = Math.max(0, Math.round(SAP.target * PERF.mobScale));
+            if (L.length > eff) { // acima do alvo: joga fora os mais longes
+                L.sort((a, b) => ((b.x - P.x) * (b.x - P.x) + (b.z - P.z) * (b.z - P.z)) - ((a.x - P.x) * (a.x - P.x) + (a.z - P.z) * (a.z - P.z)));
+                L.length = eff;
+                return;
+            }
+            if (L.length >= eff) return;
+            for (let t = 0; t < 6 && L.length < eff; t++) {
+                const a = Math.random() * 6.28318530718, r = 8 + Math.random() * 20;
+                const wx = Math.floor(P.x + Math.cos(a) * r), wz = Math.floor(P.z + Math.sin(a) * r);
+                if (!chunks.get(ckey(wx >> 4, wz >> 4))) continue;
+                // desce do ceu ate achar lama exposta (atravessa copas e troncos: so aceita lama
+                // na faixa da superficie do pantano — lama de caverna nao vale: sapo nao e morcego)
+                let gy = -1;
+                for (let y = Math.min(CH - 4, Math.floor(P.y) + 10); y > 2 && gy < 0; y--) {
+                    if (mobGet(SAP_T, wx, y, wz) === -1) break;
+                    if (!solidAt(wx, y, wz)) continue;
+                    const gb2 = getBlock(wx, y, wz, 0);
+                    if (gb2 === 30 && getBlock(wx, y + 1, wz, 0) === 0 && y >= SEA && y <= SEA + 6) gy = y; // lama da superficie com ar em cima
+                }
+                if (gy < 0) continue;
+                if (getBlock(wx, gy, wz, 0) !== 30) continue; // so na lama
+                // margem: precisa de lagoa a no maximo 2 blocos (sapo nasce onde a agua encosta)
+                let perto = false;
+                for (let dz = -2; dz <= 2 && !perto; dz++) for (let dx = -2; dx <= 2; dx++) {
+                    if (isWater(getBlock(wx + dx, SEA, wz + dz, 0))) { perto = true; break; }
+                }
+                if (!perto) continue;
+                L.push(sapoNew(wx + 0.5, gy + 1.001, wz + 0.5));
+            }
+        }
+        function sapoTick(dt) {
+            const S = MOB.species.get('sapo'); if (!S) return;
+            const L = S.list;
+            SAP.t -= dt;
+            if (SAP.t <= 0) { SAP.t = 0.7; sapoMaintain(L); }
+            const night = (time % 1) > 0.78 || (time % 1) < 0.22;
+            for (let i = L.length - 1; i >= 0; i--) {
+                const f = L[i];
+                const rx = f.x - P.x, rz = f.z - P.z;
+                const d2 = rx * rx + rz * rz;
+                if (d2 > 4225 || f.y < -8) { L.splice(i, 1); continue; } // longe demais ou caiu do mundo
+                if (getBlock(Math.floor(f.x), Math.max(0, Math.min(CH - 1, Math.floor(f.y + 0.1))), Math.floor(f.z), -1) === -1) continue; // chunk descarregado: espera
+                const t = MOB.t;
+                /* ---------- agua: boia na superficie, quintal do sapo ---------- */
+                const feetY = Math.floor(f.y + 0.1);
+                const inW = isWater(getBlock(Math.floor(f.x), feetY, Math.floor(f.z), 0)) || isWater(getBlock(Math.floor(f.x), feetY - 1, Math.floor(f.z), 0));
+                if (inW) {
+                    f.vy = Math.min(2.0, f.vy + 24 * dt);
+                    f.y += f.vy * dt;
+                    f.grounded = false;
+                    if (solidAt(Math.floor(f.x), Math.floor(f.y), Math.floor(f.z))) f.y += dt * 2.5; // anti-enterramento
+                } else {
+                    if (f.grounded) {
+                        const sb = getBlock(Math.floor(f.x), Math.floor(f.y - 0.06), Math.floor(f.z), 0);
+                        if (sb > 0 && !isWater(sb) && !isSoft(sb)) f.vy = 0; // apoiado: parado
+                        else f.grounded = false;
+                    }
+                    if (!f.grounded) {
+                        f.vy -= 22 * dt;
+                        f.y += f.vy * dt;
+                        if (f.vy < 0) {
+                            const by = Math.floor(f.y - 0.02);
+                            if (solidAt(Math.floor(f.x), by, Math.floor(f.z))) {
+                                f.y = by + 1.001; f.vy = 0; f.grounded = true; f.hspd = 0;
+                            }
+                        }
+                    }
+                }
+                /* ---------- vontades: sentado, pulou, boiou ---------- */
+                f.hopT -= dt;
+                f.croakT -= dt;
+                if (f.grounded && !inW) {
+                    if (d2 < 5.3 && f.hopT > 0.8) { // jogador em cima: pulo de susto para longe
+                        f.hdg = Math.atan2(-rz, rx) + (Math.random() - 0.5) * 0.6;
+                        f.vy = 5.0 + Math.random() * 1.4; f.hspd = 3.0 + Math.random();
+                        f.grounded = false;
+                        f.hopT = 1.6 + Math.random() * 1.6;
+                    } else if (f.hopT <= 0) { // pulo curtinho de passeio
+                        f.hdg = Math.random() * 6.28318530718;
+                        f.vy = 4.2 + Math.random() * 1.6; f.hspd = 2.0 + Math.random() * 1.2;
+                        f.grounded = false;
+                        f.hopT = 2.5 + Math.random() * 4.5;
+                    }
+                } else if (inW && f.hopT <= 0) { // na agua: procura margem seca por perto e pula para ela
+                    let alvo = null;
+                    for (let k = 0; k < 6 && !alvo; k++) {
+                        const aa = Math.random() * 6.28318530718, dd = 2 + Math.random() * 4;
+                        const tx = Math.floor(f.x + Math.cos(aa) * dd), tz = Math.floor(f.z + Math.sin(aa) * dd);
+                        for (let yy = SEA; yy <= SEA + 3 && !alvo; yy++) {
+                            if (solidAt(tx, yy, tz)) {
+                                const upB = getBlock(tx, yy + 1, tz, 0);
+                                if (!isWater(upB) && !isSoft(upB)) alvo = { x: tx, z: tz };
+                            }
+                        }
+                    }
+                    f.hdg = alvo ? Math.atan2(-(alvo.z - f.z), alvo.x - f.x) : Math.random() * 6.28318530718;
+                    f.vy = 5.4; f.hspd = 2.6;
+                    f.hopT = 1.5 + Math.random() * 2;
+                }
+                /* ---------- voo do pulo: avanco horizontal com prova de parede ---------- */
+                if (!f.grounded && !inW && f.hspd > 0.02) {
+                    const dirX = Math.cos(f.hdg), dirZ = -Math.sin(f.hdg);
+                    const mx = dirX * f.hspd * dt, mz = dirZ * f.hspd * dt;
+                    const nx = Math.floor(f.x + mx + (mx > 0 ? 0.2 : -0.2));
+                    const nz = Math.floor(f.z + mz + (mz > 0 ? 0.2 : -0.2));
+                    if (solidAt(nx, Math.floor(f.y + 0.1), nz)) { f.hspd = 0; f.hdg += 2 + Math.random() * 1.2; } // parede: para o avanco
+                    else { f.x += mx; f.z += mz; }
+                }
+                /* ---------- pose: pernas chutam no pulo, papo infla no coaxar ---------- */
+                let wd = f.hdg - f.yaw;
+                while (wd > Math.PI) wd -= 6.28318530718;
+                while (wd < -Math.PI) wd += 6.28318530718;
+                f.yaw += wd * Math.min(1, dt * (f.grounded ? 2.5 : 8));
+                const noAr = !f.grounded && !inW;
+                const tJW = noAr ? Math.max(-0.95, Math.min(0.4, -f.vy * 0.16)) : 0; // perna estica e volta
+                f.jW += (tJW - f.jW) * Math.min(1, dt * 10);
+                f.puff = Math.max(0, f.puff - dt * 1.4);
+                const tH = f.puff * 0.35 + (f.grounded && !inW ? Math.sin(t * 1.8 + f.ph * 9) * 0.05 : 0);
+                f.jH += (tH - f.jH) * Math.min(1, dt * 9);
+                f.pitch = f.grounded && !inW ? Math.sin(t * 2.1 + f.ph * 6) * 0.03 : Math.max(-0.5, Math.min(0.5, -f.vy * 0.09));
+                f.roll = 0;
+                f.jL = 0;
+                f.ix = noAr ? 0.8 : 0.1;
+                /* ---------- coaxar (com som espacializado) ---------- */
+                if (f.croakT <= 0 && !inW) {
+                    f.croakT = night ? 3.5 + Math.random() * 6 : 6 + Math.random() * 10;
+                    f.puff = 1;
+                    SND.sapoAt(f.x, f.y + 0.3, f.z);
+                }
+            }
+        }
+        mobReg('sapo', { build: buildSapo, tick: sapoTick, kind: {}, land: true });
+        function sapoCount() { const s = MOB.species.get('sapo'); return s ? s.list.length : 0; }
 
         function mobCount() { let n = 0; for (const sp of MOB.species.values()) if (sp.kind && !sp.land) n += sp.list.length; return n; } // so peixes: o /peixe regula eles
         function galinhaCount() { const s = MOB.species.get('galinha'); return s ? s.list.length : 0; }
@@ -7549,7 +8864,10 @@ void main(){
                     f.wT -= dt;
                     if (f.wT <= 0) {
                         f.wT = 2 + Math.random() * 4; fishPickTarget(f, K);
-                        if (Math.random() < 0.14) { f.wT = 0.5 + Math.random() * 0.6; f.spd = (2.7 + Math.random() * 0.9) * K.spF; } // arrancada curta
+                        if (Math.random() < 0.14) {
+                            f.wT = 0.5 + Math.random() * 0.6; f.spd = (2.7 + Math.random() * 0.9) * K.spF; // arrancada curta
+                            if (f.y > SEA - 1.2) SND.fishSplash(f.x, SEA + 0.15, f.z); // salpico na superficie
+                        }
                     }
                     desx = f.wx - f.x; desy = f.wy - f.y; desz = f.wz - f.z;
                 }
@@ -7644,16 +8962,41 @@ void main(){
                     const d2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
                     if (d2 > lim) continue;
                     if (dx2 * dir[0] + dy2 * dir[1] + dz2 * dir[2] < -3) continue;
-                    const cx = f.x | 0, cz = f.z | 0;
+                    // Coordenada arredondada para BAIXO: `| 0` truncava errado em x/z negativo
+                    // (chunk e célula trocados → lia a luz de outro lugar e a galinha ficava preta
+                    // de vez em quando perto da origem do mundo).
+                    const cx = Math.floor(f.x), cz = Math.floor(f.z);
                     let c = f.cc && f.cc.cx === (cx >> 4) && f.cc.cz === (cz >> 4) ? f.cc : chunks.get((cx >> 4) + ',' + (cz >> 4));
                     let sL = 0.7, bL = 0;
-                    // luz na célula do TORNO (y+0.5): se os pés afundarem um pouco, ainda assim pega o ar — nunca o interior do bloco (que é 0 e deixaria a galinha preta)
-                    if (c && c.lit) { const v = c.light[((Math.min(CH - 1, Math.max(0, (f.y + 0.5) | 0))) << 8) | ((cz & 15) << 4) | (cx & 15)]; sL = (v >> 4) / 15; bL = (v & 15) / 15; }
+                    // Luz do CORPO INTEIRO (pés..topo): fica com a MAIOR leitura das células que a
+                    // galinha ocupa. Assim uma célula ruim (interior de bloco, bolso escuro) nunca
+                    // escurece o bicho — e se o corpo estiver todo no escuro, olha 3 células acima
+                    // da cabeça (sombra rasa de beirada/copa) antes de aceitar o preto.
+                    if (c && c.lit) {
+                        const LX = cx & 15, LZ = cz & 15, LT = c.light;
+                        const y0 = Math.max(0, Math.min(CH - 1, Math.floor(f.y + 0.06)));
+                        const y1 = Math.max(y0, Math.min(CH - 1, Math.floor(f.y + 0.85 * f.scale)));
+                        let s = -1, b = -1;
+                        for (let pass = 0; pass < 2; pass++) {
+                            const ya = pass ? y1 + 1 : y0, yb = pass ? Math.min(CH - 1, y1 + 3) : y1;
+                            if (ya > yb) continue;
+                            for (let y = ya; y <= yb; y++) {
+                                const v = LT[(y << 8) | (LZ << 4) | LX];
+                                if (v === undefined) continue;
+                                const vs = v >> 4, vb = v & 15;
+                                if (vs > s) s = vs;
+                                if (vb > b) b = vb;
+                            }
+                            if (s > 0 || b > 0) break; // achou luz no corpo: nem olha lá em cima
+                        }
+                        if (s >= 0) { sL = s / 15; bL = b / 15; } // célula indisponível mantém o padrão
+                    }
                     const o = n * 16; n++;
                     I[o] = f.x; I[o + 1] = f.y; I[o + 2] = f.z; I[o + 3] = f.scale;
-                    I[o + 4] = f.yaw; I[o + 5] = f.pitch; I[o + 6] = f.roll; I[o + 7] = f.ph * 6.28318530718;
+                    I[o + 4] = f.yaw; I[o + 5] = f.pitch + (f.tremP || 0); I[o + 6] = f.roll + (f.tremR || 0); I[o + 7] = f.ph * 6.28318530718;
                     I[o + 8] = sL; I[o + 9] = bL; I[o + 10] = f.tint; I[o + 11] = f.ix;
-                    I[o + 12] = f.jH || 0; I[o + 13] = f.jL || 0; I[o + 14] = f.jW || 0; I[o + 15] = f.jT || 0; // juntas: cabeca, pernas, asas, rabo
+                    // juntas: cabeca, pernas, asas, rabo (+ arrepio do frio so em pitch/roll/cabeca/pernas)
+                    I[o + 12] = (f.jH || 0) + (f.tremH || 0); I[o + 13] = (f.jL || 0) + (f.tremL || 0); I[o + 14] = f.jW || 0; I[o + 15] = f.jT || 0;
                 }
                 if (!n) continue;
                 gl.bindVertexArray(sp.vao);
@@ -7699,6 +9042,7 @@ void main(){
                 if (nickIn) {
                     nickIn.value = this.nick;
                     nickIn.addEventListener('input', e => {
+                        if (state === 'paused') { e.target.value = this.nick; return; } // dentro do mundo não muda
                         this.nick = (e.target.value.trim() || 'Jogador').slice(0, 16);
                         localStorage.setItem('cubo_mp_nick', this.nick);
                     });
@@ -8383,7 +9727,7 @@ void main() {
                         }
                         const near = Math.max(0, 1 - dist / 30);
                         flashAmt = Math.max(flashAmt, 0.5 * near + 0.2); shake = Math.max(shake, near * 0.6);
-                        boom();
+                        boom(data.cx, data.cy, data.cz);
                         mobsScare(data.cx, data.cy, data.cz, data.r * 2);
 
                         if (this.isHost) {
@@ -8633,7 +9977,11 @@ void main() {
             const headW = isWater(getBlock(Math.floor(eye[0]), Math.floor(eye[1]), Math.floor(eye[2]), 0));
             const rd = pano ? (isTouch ? 4 : 5) : renderDist; // nevoa acompanha o raio do panorama leve
             let fogN = rd * 16 * 0.55, fogF = rd * 16 * 0.95;
-            if (headW) { sky[0] = 0.08 * light + 0.04; sky[1] = 0.22 * light + 0.05; sky[2] = 0.5 * light + 0.05; fogN = 1; fogF = 24; }
+            if (headW) {
+                const swU = !pano && biomeAt(Math.floor(eye[0]), Math.floor(eye[2])) === SWAMP_B; // agua de pantano: verde barrenta, mais fechada
+                sky[0] = (swU ? 0.05 : 0.08) * light + 0.04; sky[1] = (swU ? 0.15 : 0.22) * light + 0.05; sky[2] = (swU ? 0.11 : 0.5) * light + 0.05;
+                fogN = 1; fogF = swU ? 15 : 24;
+            }
             if (rainAmt > 0 && !headW) {
                 const stormDim = 1 - 0.42 * rainAmt;
                 sky[0] *= stormDim; sky[1] *= stormDim; sky[2] = Math.min(1, sky[2] * (1 - 0.32 * rainAmt));
@@ -8647,6 +9995,11 @@ void main() {
                     sky[0] += (0.72 * kk - sky[0]) * ks; sky[1] += (0.76 * kk - sky[1]) * ks; sky[2] += (0.82 * kk - sky[2]) * ks;
                     light += 0.2 * sf * (1 - light);
                 }
+            }
+            if (!pano && biomeAt(Math.floor(eye[0]), Math.floor(eye[2])) === SWAMP_B) { // pantano: ar pesado e esverdeado
+                sky[0] *= 0.9; sky[1] = Math.min(1, sky[1] * 1.06); sky[2] *= 0.84;
+                fogN *= 0.8; fogF *= 0.88;
+                light *= 0.96;
             }
             if (pano) { // no menu a nevoa abre conforme o mundo termina de carregar: nenhum pedaco aparece de repente
                 const ecx = Math.floor(eye[0]) >> 4, ecz = Math.floor(eye[2]) >> 4;
@@ -8806,7 +10159,7 @@ void main() {
             const isMP = typeof MP !== 'undefined' && MP.active;
             { const v = (rewinding && !isMP) ? 1 : 0; if (v !== _rO) rewEl.style.opacity = _rO = v; }
             if (rewinding && !isMP) rewEl.textContent = 'Voltando no tempo  (' + Math.floor(history.length / 5) + ')';
-            if (live) { render(); rainSound(dtP); PERF.tick(dtP, state === 'playing' || state === 'pano' || mpLive); }
+            if (live) { render(); SND.update(dtP); rainSound(dtP); PERF.tick(dtP, state === 'playing' || state === 'pano' || mpLive); }
             else PERF.tick(dtP, false);
             if (state === 'loading') mcAnim(dtP);
             if (spawned) {
